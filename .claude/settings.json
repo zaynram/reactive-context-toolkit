@@ -1,0 +1,61 @@
+{
+    "defaultShell": "powershell",
+    "plansDirectory": ".claude/plans/",
+    "autoMemoryDirectory": ".claude/memory/",
+    "autoUpdatesChannel": "latest",
+    "alwaysThinkingEnabled": true,
+    "autoMemoryEnabled": true,
+    "autoDreamEnabled": true,
+    "showThinkingSummaries": true,
+    "permissions": {
+        "defaultMode": "bypassPermissions",
+        "additionalDirectories": [
+            "~/.claude/",
+            "~/AppData/Roaming/Claude/",
+            "~/Documents/Code/"
+        ]
+    },
+    "env": {
+        "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+    },
+    "extraKnownMarketplaces": {
+        "crosbycrosbylaw-plugins-official": {
+            "source": {
+                "source": "github",
+                "repo": "crosbycrosbylaw/claude-marketplace"
+            },
+            "autoUpdate": true
+        }
+    },
+    "enabledPlugins": {
+        "db-operations@crosbycrosbylaw-plugins-official": true,
+        "reasoning-protocols@crosbycrosbylaw-plugins-official": true,
+        "rust-toolkit@crosbycrosbylaw-plugins-official": false,
+        "python-toolkit@crosbycrosbylaw-plugins-official": false,
+        "work-orchestration@crosbycrosbylaw-plugins-official": false,
+        "superpowers@superpowers-dev": true,
+        "atomic-agents@claude-plugins-official": true,
+        "typescript-lsp@claude-plugins-official": true,
+        "feature-dev@claude-plugins-official": true,
+        "ralph-loop@claude-plugins-official": true,
+        "code-review@claude-plugins-official": true,
+        "commit-commands@claude-plugins-official": true,
+        "hookify@claude-plugins-official": true,
+        "remember@claude-plugins-official": true,
+        "pr-review-toolkit@claude-plugins-official": true,
+        "code-simplifier@claude-plugins-official": true,
+        "mcp-server-dev@claude-plugins-official": false,
+        "learning-output-style@claude-plugins-official": false,
+        "plugin-dev@claude-plugins-official": false,
+        "claude-code-setup@claude-plugins-official": false,
+        "skill-creator@claude-plugins-official": false
+    },
+    "enableAllProjectMcpServers": true,
+    "enabledMcpjsonServers": [
+        "task-orchestrator",
+        "sequential-thinking",
+        "memory",
+        "memory-keeper",
+        "winterm-mcp"
+    ]
+}

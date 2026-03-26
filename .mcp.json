@@ -1,0 +1,9 @@
+{
+    "mcpServers": {
+        "memory-keeper": {
+            "command": "cmd",
+            "args": ["/c", "npx -y mcp-memory-keeper"],
+            "env": { "DATA_DIR": ".mcp-data/memory-keeper/" }
+        }
+    }
+}

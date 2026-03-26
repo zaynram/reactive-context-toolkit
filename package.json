@@ -1,0 +1,12 @@
+{
+    "name": "daisy.hooks",
+    "version": "0.1.0",
+    "private": true,
+    "packageManager": "bun@1.3.10",
+    "scripts": {},
+    "dependencies": {},
+    "devDependencies": {
+        "@anthropic-ai/claude-agent-sdk": "^0.2.84",
+        "claude-hooks": "^2.4.0"
+    }
+}

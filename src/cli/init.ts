@@ -116,16 +116,18 @@ export function mergeSettings(settingsPath: string, config: RCTConfig): void {
   const postToolMatchers = new Set<string>()
 
   for (const rule of config.rules ?? []) {
-    if (rule.on === "PreToolUse" && rule.matcher) {
-      rule.matcher.split("|").forEach(m => preToolMatchers.add(m))
+    if (rule.matcher) {
+      const matchers = rule.on === "PreToolUse" ? preToolMatchers : postToolMatchers
+      rule.matcher.split("|").forEach(m => matchers.add(m))
     }
   }
   for (const inj of config.injections ?? []) {
-    if (inj.on === "PreToolUse" && inj.matcher) {
-      inj.matcher.split("|").forEach(m => preToolMatchers.add(m))
+    const matchers = inj.on === "PreToolUse" ? preToolMatchers : postToolMatchers
+    if (inj.matcher) {
+      inj.matcher.split("|").forEach(m => matchers.add(m))
     }
-    if (inj.on === "PostToolUse" && inj.matcher) {
-      inj.matcher.split("|").forEach(m => postToolMatchers.add(m))
+    if (inj.matchFile) {
+      postToolMatchers.add("Read")
     }
   }
 
@@ -150,6 +152,25 @@ export function mergeSettings(settingsPath: string, config: RCTConfig): void {
     const hook = { type: "command", command: `${hookCommand} PostToolUse` }
     if (!settings.hooks.PostToolUse) {
       settings.hooks.PostToolUse = [{ matcher, hooks: [hook] }]
+    }
+  }
+
+  // Add hooks for other events used by injections/rules
+  const otherEvents = new Set<string>()
+  for (const inj of config.injections ?? []) {
+    if (!["PreToolUse", "PostToolUse", "SessionStart"].includes(inj.on)) {
+      otherEvents.add(inj.on)
+    }
+  }
+  for (const rule of config.rules ?? []) {
+    if (!["PreToolUse", "PostToolUse", "SessionStart"].includes(rule.on)) {
+      otherEvents.add(rule.on)
+    }
+  }
+  for (const event of otherEvents) {
+    const hook = { type: "command", command: `${hookCommand} ${event}` }
+    if (!settings.hooks[event]) {
+      settings.hooks[event] = [{ hooks: [hook] }]
     }
   }
 

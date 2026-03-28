@@ -1,3 +1,4 @@
+import path from "path"
 import type {
   RCTConfig,
   GlobalsConfig,
@@ -75,7 +76,7 @@ export function desugarFileInjections(config: ValidatedConfig): ValidatedConfig 
   const newInjections: InjectionEntry[] = []
 
   for (const file of files) {
-    const alias = file.alias ?? file.path
+    const alias = file.alias ?? path.basename(file.path)
 
     // Desugar file-level injectOn
     if (file.injectOn) {

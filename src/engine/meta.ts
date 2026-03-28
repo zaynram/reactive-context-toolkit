@@ -162,7 +162,7 @@ export function generateMeta(
   globals: Required<GlobalsConfig>,
   metaConfig: MetaConfig,
 ): string {
-  const include: MetaSection[] = metaConfig.include ?? ["files", "lang", "test", "rules"]
+  const include: MetaSection[] = metaConfig.include ?? ["files", "lang"]
   const brief = metaConfig.brief ?? false
   const enumeration = metaConfig.contents?.enumeration ?? "xml"
 

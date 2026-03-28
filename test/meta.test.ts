@@ -198,7 +198,7 @@ describe("generateMeta", () => {
     expect(parsed.rules.actions).toContain("warn")
   })
 
-  test("includes all sections when include not specified", () => {
+  test("includes files and lang by default when include not specified", () => {
     const meta: MetaConfig = {
       contents: { enumeration: "json" },
     }
@@ -206,7 +206,7 @@ describe("generateMeta", () => {
     const parsed = JSON.parse(result)
     expect(parsed).toHaveProperty("files")
     expect(parsed).toHaveProperty("lang")
-    expect(parsed).toHaveProperty("test")
-    expect(parsed).toHaveProperty("rules")
+    expect(parsed).not.toHaveProperty("test")
+    expect(parsed).not.toHaveProperty("rules")
   })
 })

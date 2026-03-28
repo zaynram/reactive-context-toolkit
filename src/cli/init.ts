@@ -103,7 +103,12 @@ export function mergeSettings(settingsPath: string, config: RCTConfig): void {
   // Read existing settings.json
   let settings: Record<string, any> = {}
   if (existsSync(settingsPath)) {
-    settings = JSON.parse(readFileSync(settingsPath, "utf-8"))
+    try {
+      settings = JSON.parse(readFileSync(settingsPath, "utf-8"))
+    } catch {
+      console.error(`Error: ${settingsPath} contains invalid JSON. Fix it before running rct init.`)
+      process.exit(1)
+    }
   }
 
   // Merge hooks (don't overwrite existing)

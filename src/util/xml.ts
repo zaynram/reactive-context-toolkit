@@ -91,7 +91,7 @@ const wrap = <T extends WrapXMLOptions>(
                                       noun.singular,
                                       index ? { ...a, index: `${i + 1}` } : a,
                                   )
-                    inner.items.map(callback)
+                    parts.push(...inner.items.map(callback))
                     parts.push(close(noun.plural))
                 }
                 break

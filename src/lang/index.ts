@@ -35,9 +35,13 @@ function evaluateToolResults(
             if (tool.workspace) results.push(getBunWorkspace(tool, rootDir))
             break
         case "pixi":
-        case "uv":
             if (tool.tasks !== false) results.push(getPixiTasks(tool, rootDir))
             if (tool.environment) results.push(getPixiEnvironment(tool, rootDir))
+            break
+        case "uv":
+        case "pip":
+        case "pipx":
+            // Python package managers without task runner support — no output
             break
         case "cargo":
         case "cargo-binstall":

@@ -6,7 +6,7 @@ import { evaluateRules } from "./engine/rules"
 import { evaluateInjections } from "./engine/injections"
 import { generateMeta } from "./engine/meta"
 import { evaluateLang } from "./lang"
-import { resolveTestCommand, runTest, formatTestResult } from "./test/runner"
+import { resolveTestCommand, runTest, formatTestResult, getCachedResult, setCachedResult } from "./test/runner"
 import { composeOutput } from "./engine/compose"
 import type { HookEvent } from "./config/types"
 
@@ -82,7 +82,15 @@ async function main() {
     if (testEvents.includes(event)) {
       const cmd = resolveTestCommand(desugared)
       if (cmd) {
-        const result = runTest(cmd, process.env.CLAUDE_PROJECT_DIR ?? process.cwd())
+        const sessionId = (payload as any).session_id ?? "unknown"
+        const cacheEnabled = typeof testConfig === "object" && (testConfig as any).cache === true
+        const cacheTTL = typeof testConfig === "object" ? ((testConfig as any).cacheTTL ?? 300) : 300
+
+        let result = cacheEnabled ? getCachedResult(sessionId, cmd, cacheTTL) : null
+        if (!result) {
+          result = runTest(cmd, process.env.CLAUDE_PROJECT_DIR ?? process.cwd())
+          if (cacheEnabled) setCachedResult(sessionId, cmd, result)
+        }
         testResult = formatTestResult(result, typeof testConfig === "object" ? (testConfig as any).brief : undefined)
       }
     }

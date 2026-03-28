@@ -1,6 +1,8 @@
 import type { InjectionEntry, HookEvent, GlobalsConfig } from "#config/types"
 import type { FileRegistry } from "#config/files"
 import { evaluateMatch, extractTargetValue } from "./evaluate"
+import { normalize } from "#util"
+import { applyStaleCheck } from "#config/schema"
 
 export function evaluateInjections(
   injections: InjectionEntry[],
@@ -32,7 +34,7 @@ export function evaluateInjections(
       const filePath = extractTargetValue("file_path", payload)
       if (!filePath) continue
       const matchedFile = registry.get(injection.matchFile)
-      if (!matchedFile || matchedFile.path !== filePath) continue
+      if (!matchedFile || matchedFile.path !== normalize(filePath)) continue
     }
 
     // Evaluate match conditions
@@ -56,6 +58,9 @@ export function evaluateInjections(
         content = file.brief
       } else {
         content = file.read()
+        if (file.staleCheck) {
+          content = applyStaleCheck(content, file.staleCheck)
+        }
       }
 
       // Wrap content if wrapper specified

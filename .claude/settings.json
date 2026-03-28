@@ -34,7 +34,7 @@
         "rust-toolkit@crosbycrosbylaw-plugins-official": false,
         "python-toolkit@crosbycrosbylaw-plugins-official": false,
         "work-orchestration@crosbycrosbylaw-plugins-official": false,
-        "superpowers@superpowers-dev": true,
+        "superpowers@claude-plugins-official": true,
         "atomic-agents@claude-plugins-official": true,
         "typescript-lsp@claude-plugins-official": true,
         "feature-dev@claude-plugins-official": true,

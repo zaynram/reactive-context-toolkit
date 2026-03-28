@@ -40,7 +40,7 @@ const attributes = (attrs?: AttributesArgument): XML.AttributeString[] =>
               .map(([k, v]): XML.AttributeString => `${k}="${v}"`)
 
 const open = (tag: string, attrs?: AttributesArgument): XML.OpenTag =>
-    attrs ? `<${tag}>` : `<${tag} ${attributes(attrs).join(" ").trim()}>`
+    !attrs ? `<${tag}>` : `<${tag} ${attributes(attrs).join(" ").trim()}>`
 
 const close = (tag: string): XML.CloseTag => `</${tag}>`
 
@@ -91,7 +91,7 @@ const wrap = <T extends WrapXMLOptions>(
                                       noun.singular,
                                       index ? { ...a, index: `${i + 1}` } : a,
                                   )
-                    inner.items.map(callback)
+                    parts.push(...inner.items.map(callback))
                     parts.push(close(noun.plural))
                 }
                 break

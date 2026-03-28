@@ -1,0 +1,1 @@
+{ "name": "test-project", "scripts": { "test": "bun test", "build": "bun build" } }

@@ -1,9 +1,9 @@
-// .claude/hooks/lib/fs.mjs
 import { existsSync, readFileSync } from "fs"
 import { minify, normalize } from "./general"
 import path from "path"
+import { CLAUDE_PROJECT_DIR } from "#config/loader"
 
-const ROOT = process.env.CLAUDE_PROJECT_DIR ?? process.cwd()
+const ROOT = CLAUDE_PROJECT_DIR
 
 function checkResolved(segments: string[]): string | null {
     const base = path.join(...segments)

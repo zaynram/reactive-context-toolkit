@@ -1,0 +1,5 @@
+export { loadConfig, CLAUDE_PROJECT_DIR } from "./loader"
+export { validateConfig, desugarFileInjections } from "./schema"
+export { buildFileRegistry } from "./files"
+export type { ReferenceFile, FileRegistry } from "./files"
+export type * from "./types"

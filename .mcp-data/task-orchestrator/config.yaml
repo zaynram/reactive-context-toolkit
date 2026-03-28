@@ -1,0 +1,11 @@
+# Server configuration
+server:
+    name: "task-orchestrator"
+    log_level: "INFO"
+# Database configuration
+database:
+    path: "./task_orchestrator.db"
+# Task configuration
+tasks:
+    max_subtasks: 10
+    default_complexity: "moderate"

@@ -1,0 +1,97 @@
+import { execSync } from "child_process"
+import path from "path"
+import type { LangTool } from "#config/types"
+
+interface PixiTaskArgument {
+    name: string
+    default?: string
+}
+
+interface PixiTask {
+    name: string
+    description?: string
+    args?: (string | PixiTaskArgument)[]
+}
+
+function validateTask(o: unknown): PixiTask {
+    if (o && typeof o === "object" && "name" in o)
+        return {
+            ...(o as PixiTask),
+            description:
+                "description" in o ? (o as PixiTask).description : "",
+            args: "args" in o ? ((o as PixiTask).args ?? []) : [],
+        }
+    throw TypeError(`Received invalid task object: ${o}`)
+}
+
+function resolveCwd(tool: LangTool, rootDir: string): string {
+    if (tool.manifest) return path.dirname(path.resolve(rootDir, tool.manifest))
+    return rootDir
+}
+
+export function getPixiTasks(tool: LangTool, rootDir: string): string {
+    try {
+        const cwd = resolveCwd(tool, rootDir)
+        const items = execSync("pixi task list --json", {
+            encoding: "utf-8",
+            cwd,
+            stdio: ["ignore", "pipe", "ignore"],
+        }).trim()
+
+        const tasks: { name: string; synopsis: string; usage: string }[] = []
+        for (const env of JSON.parse(items) ?? []) {
+            for (const feature of env.features ?? []) {
+                for (const task of feature.tasks ?? []) {
+                    try {
+                        const { name, description, args } = validateTask(task)
+                        tasks.push({
+                            name,
+                            synopsis: description?.split("Usage: ")[0] ?? "",
+                            usage: `pixi run ${name} ${(args ?? [])
+                                .map((a: string | PixiTaskArgument) =>
+                                    typeof a === "string"
+                                        ? a
+                                        : typeof a.default === "string"
+                                          ? `[${a.name}=${a.default}]`
+                                          : `<${a.name}>`,
+                                )
+                                .join(" ")}`.trim(),
+                        })
+                    } catch {
+                        continue
+                    }
+                }
+            }
+        }
+
+        if (tasks.length === 0) return `<pixi-tasks unavailable="no tasks found"/>`
+
+        const inner = tasks
+            .map(
+                (t, i) =>
+                    `<task index="${i + 1}" name="${t.name}" synopsis="${t.synopsis}" usage="${t.usage}"/>`,
+            )
+            .join("")
+        return `<pixi-tasks>${inner}</pixi-tasks>`
+    } catch {
+        return `<pixi-tasks unavailable="pixi not found or command failed"/>`
+    }
+}
+
+export function getPixiEnvironment(tool: LangTool, rootDir: string): string {
+    try {
+        const cwd = resolveCwd(tool, rootDir)
+        const output = execSync("pixi info --json", {
+            encoding: "utf-8",
+            cwd,
+            stdio: ["ignore", "pipe", "ignore"],
+        }).trim()
+
+        const info = JSON.parse(output)
+        const platform = info.platform ?? "unknown"
+        const version = info.pixi_version ?? info.version ?? "unknown"
+        return `<pixi-environment platform="${platform}" version="${version}"/>`
+    } catch {
+        return `<pixi-environment unavailable="pixi not found or command failed"/>`
+    }
+}

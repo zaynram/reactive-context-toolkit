@@ -1,0 +1,550 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/nickarail/reactive-context-toolkit/blob/main/rct.config.schema.json",
+  "title": "RCT Configuration",
+  "description": "Configuration schema for Reactive Context Toolkit (rct.config.json)",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema reference"
+    },
+    "globals": {
+      "$ref": "#/$defs/GlobalsConfig"
+    },
+    "files": {
+      "type": "array",
+      "description": "File entries for context injection",
+      "items": {
+        "$ref": "#/$defs/FileEntry"
+      }
+    },
+    "lang": {
+      "$ref": "#/$defs/LangConfig"
+    },
+    "test": {
+      "description": "Test runner config (boolean, command string, or full config)",
+      "anyOf": [
+        { "type": "boolean" },
+        { "type": "string" },
+        { "$ref": "#/$defs/TestConfig" }
+      ]
+    },
+    "rules": {
+      "type": "array",
+      "description": "Rules for blocking/warning on tool usage",
+      "items": {
+        "$ref": "#/$defs/RuleEntry"
+      }
+    },
+    "injections": {
+      "type": "array",
+      "description": "Context injection definitions",
+      "items": {
+        "$ref": "#/$defs/InjectionEntry"
+      }
+    },
+    "meta": {
+      "$ref": "#/$defs/MetaConfig"
+    }
+  },
+  "$defs": {
+    "HookEvent": {
+      "type": "string",
+      "enum": [
+        "PreToolUse",
+        "PostToolUse",
+        "PostToolUseFailure",
+        "SessionStart",
+        "UserPromptSubmit",
+        "Setup",
+        "SubagentStart",
+        "Notification"
+      ],
+      "description": "Hook events that support additionalContext"
+    },
+    "HookEventOrArray": {
+      "description": "A single hook event or an array of hook events",
+      "anyOf": [
+        { "$ref": "#/$defs/HookEvent" },
+        {
+          "type": "array",
+          "items": { "$ref": "#/$defs/HookEvent" }
+        }
+      ]
+    },
+    "Format": {
+      "type": "string",
+      "enum": ["xml", "json"],
+      "description": "Output format for injected context"
+    },
+    "FileRef": {
+      "type": "string",
+      "description": "FileRef pattern: alias[:metaAlias][~brief]. A string reference to a file entry by its alias, optionally selecting a meta-alias and/or requesting brief mode.",
+      "pattern": "^[a-zA-Z0-9_-]+(:[a-zA-Z0-9_-]+)?(~brief)?$"
+    },
+    "GlobalsConfig": {
+      "type": "object",
+      "description": "Global configuration defaults",
+      "additionalProperties": false,
+      "properties": {
+        "format": {
+          "$ref": "#/$defs/Format",
+          "default": "xml"
+        },
+        "wrapper": {
+          "type": "string",
+          "description": "Wrapper tag name",
+          "default": "context"
+        },
+        "briefByDefault": {
+          "type": "boolean",
+          "description": "Whether files are injected in brief mode by default",
+          "default": false
+        }
+      }
+    },
+    "MetaFileEntry": {
+      "type": "object",
+      "description": "A meta-file entry attached to a parent FileEntry",
+      "additionalProperties": false,
+      "required": ["path"],
+      "properties": {
+        "alias": {
+          "type": "string",
+          "description": "Optional alias for referencing this meta-file"
+        },
+        "path": {
+          "type": "string",
+          "description": "Path to the file (absolute or relative to project root)"
+        },
+        "injectOn": {
+          "$ref": "#/$defs/HookEventOrArray",
+          "description": "Hook event(s) that trigger injection of this meta-file"
+        },
+        "brief": {
+          "type": "string",
+          "description": "Brief/summary content to inject instead of full file"
+        }
+      }
+    },
+    "FileEntry": {
+      "type": "object",
+      "description": "A file entry in the config, extending MetaFileEntry with staleness and meta-files",
+      "additionalProperties": false,
+      "required": ["path"],
+      "properties": {
+        "alias": {
+          "type": "string",
+          "description": "Optional alias for referencing this file"
+        },
+        "path": {
+          "type": "string",
+          "description": "Path to the file (absolute or relative to project root)"
+        },
+        "injectOn": {
+          "$ref": "#/$defs/HookEventOrArray",
+          "description": "Hook event(s) that trigger injection of this file"
+        },
+        "brief": {
+          "type": "string",
+          "description": "Brief/summary content to inject instead of full file"
+        },
+        "staleCheck": {
+          "type": "object",
+          "description": "Staleness check configuration",
+          "additionalProperties": false,
+          "required": ["dateTag", "wrapTag"],
+          "properties": {
+            "dateTag": {
+              "type": "string",
+              "description": "Tag name containing the date"
+            },
+            "wrapTag": {
+              "type": "string",
+              "description": "Tag name wrapping the content"
+            },
+            "format": {
+              "type": "string",
+              "description": "Date format string"
+            }
+          }
+        },
+        "metaFiles": {
+          "type": "array",
+          "description": "Associated meta-files",
+          "items": {
+            "$ref": "#/$defs/MetaFileEntry"
+          }
+        }
+      }
+    },
+    "MatchTarget": {
+      "type": "string",
+      "enum": [
+        "file_path",
+        "new_string",
+        "content",
+        "command",
+        "user_prompt",
+        "tool_name",
+        "error"
+      ],
+      "description": "Targets for match conditions"
+    },
+    "MatchOperator": {
+      "type": "string",
+      "enum": [
+        "regex",
+        "contains",
+        "equals",
+        "not_contains",
+        "starts_with",
+        "ends_with",
+        "glob"
+      ],
+      "description": "Operators for match conditions",
+      "default": "regex"
+    },
+    "MatchConditionPatternItem": {
+      "description": "A pattern item: either a string or an object with name and path",
+      "anyOf": [
+        { "type": "string" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "path"],
+          "properties": {
+            "name": { "type": "string" },
+            "path": { "type": "string" }
+          }
+        }
+      ]
+    },
+    "MatchCondition": {
+      "type": "object",
+      "description": "A single match condition",
+      "additionalProperties": false,
+      "required": ["target", "pattern"],
+      "properties": {
+        "target": {
+          "$ref": "#/$defs/MatchTarget"
+        },
+        "operator": {
+          "$ref": "#/$defs/MatchOperator"
+        },
+        "pattern": {
+          "description": "Pattern(s) to match -- string or array of strings/objects",
+          "anyOf": [
+            { "type": "string" },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/MatchConditionPatternItem"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "Match": {
+      "description": "A match specification: single condition or array of conditions",
+      "anyOf": [
+        { "$ref": "#/$defs/MatchCondition" },
+        {
+          "type": "array",
+          "items": { "$ref": "#/$defs/MatchCondition" }
+        }
+      ]
+    },
+    "RuleEntry": {
+      "type": "object",
+      "description": "A rule entry that blocks or warns on matched tool usage",
+      "additionalProperties": false,
+      "required": ["on", "match", "action", "message"],
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether this rule is active",
+          "default": true
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description"
+        },
+        "on": {
+          "$ref": "#/$defs/HookEvent",
+          "description": "Hook event this rule applies to"
+        },
+        "matcher": {
+          "type": "string",
+          "description": "Pipe-delimited tool name matcher"
+        },
+        "match": {
+          "$ref": "#/$defs/Match"
+        },
+        "action": {
+          "type": "string",
+          "enum": ["block", "warn"],
+          "description": "Action to take on match"
+        },
+        "message": {
+          "type": "string",
+          "description": "Message to display"
+        }
+      }
+    },
+    "InjectionEntry": {
+      "type": "object",
+      "description": "An injection entry that injects file content on matched events",
+      "additionalProperties": false,
+      "required": ["on", "inject"],
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether this injection is active"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description"
+        },
+        "on": {
+          "$ref": "#/$defs/HookEvent",
+          "description": "Hook event this injection applies to"
+        },
+        "matcher": {
+          "type": "string",
+          "description": "Pipe-delimited tool name matcher"
+        },
+        "matchFile": {
+          "type": "string",
+          "description": "Glob pattern to match file paths"
+        },
+        "match": {
+          "$ref": "#/$defs/Match"
+        },
+        "inject": {
+          "type": "array",
+          "description": "File references to inject",
+          "items": {
+            "$ref": "#/$defs/FileRef"
+          }
+        },
+        "brief": {
+          "type": "boolean",
+          "description": "Whether to inject in brief mode"
+        },
+        "wrapper": {
+          "type": "string",
+          "description": "Custom wrapper tag"
+        },
+        "format": {
+          "$ref": "#/$defs/Format",
+          "description": "Output format override"
+        }
+      }
+    },
+    "LangToolName": {
+      "type": "string",
+      "enum": [
+        "bun",
+        "npm",
+        "pnpm",
+        "pixi",
+        "uv",
+        "pip",
+        "pipx",
+        "cargo",
+        "cargo-binstall",
+        "rustup"
+      ],
+      "description": "Known language tool names"
+    },
+    "LangTool": {
+      "type": "object",
+      "description": "Configuration for a language tool",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/LangToolName"
+        },
+        "tasks": {
+          "type": "boolean",
+          "description": "Whether to inject task runner info"
+        },
+        "environment": {
+          "type": "boolean",
+          "description": "Whether to inject environment info"
+        },
+        "workspace": {
+          "type": "boolean",
+          "description": "Whether to inject workspace info"
+        },
+        "scripts": {
+          "type": "boolean",
+          "description": "Whether to inject scripts info"
+        },
+        "manifest": {
+          "type": "string",
+          "description": "Path to manifest file"
+        },
+        "lockfile": {
+          "type": "string",
+          "description": "Path to lockfile"
+        },
+        "config": {
+          "type": "string",
+          "description": "Path to tool config file"
+        },
+        "injectOn": {
+          "$ref": "#/$defs/HookEventOrArray",
+          "description": "Hook event(s) that trigger injection"
+        }
+      }
+    },
+    "LangConfigFile": {
+      "type": "object",
+      "description": "A language-specific config file to track",
+      "additionalProperties": false,
+      "required": ["name", "path"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Display name"
+        },
+        "path": {
+          "type": "string",
+          "description": "Path to the config file"
+        },
+        "inject": {
+          "type": "boolean",
+          "description": "Whether to inject this config file's content"
+        },
+        "extractPaths": {
+          "type": "boolean",
+          "description": "Whether to extract paths from this config"
+        }
+      }
+    },
+    "LangEntry": {
+      "type": "object",
+      "description": "Configuration for a language ecosystem",
+      "additionalProperties": false,
+      "properties": {
+        "tools": {
+          "type": "array",
+          "description": "Language tools to configure",
+          "items": {
+            "$ref": "#/$defs/LangTool"
+          }
+        },
+        "config": {
+          "type": "array",
+          "description": "Config files to track",
+          "items": {
+            "$ref": "#/$defs/LangConfigFile"
+          }
+        },
+        "injectOn": {
+          "$ref": "#/$defs/HookEventOrArray",
+          "description": "Hook event(s) that trigger injection"
+        },
+        "format": {
+          "$ref": "#/$defs/Format",
+          "description": "Output format override"
+        }
+      }
+    },
+    "LangConfig": {
+      "type": "object",
+      "description": "Language-specific configurations keyed by language name",
+      "additionalProperties": false,
+      "properties": {
+        "typescript": {
+          "$ref": "#/$defs/LangEntry"
+        },
+        "javascript": {
+          "$ref": "#/$defs/LangEntry"
+        },
+        "python": {
+          "$ref": "#/$defs/LangEntry"
+        },
+        "rust": {
+          "$ref": "#/$defs/LangEntry"
+        }
+      }
+    },
+    "TestConfig": {
+      "type": "object",
+      "description": "Test runner configuration",
+      "additionalProperties": false,
+      "required": ["command"],
+      "properties": {
+        "command": {
+          "description": "Test command to run (true = auto-detect)",
+          "anyOf": [
+            { "type": "boolean", "const": true },
+            { "type": "string" }
+          ]
+        },
+        "injectOn": {
+          "$ref": "#/$defs/HookEventOrArray",
+          "description": "Hook event(s) that trigger test injection"
+        },
+        "cache": {
+          "type": "boolean",
+          "description": "Whether to cache test results"
+        },
+        "cacheTTL": {
+          "type": "number",
+          "description": "Cache TTL in seconds"
+        },
+        "brief": {
+          "type": "string",
+          "description": "Brief summary of test results"
+        },
+        "format": {
+          "$ref": "#/$defs/Format",
+          "description": "Output format override"
+        }
+      }
+    },
+    "MetaConfig": {
+      "type": "object",
+      "description": "Meta-configuration for the config itself",
+      "additionalProperties": false,
+      "properties": {
+        "injectOn": {
+          "$ref": "#/$defs/HookEventOrArray",
+          "description": "Hook event(s) that trigger meta injection"
+        },
+        "include": {
+          "type": "array",
+          "description": "Which config sections to include in meta output",
+          "items": {
+            "type": "string",
+            "enum": ["files", "lang", "test", "rules"]
+          }
+        },
+        "brief": {
+          "type": "boolean",
+          "description": "Whether to use brief mode"
+        },
+        "contents": {
+          "type": "object",
+          "description": "Content enumeration settings",
+          "additionalProperties": false,
+          "properties": {
+            "enumeration": {
+              "type": "string",
+              "enum": ["raw", "path", "xml", "json"],
+              "description": "How to enumerate contents"
+            }
+          }
+        }
+      }
+    }
+  }
+}

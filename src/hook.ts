@@ -8,7 +8,7 @@ import { generateMeta } from "./engine/meta"
 import { evaluateLang } from "./lang"
 import { resolveTestCommand, runTest, formatTestResult, getCachedResult, setCachedResult } from "./test/runner"
 import { composeOutput } from "./engine/compose"
-import type { HookEvent } from "./config/types"
+import type { HookEvent, TestConfig } from "./config/types"
 
 const SYNC_EVENTS: HookEvent[] = ["SessionStart", "Setup"]
 
@@ -20,7 +20,7 @@ async function main() {
   const validated = validateConfig(config)
   const desugared = desugarFileInjections(validated)
   const registry = buildFileRegistry(desugared.files ?? [], process.env.CLAUDE_PROJECT_DIR ?? process.cwd())
-  const globals = validated.globals ?? { format: "xml" as const, wrapper: "context" as const, briefByDefault: false }
+  const globals = desugared.globals
 
   let payload: Record<string, unknown> = {}
   let toolName: string | undefined
@@ -77,14 +77,19 @@ async function main() {
   // Test
   let testResult: string | null = null
   if (desugared.test) {
-    const testConfig = typeof desugared.test === "object" && typeof desugared.test !== "boolean" ? desugared.test : { command: desugared.test as true | string }
-    const testEvents = Array.isArray((testConfig as any).injectOn) ? (testConfig as any).injectOn : [(testConfig as any).injectOn ?? "SessionStart"]
+    const testConfig: TestConfig = typeof desugared.test === "object" && desugared.test !== true
+      ? (desugared.test as TestConfig)
+      : { command: desugared.test as true | string }
+    const rawInjectOn = testConfig.injectOn
+    const testEvents: HookEvent[] = Array.isArray(rawInjectOn)
+      ? rawInjectOn
+      : [rawInjectOn ?? "SessionStart"]
     if (testEvents.includes(event)) {
       const cmd = resolveTestCommand(desugared)
       if (cmd) {
-        const sessionId = (payload as any).session_id ?? "unknown"
-        const cacheEnabled = typeof testConfig === "object" && (testConfig as any).cache === true
-        const cacheTTL = typeof testConfig === "object" ? ((testConfig as any).cacheTTL ?? 300) : 300
+        const sessionId = (payload as Record<string, string>).session_id ?? "unknown"
+        const cacheEnabled = testConfig.cache === true
+        const cacheTTL = testConfig.cacheTTL ?? 300
 
         let result = cacheEnabled ? getCachedResult(sessionId, cmd, cacheTTL) : null
         if (!result) {

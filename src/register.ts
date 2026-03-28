@@ -13,7 +13,7 @@ export function standard<T extends RC.HookEvent = RC.HookEvent>(
             } as RC.HookJSONOutput<T>),
         ),
     )
-    return process.exit()
+    return process.exit(0)
 }
 
 function isError(e: unknown): e is Error {

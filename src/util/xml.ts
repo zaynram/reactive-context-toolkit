@@ -40,7 +40,7 @@ const attributes = (attrs?: AttributesArgument): XML.AttributeString[] =>
               .map(([k, v]): XML.AttributeString => `${k}="${v}"`)
 
 const open = (tag: string, attrs?: AttributesArgument): XML.OpenTag =>
-    attrs ? `<${tag}>` : `<${tag} ${attributes(attrs).join(" ").trim()}>`
+    !attrs ? `<${tag}>` : `<${tag} ${attributes(attrs).join(" ").trim()}>`
 
 const close = (tag: string): XML.CloseTag => `</${tag}>`
 

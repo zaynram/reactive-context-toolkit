@@ -75,22 +75,48 @@ export function desugarFileInjections(config: ValidatedConfig): ValidatedConfig 
   const newInjections: InjectionEntry[] = []
 
   for (const file of files) {
-    if (!file.injectOn) continue
     const alias = file.alias ?? file.path
-    const events: HookEvent[] = Array.isArray(file.injectOn)
-      ? file.injectOn
-      : [file.injectOn]
 
-    for (const event of events) {
-      // Check if explicit injection already exists for this alias+event
-      const alreadyExists = existingInjections.some(
-        (inj) => inj.on === event && inj.inject.includes(alias),
-      )
-      if (!alreadyExists) {
-        newInjections.push({
-          on: event,
-          inject: [alias],
-        })
+    // Desugar file-level injectOn
+    if (file.injectOn) {
+      const events: HookEvent[] = Array.isArray(file.injectOn)
+        ? file.injectOn
+        : [file.injectOn]
+
+      for (const event of events) {
+        const alreadyExists = existingInjections.some(
+          (inj) => inj.on === event && inj.inject.includes(alias),
+        )
+        if (!alreadyExists) {
+          newInjections.push({
+            on: event,
+            inject: [alias],
+          })
+        }
+      }
+    }
+
+    // Desugar metaFile-level injectOn
+    if (file.metaFiles) {
+      for (const meta of file.metaFiles) {
+        if (!meta.injectOn) continue
+        const metaAlias = meta.alias ?? meta.path
+        const colonRef = `${alias}:${metaAlias}`
+        const events: HookEvent[] = Array.isArray(meta.injectOn)
+          ? meta.injectOn
+          : [meta.injectOn]
+
+        for (const event of events) {
+          const alreadyExists = existingInjections.some(
+            (inj) => inj.on === event && inj.inject.includes(colonRef),
+          )
+          if (!alreadyExists) {
+            newInjections.push({
+              on: event,
+              inject: [colonRef],
+            })
+          }
+        }
       }
     }
   }
@@ -99,4 +125,20 @@ export function desugarFileInjections(config: ValidatedConfig): ValidatedConfig 
     ...config,
     injections: [...existingInjections, ...newInjections],
   }
+}
+
+export function applyStaleCheck(
+  content: string,
+  staleConfig: { dateTag: string; wrapTag: string; format?: string },
+  today: string,
+): string {
+  const dateRegex = new RegExp(`<${staleConfig.dateTag}>(\\d{4}-\\d{2}-\\d{2})</${staleConfig.dateTag}>`)
+  const match = dateRegex.exec(content)
+  if (!match) return content
+
+  const extractedDate = match[1]
+  // Compare dates as strings (YYYY-MM-DD format is lexicographically comparable)
+  if (extractedDate >= today) return content
+
+  return `<${staleConfig.wrapTag} date="${extractedDate}" today="${today}">${content}</${staleConfig.wrapTag}>`
 }

@@ -109,4 +109,109 @@ describe("desugarFileInjections", () => {
     expect(sessionInjections).toHaveLength(1)
     expect(sessionInjections[0].wrapper).toBe("custom-wrapper")
   })
+
+  test("metaFile.injectOn creates injection with colon ref", () => {
+    const config: ValidatedConfig = {
+      globals: { format: "xml", wrapper: "context", briefByDefault: false },
+      files: [
+        {
+          alias: "docs",
+          path: "dev/docs.md",
+          metaFiles: [
+            { alias: "meta", path: "dev/docs-meta.md", injectOn: "SessionStart" },
+          ],
+        },
+      ],
+      injections: [],
+    }
+    const result = desugarFileInjections(config)
+    const injections = result.injections!
+    expect(injections.length).toBe(1)
+    expect(injections[0].on).toBe("SessionStart")
+    expect(injections[0].inject).toEqual(["docs:meta"])
+  })
+
+  test("metaFile.injectOn with multiple events", () => {
+    const config: ValidatedConfig = {
+      globals: { format: "xml", wrapper: "context", briefByDefault: false },
+      files: [
+        {
+          alias: "docs",
+          path: "dev/docs.md",
+          metaFiles: [
+            { alias: "meta", path: "dev/docs-meta.md", injectOn: ["SessionStart", "PreToolUse"] },
+          ],
+        },
+      ],
+      injections: [],
+    }
+    const result = desugarFileInjections(config)
+    const injections = result.injections!
+    expect(injections.length).toBe(2)
+    expect(injections.some((i: InjectionEntry) => i.on === "SessionStart" && i.inject.includes("docs:meta"))).toBe(true)
+    expect(injections.some((i: InjectionEntry) => i.on === "PreToolUse" && i.inject.includes("docs:meta"))).toBe(true)
+  })
+
+  test("metaFile dedup: explicit injection overrides implicit", () => {
+    const config: ValidatedConfig = {
+      globals: { format: "xml", wrapper: "context", briefByDefault: false },
+      files: [
+        {
+          alias: "docs",
+          path: "dev/docs.md",
+          metaFiles: [
+            { alias: "meta", path: "dev/docs-meta.md", injectOn: "SessionStart" },
+          ],
+        },
+      ],
+      injections: [
+        {
+          on: "SessionStart",
+          inject: ["docs:meta"],
+          wrapper: "custom",
+        },
+      ],
+    }
+    const result = desugarFileInjections(config)
+    const injections = result.injections!
+    const sessionMeta = injections.filter(
+      (i: InjectionEntry) => i.on === "SessionStart" && i.inject.includes("docs:meta"),
+    )
+    expect(sessionMeta).toHaveLength(1)
+    expect(sessionMeta[0].wrapper).toBe("custom")
+  })
+})
+
+describe("staleCheck", () => {
+  test("applyStaleCheck wraps stale content", () => {
+    const { applyStaleCheck } = require("../src/config/schema") as typeof import("../src/config/schema")
+    const content = "<scope><date>2025-01-01</date><focus>Old stuff</focus></scope>"
+    const staleConfig = { dateTag: "date", wrapTag: "stale-scope" }
+    const today = "2026-03-28"
+    const result = applyStaleCheck(content, staleConfig, today)
+    expect(result).toContain("<stale-scope")
+    expect(result).toContain('date="2025-01-01"')
+    expect(result).toContain(`today="${today}"`)
+    expect(result).toContain(content)
+    expect(result).toContain("</stale-scope>")
+  })
+
+  test("applyStaleCheck returns content unchanged when not stale", () => {
+    const { applyStaleCheck } = require("../src/config/schema") as typeof import("../src/config/schema")
+    const content = "<scope><date>2026-03-28</date><focus>Current</focus></scope>"
+    const staleConfig = { dateTag: "date", wrapTag: "stale-scope" }
+    const today = "2026-03-28"
+    const result = applyStaleCheck(content, staleConfig, today)
+    // Not stale, so no wrapping
+    expect(result).toBe(content)
+  })
+
+  test("applyStaleCheck returns content unchanged when no date found", () => {
+    const { applyStaleCheck } = require("../src/config/schema") as typeof import("../src/config/schema")
+    const content = "<scope><focus>No date</focus></scope>"
+    const staleConfig = { dateTag: "date", wrapTag: "stale-scope" }
+    const today = "2026-03-28"
+    const result = applyStaleCheck(content, staleConfig, today)
+    expect(result).toBe(content)
+  })
 })

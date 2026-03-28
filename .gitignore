@@ -1,0 +1,5 @@
+*.*shm
+*.*wal
+.task_orchestrator
+.remember
+node_modules

@@ -16,7 +16,8 @@
         ]
     },
     "env": {
-        "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+        "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
+        "MCP_TASK_ORCHESTRATOR_CONFIG_DIR": ".mcp-data/task-orchestrator"
     },
     "extraKnownMarketplaces": {
         "crosbycrosbylaw-plugins-official": {

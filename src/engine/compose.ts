@@ -25,8 +25,8 @@ export function composeOutput(input: ComposeInput): string {
 
   // Collect all context strings
   const parts: string[] = [
-    ...warnMessages,
     ...injectionResults,
+    ...warnMessages,
     ...(metaResult ? [metaResult] : []),
     ...(langResult ? [langResult] : []),
     ...(testResult ? [testResult] : []),

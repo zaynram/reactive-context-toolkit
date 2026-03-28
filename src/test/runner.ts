@@ -42,6 +42,7 @@ function findFirstToolCommand(config: RCTConfig): string | null {
     for (const entry of langEntries) {
         if (!entry?.tools) continue
         for (const tool of entry.tools) {
+            if (!tool.tasks && !tool.scripts) continue
             const cmd = TOOL_TEST_COMMANDS[tool.name]
             if (cmd) return cmd
         }
@@ -96,12 +97,13 @@ export function formatTestResult(result: TestResult, brief?: string): string {
 
 // -- Cache --
 
-const CACHE_DIR = "/tmp/rct-cache"
+function cacheDir(sessionId: string): string {
+    return `/tmp/rct-cache-${sessionId.replace(/[^a-zA-Z0-9_-]/g, "_")}`
+}
 
 function cacheKey(sessionId: string, command: string): string {
-    // Simple hash-like key from session + command
-    const key = `${sessionId}_${command}`.replace(/[^a-zA-Z0-9_-]/g, "_")
-    return path.join(CACHE_DIR, `${key}.json`)
+    const key = command.replace(/[^a-zA-Z0-9_-]/g, "_")
+    return path.join(cacheDir(sessionId), `${key}.json`)
 }
 
 interface CacheEntry {
@@ -134,7 +136,8 @@ export function setCachedResult(
 ): void {
     const file = cacheKey(sessionId, command)
     try {
-        if (!existsSync(CACHE_DIR)) mkdirSync(CACHE_DIR, { recursive: true })
+        const dir = cacheDir(sessionId)
+        if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
         const entry: CacheEntry = { result, timestamp: Date.now() }
         writeFileSync(file, JSON.stringify(entry), "utf-8")
     } catch {

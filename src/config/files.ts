@@ -1,13 +1,8 @@
 import { fs, normalize } from "#util"
-import { existsSync, writeFileSync } from "fs"
-
-const p = process.env.RC_FILEMAP_PATH ?? fs.resolve(".claude", "filemap.json")
-if (!existsSync(p)) writeFileSync(p, "{}", { encoding: "utf-8" })
-
-const filemap: Record<string, string[]> = JSON.parse(fs.read(p))
+import { config } from "./index"
 
 const referenceFiles: Record<string, ReferenceFile> = Object.fromEntries(
-    Object.entries(filemap).map(([key, segments]) => {
+    Object.entries(config.files ?? {}).map(([key, segments]) => {
         const path = fs.resolve(...segments)
         return [
             key,

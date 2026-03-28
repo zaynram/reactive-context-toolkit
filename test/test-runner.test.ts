@@ -43,7 +43,7 @@ describe("resolveTestCommand", () => {
             test: true,
             lang: {
                 rust: {
-                    tools: [{ name: "cargo" }],
+                    tools: [{ name: "cargo", tasks: true }],
                 },
             },
         }

@@ -26,6 +26,13 @@
                 "repo": "crosbycrosbylaw/claude-marketplace"
             },
             "autoUpdate": true
+        },
+        "superpowers-dev": {
+            "source": {
+                "source": "github",
+                "repo": "obra/superpowers"
+            },
+            "autoUpdate": true
         }
     },
     "enabledPlugins": {
@@ -34,7 +41,7 @@
         "rust-toolkit@crosbycrosbylaw-plugins-official": false,
         "python-toolkit@crosbycrosbylaw-plugins-official": false,
         "work-orchestration@crosbycrosbylaw-plugins-official": false,
-        "superpowers@claude-plugins-official": true,
+        "superpowers@superpowers-dev": true,
         "atomic-agents@claude-plugins-official": true,
         "typescript-lsp@claude-plugins-official": true,
         "feature-dev@claude-plugins-official": true,

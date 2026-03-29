@@ -1,6 +1,6 @@
 import type { RCTConfig, MetaConfig, GlobalsConfig, LangConfig } from "#config/types"
 import type { FileRegistry } from "#config/files"
-import { xml, entries } from "#util"
+import { xml } from "#util"
 
 type MetaSection = "files" | "lang" | "test" | "rules"
 
@@ -46,7 +46,7 @@ function buildFilesSection(config: RCTConfig, registry: FileRegistry, brief: boo
 
 function buildLangSection(lang: LangConfig): LangMeta[] {
   const result: LangMeta[] = []
-  for (const [language, entry] of entries(lang)) {
+  for (const [language, entry] of Object.entries(lang)) {
     if (!entry) continue
     const tools = (entry.tools ?? []).map((t) => t.name)
     result.push({ language, tools })

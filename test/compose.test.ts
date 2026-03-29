@@ -154,4 +154,58 @@ describe("composeOutput", () => {
     const ctx = parsed.hookSpecificOutput.additionalContext
     expect(ctx).toBe("line1 | line2 | line3")
   })
+
+  it("strips newlines for xml format by default", () => {
+    const result = composeOutput({
+      event: "SessionStart",
+      blockResult: null,
+      warnMessages: [],
+      injectionResults: ["<tag>\nline1\nline2\n</tag>"],
+      metaResult: null,
+      langResult: null,
+      testResult: null,
+      globals, // format: "xml" — newlines stripped by default
+    })
+
+    const parsed = JSON.parse(result)
+    expect(parsed.hookSpecificOutput.additionalContext).not.toContain("\n")
+    expect(parsed.hookSpecificOutput.additionalContext).toBe("<tag> line1 line2 </tag>")
+  })
+
+  it("preserves newlines for json format by default", () => {
+    const jsonGlobals: Required<GlobalsConfig> = { ...globals, format: "json", minify: true }
+    const result = composeOutput({
+      event: "SessionStart",
+      blockResult: null,
+      warnMessages: [],
+      injectionResults: ['{"key": "value",\n  "key2": "value2"}'],
+      metaResult: null,
+      langResult: null,
+      testResult: null,
+      globals: jsonGlobals,
+    })
+
+    const parsed = JSON.parse(result)
+    const ctx = parsed.hookSpecificOutput.additionalContext
+    expect(ctx).toContain("\n")
+    // But horizontal whitespace should still be condensed
+    expect(ctx).not.toContain("  ")
+  })
+
+  it("respects explicit preserveNewlines override", () => {
+    const result = composeOutput({
+      event: "SessionStart",
+      blockResult: null,
+      warnMessages: [],
+      injectionResults: ["<tag>\nline1\nline2\n</tag>"],
+      metaResult: null,
+      langResult: null,
+      testResult: null,
+      globals: { ...globals, minify: { enabled: true, preserveNewlines: true } },
+    })
+
+    const parsed = JSON.parse(result)
+    const ctx = parsed.hookSpecificOutput.additionalContext
+    expect(ctx).toContain("\n")
+  })
 })

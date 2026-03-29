@@ -12,11 +12,19 @@ export interface ComposeInput {
   globals: Required<GlobalsConfig>
 }
 
-function resolveMinify(globals: Required<GlobalsConfig>): { enabled: boolean; separator: string } {
+function resolveMinify(globals: Required<GlobalsConfig>): { enabled: boolean; separator: string; preserveNewlines: boolean } {
   const m = globals.minify
-  if (m === false) return { enabled: false, separator: " " }
-  if (m === true || m === undefined) return { enabled: true, separator: " " }
-  return { enabled: m.enabled !== false, separator: m.separator ?? " " }
+  const format = globals.format
+  // Default: xml strips newlines (tags are boundaries), json/other preserves them
+  const defaultPreserveNewlines = format !== "xml"
+
+  if (m === false) return { enabled: false, separator: " ", preserveNewlines: true }
+  if (m === true || m === undefined) return { enabled: true, separator: " ", preserveNewlines: defaultPreserveNewlines }
+  return {
+    enabled: m.enabled !== false,
+    separator: m.separator ?? " ",
+    preserveNewlines: m.preserveNewlines ?? defaultPreserveNewlines,
+  }
 }
 
 export function composeOutput(input: ComposeInput): string {
@@ -45,9 +53,9 @@ export function composeOutput(input: ComposeInput): string {
   let combined = parts.join("\n")
 
   // Apply content minification (condense whitespace for token efficiency)
-  const { enabled, separator } = resolveMinify(globals)
+  const { enabled, separator, preserveNewlines } = resolveMinify(globals)
   if (enabled) {
-    combined = condense(combined, separator)
+    combined = condense(combined, separator, preserveNewlines)
   }
 
   return minify(JSON.stringify({

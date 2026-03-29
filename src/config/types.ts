@@ -33,6 +33,12 @@ export interface MinifyConfig {
   enabled?: boolean
   /** Whitespace separator used when condensing (default: " ") */
   separator?: string
+  /**
+   * Whether to preserve newlines (default: format-dependent).
+   * When false (default for xml): newlines are treated as whitespace and condensed.
+   * When true (default for json/raw): newlines are preserved, only horizontal whitespace condensed.
+   */
+  preserveNewlines?: boolean
 }
 
 /** Global configuration defaults */

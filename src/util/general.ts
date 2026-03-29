@@ -17,10 +17,22 @@ export const minify = (text: string) =>
 
 /**
  * Condense whitespace in text content for token-efficient injection.
- * Collapses all whitespace runs (spaces, tabs, newlines) to a single separator.
- * Preserves content within XML tags but condenses whitespace between/around them.
+ *
+ * @param text - Input text
+ * @param separator - Replacement for whitespace runs (default: " ")
+ * @param preserveNewlines - If true, only condense horizontal whitespace (spaces/tabs)
+ *   and collapse blank-line runs to single newline. If false, all whitespace
+ *   including newlines collapsed to separator.
  */
-export function condense(text: string, separator = " "): string {
+export function condense(text: string, separator = " ", preserveNewlines = false): string {
+    if (preserveNewlines) {
+        return text
+            .split("\n")
+            .map(line => line.replace(/[^\S\n]+/g, separator).trim())
+            .join("\n")
+            .replace(/\n{2,}/g, "\n")
+            .trim()
+    }
     return text.replace(/\s+/g, separator).trim()
 }
 

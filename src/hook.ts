@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-import { loadConfig } from "./config/loader"
+import { loadConfig, CLAUDE_PROJECT_DIR } from "./config/loader"
 import { validateConfig, desugarFileInjections } from "./config/schema"
 import { buildFileRegistry } from "./config/files"
 import { evaluateRules } from "./engine/rules"
@@ -19,7 +19,7 @@ async function main() {
   const config = await loadConfig()
   const validated = validateConfig(config)
   const desugared = desugarFileInjections(validated)
-  const registry = buildFileRegistry(desugared.files ?? [], process.env.CLAUDE_PROJECT_DIR ?? process.cwd())
+  const registry = buildFileRegistry(desugared.files ?? [], CLAUDE_PROJECT_DIR)
   const globals = desugared.globals
 
   let payload: Record<string, unknown> = {}
@@ -72,7 +72,7 @@ async function main() {
   }
 
   // Lang
-  const langResults = desugared.lang ? evaluateLang(desugared.lang, event, process.env.CLAUDE_PROJECT_DIR ?? process.cwd(), globals) : []
+  const langResults = desugared.lang ? evaluateLang(desugared.lang, event, CLAUDE_PROJECT_DIR, globals) : []
   const langResult = langResults.length > 0 ? langResults.join("\n") : null
 
   // Test
@@ -94,7 +94,7 @@ async function main() {
 
         let result = cacheEnabled ? getCachedResult(sessionId, cmd, cacheTTL) : null
         if (!result) {
-          result = runTest(cmd, process.env.CLAUDE_PROJECT_DIR ?? process.cwd())
+          result = runTest(cmd, CLAUDE_PROJECT_DIR)
           if (cacheEnabled) setCachedResult(sessionId, cmd, result)
         }
         testResult = formatTestResult(result, typeof testConfig === "object" ? (testConfig as any).brief : undefined)

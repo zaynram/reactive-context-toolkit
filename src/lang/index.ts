@@ -10,6 +10,7 @@ import { getPixiTasks, getPixiEnvironment } from "./pixi"
 import { getBunScripts, getBunWorkspace } from "./bun"
 import { getCargoInfo } from "./cargo"
 import { readFileSync, existsSync } from "fs"
+import { xml } from "#util"
 
 function eventMatches(
     event: HookEvent,
@@ -89,7 +90,7 @@ export function evaluateLang(
                     try {
                         const content = readFileSync(cfg.path, "utf-8")
                         results.push(
-                            `<config name="${cfg.name}">${content}</config>`,
+                            xml.open("config", { name: cfg.name }) + content + xml.close("config"),
                         )
                     } catch {
                         // Skip unreadable configs
@@ -116,14 +117,13 @@ export function extractTsconfigPaths(configPath: string): string | null {
         if (!paths || typeof paths !== "object") return null
 
         const aliases = Object.entries(paths)
-            .map(
-                ([name, targets]) =>
-                    `<path-alias name="${name}" target="${Array.isArray(targets) ? targets[0] : targets}"/>`,
+            .map(([name, targets]) =>
+                xml.inline("path-alias", { name, target: String(Array.isArray(targets) ? targets[0] : targets) }),
             )
             .join("")
 
         if (!aliases) return null
-        return `<path-aliases>${aliases}</path-aliases>`
+        return xml.open("path-aliases") + aliases + xml.close("path-aliases")
     } catch {
         return null
     }

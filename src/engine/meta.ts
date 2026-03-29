@@ -1,5 +1,6 @@
 import type { RCTConfig, MetaConfig, GlobalsConfig, LangConfig } from "#config/types"
 import type { FileRegistry } from "#config/files"
+import { xml, entries } from "#util"
 
 type MetaSection = "files" | "lang" | "test" | "rules"
 
@@ -45,7 +46,7 @@ function buildFilesSection(config: RCTConfig, registry: FileRegistry, brief: boo
 
 function buildLangSection(lang: LangConfig): LangMeta[] {
   const result: LangMeta[] = []
-  for (const [language, entry] of Object.entries(lang)) {
+  for (const [language, entry] of entries(lang)) {
     if (!entry) continue
     const tools = (entry.tools ?? []).map((t) => t.name)
     result.push({ language, tools })
@@ -65,34 +66,33 @@ function buildRulesSection(config: RCTConfig): RulesMeta {
 
 function formatXml(sections: SectionData): string {
   const parts: string[] = []
-  parts.push("<rct-meta>")
+  parts.push(xml.open("rct-meta"))
 
   if (sections.files) {
-    parts.push("<files>")
+    parts.push(xml.open("files"))
     for (const f of sections.files) {
-      const briefAttr = f.brief ? ` brief="${f.brief}"` : ""
-      parts.push(`<file alias="${f.alias}" path="${f.path}"${briefAttr}/>`)
+      parts.push(xml.inline("file", { alias: f.alias, path: f.path, ...(f.brief && { brief: f.brief }) }))
     }
-    parts.push("</files>")
+    parts.push(xml.close("files"))
   }
 
   if (sections.lang) {
-    parts.push("<lang>")
+    parts.push(xml.open("lang"))
     for (const l of sections.lang) {
-      parts.push(`<language name="${l.language}" tools="${l.tools.join(", ")}"/>`)
+      parts.push(xml.inline("language", { name: l.language, tools: l.tools.join(", ") }))
     }
-    parts.push("</lang>")
+    parts.push(xml.close("lang"))
   }
 
   if (sections.test) {
-    parts.push(`<test configured="${sections.test.configured}"/>`)
+    parts.push(xml.inline("test", { configured: String(sections.test.configured) }))
   }
 
   if (sections.rules) {
-    parts.push(`<rules count="${sections.rules.count}" actions="${sections.rules.actions.join(", ")}"/>`)
+    parts.push(xml.inline("rules", { count: String(sections.rules.count), actions: sections.rules.actions.join(", ") }))
   }
 
-  parts.push("</rct-meta>")
+  parts.push(xml.close("rct-meta"))
   return parts.join("")
 }
 

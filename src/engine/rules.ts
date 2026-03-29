@@ -1,5 +1,6 @@
 import type { RuleEntry, HookEvent } from "#config/types"
 import { evaluateMatch } from "./evaluate"
+import { matchesTool } from "#util/general"
 
 export interface RuleResult {
   action: "block" | "warn"
@@ -23,12 +24,7 @@ export function evaluateRules(
     if (rule.on !== event) continue
 
     // Filter by matcher (pipe-delimited tool names)
-    if (rule.matcher && toolName) {
-      const matchers = rule.matcher.split("|")
-      if (!matchers.includes(toolName)) continue
-    } else if (rule.matcher && !toolName) {
-      continue
-    }
+    if (!matchesTool(rule.matcher, toolName)) continue
 
     // Evaluate match conditions against payload
     if (!evaluateMatch(rule.match, payload)) continue

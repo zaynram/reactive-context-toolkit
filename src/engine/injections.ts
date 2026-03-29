@@ -13,6 +13,7 @@ export function evaluateInjections(
   globals: Required<GlobalsConfig>,
 ): string[] {
   const results: string[] = []
+  const today = new Date().toISOString().split('T')[0]
 
   for (const injection of injections) {
     // Skip disabled
@@ -59,7 +60,7 @@ export function evaluateInjections(
       } else {
         content = file.read()
         if (file.staleCheck) {
-          content = applyStaleCheck(content, file.staleCheck)
+          content = applyStaleCheck(content, file.staleCheck, today)
         }
       }
 

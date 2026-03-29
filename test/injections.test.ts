@@ -54,6 +54,7 @@ const defaultGlobals: Required<GlobalsConfig> = {
   format: "xml",
   wrapper: "context",
   briefByDefault: false,
+  minify: true,
 }
 
 describe("evaluateInjections", () => {
@@ -233,5 +234,60 @@ describe("evaluateInjections", () => {
       defaultGlobals,
     )
     expect(result).toEqual([])
+  })
+
+  test("staleCheck wraps stale content with today's date", () => {
+    const staleContent = "<scope><date>2020-01-01</date><focus>Old content</focus></scope>"
+    const staleRef: ReferenceFile = {
+      alias: "stale",
+      path: "/project/stale.xml",
+      read: () => staleContent,
+      staleCheck: { dateTag: "date", wrapTag: "stale-scope" },
+    }
+    const staleRegistry = makeRegistry([staleRef])
+    const injection: InjectionEntry = {
+      on: "PreToolUse",
+      inject: ["stale"],
+    }
+    const result = evaluateInjections(
+      [injection],
+      "PreToolUse",
+      "Write",
+      {},
+      staleRegistry,
+      defaultGlobals,
+    )
+    expect(result).toHaveLength(1)
+    expect(result[0]).toContain("<stale-scope")
+    expect(result[0]).toContain('date="2020-01-01"')
+    expect(result[0]).toContain("today=")
+    expect(result[0]).toContain("Old content")
+  })
+
+  test("staleCheck skips wrapping when content is not stale", () => {
+    const futureDate = "2999-12-31"
+    const freshContent = `<scope><date>${futureDate}</date><focus>New content</focus></scope>`
+    const freshRef: ReferenceFile = {
+      alias: "fresh",
+      path: "/project/fresh.xml",
+      read: () => freshContent,
+      staleCheck: { dateTag: "date", wrapTag: "stale-scope" },
+    }
+    const freshRegistry = makeRegistry([freshRef])
+    const injection: InjectionEntry = {
+      on: "PreToolUse",
+      inject: ["fresh"],
+    }
+    const result = evaluateInjections(
+      [injection],
+      "PreToolUse",
+      "Write",
+      {},
+      freshRegistry,
+      defaultGlobals,
+    )
+    expect(result).toHaveLength(1)
+    expect(result[0]).not.toContain("<stale-scope")
+    expect(result[0]).toBe(freshContent)
   })
 })

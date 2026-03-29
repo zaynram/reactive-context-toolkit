@@ -119,4 +119,24 @@ describe("evaluateRules", () => {
     expect(result!.action).toBe("block")
     expect(result!.messages).toEqual(["Specs belong in .claude/plans/"])
   })
+
+  test("collects all messages when multiple block rules match", () => {
+    const blockRule2: RuleEntry = {
+      on: "PreToolUse",
+      match: { target: "file_path", operator: "contains", pattern: "specs" },
+      action: "block",
+      message: "No specs modification allowed",
+    }
+    const result = evaluateRules(
+      [blockRule, blockRule2],
+      "PreToolUse",
+      "Write",
+      { tool_input: { file_path: "docs/specs/api.md" } },
+    )
+    expect(result).not.toBeNull()
+    expect(result!.action).toBe("block")
+    expect(result!.messages).toHaveLength(2)
+    expect(result!.messages).toContain("Specs belong in .claude/plans/")
+    expect(result!.messages).toContain("No specs modification allowed")
+  })
 })

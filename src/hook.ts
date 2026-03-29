@@ -45,7 +45,7 @@ async function main() {
   // If block, output and exit
   if (ruleResult?.action === "block") {
     const output = composeOutput({
-      event, blockResult: { message: ruleResult.messages[0] },
+      event, blockResult: { message: ruleResult.messages.join("\n") },
       warnMessages: [], injectionResults: [],
       metaResult: null, langResult: null, testResult: null,
       globals,

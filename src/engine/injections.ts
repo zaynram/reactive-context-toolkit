@@ -13,6 +13,11 @@ export function evaluateInjections(
   globals: Required<GlobalsConfig>,
 ): string[] {
   const results: string[] = []
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, "0")
+  const day = String(now.getDate()).padStart(2, "0")
+  const today = `${year}-${month}-${day}`
 
   for (const injection of injections) {
     // Skip disabled
@@ -59,7 +64,7 @@ export function evaluateInjections(
       } else {
         content = file.read()
         if (file.staleCheck) {
-          content = applyStaleCheck(content, file.staleCheck)
+          content = applyStaleCheck(content, file.staleCheck, today)
         }
       }
 

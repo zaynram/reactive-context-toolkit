@@ -43,7 +43,7 @@ export function evaluateRules(
 
   // Block takes priority over warn
   if (blockMessages.length > 0) {
-    return { action: "block", messages: [blockMessages[0]] }
+    return { action: "block", messages: blockMessages }
   }
 
   if (warnMessages.length > 0) {

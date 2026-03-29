@@ -39,3 +39,12 @@ export function condense(text: string, separator = " ", preserveNewlines = false
 export const entries = <T extends any = unknown>(
     o: Record<string, T>,
 ): [string, T][] => Object.entries(o)
+
+export function matchesTool(
+    matcher: string | undefined,
+    toolName: string | undefined,
+): boolean {
+    if (!matcher) return true
+    if (!toolName) return false
+    return matcher.split("|").includes(toolName)
+}

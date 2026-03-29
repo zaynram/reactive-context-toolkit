@@ -1,7 +1,7 @@
 import type { InjectionEntry, HookEvent, GlobalsConfig } from "#config/types"
 import type { FileRegistry } from "#config/files"
 import { evaluateMatch, extractTargetValue } from "./evaluate"
-import { normalize } from "#util"
+import { normalize, xml, matchesTool } from "#util"
 import { applyStaleCheck } from "#config/schema"
 
 export function evaluateInjections(
@@ -27,12 +27,7 @@ export function evaluateInjections(
     if (injection.on !== event) continue
 
     // Filter by matcher (pipe-delimited tool names)
-    if (injection.matcher && toolName) {
-      const matchers = injection.matcher.split("|")
-      if (!matchers.includes(toolName)) continue
-    } else if (injection.matcher && !toolName) {
-      continue
-    }
+    if (!matchesTool(injection.matcher, toolName)) continue
 
     // Check matchFile: tool_input.file_path must match a registered file
     if (injection.matchFile) {
@@ -73,7 +68,7 @@ export function evaluateInjections(
         if (format === "json") {
           content = JSON.stringify({ [wrapper]: content })
         } else {
-          content = `<${wrapper}>${content}</${wrapper}>`
+          content = xml.open(wrapper) + content + xml.close(wrapper)
         }
       }
 

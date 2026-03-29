@@ -29,6 +29,9 @@ function isArray<T = any>(x: unknown, tc?: (x: unknown) => x is T): x is T[] {
 
 // -- Methods --
 
+const escapeAttrValue = (s: string): string =>
+    s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+
 const attributes = (attrs?: AttributesArgument): XML.AttributeString[] =>
     !attrs || typeof attrs !== "object"
         ? isAttributeString(attrs)
@@ -37,7 +40,7 @@ const attributes = (attrs?: AttributesArgument): XML.AttributeString[] =>
         : entries(attrs)
               .map(a => a.map(s => s.trim()))
               .filter(a => a.length === 2 && a.every(Boolean))
-              .map(([k, v]): XML.AttributeString => `${k}="${v}"`)
+              .map(([k, v]): XML.AttributeString => `${k}="${escapeAttrValue(v)}"`)
 
 const open = (tag: string, attrs?: AttributesArgument): XML.OpenTag =>
     !attrs ? `<${tag}>` : `<${tag} ${attributes(attrs).join(" ").trim()}>`

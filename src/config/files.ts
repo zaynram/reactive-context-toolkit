@@ -1,6 +1,7 @@
 import { readFileSync } from "fs"
 import path from "path"
 import type { FileEntry, MetaFileEntry } from "./types"
+import { normalize } from "#util/general"
 
 export interface ReferenceFile {
   alias: string
@@ -18,13 +19,9 @@ export interface FileRegistry {
   matchPath(filePath: string): ReferenceFile | undefined
 }
 
-function normalizePath(p: string): string {
-  return path.normalize(p).replaceAll("\\", "/")
-}
-
 function resolveFilePath(filePath: string, rootDir: string): string {
-  if (path.isAbsolute(filePath)) return normalizePath(filePath)
-  return normalizePath(path.resolve(rootDir, filePath))
+  if (path.isAbsolute(filePath)) return normalize(filePath)
+  return normalize(path.resolve(rootDir, filePath))
 }
 
 function deriveAlias(entry: MetaFileEntry): string {
@@ -104,7 +101,7 @@ export function buildFileRegistry(
     },
 
     matchPath(filePath: string): ReferenceFile | undefined {
-      const normalized = normalizePath(filePath)
+      const normalized = normalize(filePath)
       for (const file of files.values()) {
         if (file.path === normalized) return file
       }

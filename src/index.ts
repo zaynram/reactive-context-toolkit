@@ -31,4 +31,4 @@ export { standard, dynamic, block } from "./register"
 // Utilities
 export { fs } from "./util/fs"
 export { xml } from "./util/xml"
-export { normalize, minify } from "./util/general"
+export { normalize, minify, condense } from "./util/general"

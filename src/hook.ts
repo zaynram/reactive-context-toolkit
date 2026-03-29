@@ -48,6 +48,7 @@ async function main() {
       event, blockResult: { message: ruleResult.messages[0] },
       warnMessages: [], injectionResults: [],
       metaResult: null, langResult: null, testResult: null,
+      globals,
     })
     console.log(output)
     process.exit(2)
@@ -105,6 +106,7 @@ async function main() {
     event, blockResult: null,
     warnMessages, injectionResults,
     metaResult, langResult, testResult,
+    globals,
   })
 
   if (output) console.log(output)

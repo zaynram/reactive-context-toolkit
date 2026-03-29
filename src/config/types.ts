@@ -27,6 +27,14 @@ export type Format = "xml" | "json"
  */
 export type FileRef = string
 
+/** Minification configuration */
+export interface MinifyConfig {
+  /** Whether minification is enabled (default: true) */
+  enabled?: boolean
+  /** Whitespace separator used when condensing (default: " ") */
+  separator?: string
+}
+
 /** Global configuration defaults */
 export interface GlobalsConfig {
   /** Output format (default: "xml") */
@@ -35,6 +43,8 @@ export interface GlobalsConfig {
   wrapper?: string
   /** Whether files are injected in brief mode by default (default: false) */
   briefByDefault?: boolean
+  /** Minification of injected content (default: true). All whitespace runs condensed to separator. */
+  minify?: boolean | MinifyConfig
 }
 
 /** A meta-file entry attached to a parent FileEntry */
@@ -137,6 +147,8 @@ export interface InjectionEntry {
   wrapper?: string
   /** Output format override */
   format?: Format
+  /** Override global minification for this injection (default: inherit from globals) */
+  minify?: boolean
 }
 
 /** A language-specific config file to track */

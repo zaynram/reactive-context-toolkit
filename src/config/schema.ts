@@ -14,6 +14,7 @@ const DEFAULT_GLOBALS: Required<GlobalsConfig> = {
   format: "xml",
   wrapper: "context",
   briefByDefault: false,
+  minify: true,
 }
 
 function validateRegex(pattern: string, context: string): void {

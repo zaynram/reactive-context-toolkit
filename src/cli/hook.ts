@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
-import { loadConfig, CLAUDE_PROJECT_DIR } from "#config/loader"
+import { loadConfig } from "#config/loader"
+import { CLAUDE_PROJECT_DIR } from "#constants"
 import { validateConfig, desugarFileInjections, applyPlugins } from "#config/schema"
 import { buildFileRegistry } from "#config/files"
 import { evaluateRules } from "#engine/rules"

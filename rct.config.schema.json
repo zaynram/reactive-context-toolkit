@@ -102,6 +102,22 @@
                     "type": "boolean",
                     "description": "Whether files are injected in brief mode by default",
                     "default": false
+                },
+                "minify": {
+                    "description": "Minification of injected content. true/false or fine-grained MinifyConfig object.",
+                    "oneOf": [
+                        { "type": "boolean" },
+                        { "$ref": "#/$defs/MinifyConfig" }
+                    ],
+                    "default": true
+                },
+                "plugins": {
+                    "type": "array",
+                    "description": "Names of plugins to activate by default.",
+                    "items": {
+                        "type": "string",
+                        "description": "Plugin name. Built-in options: 'track-work', 'issue-scope'."
+                    }
                 }
             }
         },
@@ -335,6 +351,10 @@
                     "type": "boolean",
                     "description": "Whether to inject in brief mode"
                 },
+                "minify": {
+                    "type": "boolean",
+                    "description": "Override global minification for this injection entry."
+                },
                 "wrapper": {
                     "type": "string",
                     "description": "Custom wrapper tag"
@@ -508,6 +528,27 @@
                 "format": {
                     "$ref": "#/$defs/Format",
                     "description": "Output format override"
+                }
+            }
+        },
+        "MinifyConfig": {
+            "type": "object",
+            "description": "Fine-grained control over whitespace condensation for token-efficient injection.",
+            "additionalProperties": false,
+            "properties": {
+                "enabled": {
+                    "type": "boolean",
+                    "description": "Whether minification is enabled.",
+                    "default": true
+                },
+                "separator": {
+                    "type": "string",
+                    "description": "Replacement string for condensed whitespace runs.",
+                    "default": " "
+                },
+                "preserveNewlines": {
+                    "type": "boolean",
+                    "description": "Preserve newlines; only condense horizontal whitespace. Defaults to true for JSON format, false for XML."
                 }
             }
         },

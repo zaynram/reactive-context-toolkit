@@ -1,5 +1,6 @@
 import { describe, test, expect } from "bun:test"
 import { generateMeta } from "../src/engine/meta"
+import { buildFileRegistry } from "../src/config/files"
 import type { RCTConfig, MetaConfig, GlobalsConfig } from "../src/config/types"
 import type { FileRegistry, ReferenceFile } from "../src/config/files"
 
@@ -210,5 +211,40 @@ describe("generateMeta", () => {
     expect(parsed).toHaveProperty("lang")
     expect(parsed).not.toHaveProperty("test")
     expect(parsed).not.toHaveProperty("rules")
+  })
+
+  test("includes plugin-contributed files in files section", () => {
+    const config: RCTConfig = {
+      globals: { plugins: ["track-work"] },
+      files: [{ alias: "my-file", path: "my-file.xml" }],
+    }
+    const registry = buildFileRegistry([])
+    const result = generateMeta(
+      config,
+      registry,
+      { ...defaultGlobals, plugins: ["track-work"] },
+      { include: ["files"] },
+    )
+    // track-work plugin contributes "chores" and "plans" files
+    expect(result).toContain("chores")
+    expect(result).toContain("plans")
+    // Original file should also appear
+    expect(result).toContain("my-file")
+  })
+
+  test("plugin-contributed rules count in rules section", () => {
+    const config: RCTConfig = {
+      globals: { plugins: ["track-work"] },
+      rules: [{ on: "PreToolUse", match: { target: "tool_name", pattern: "Bash" }, action: "warn", message: "test" }],
+    }
+    const registry = buildFileRegistry([])
+    const result = generateMeta(
+      config,
+      registry,
+      { ...defaultGlobals, plugins: ["track-work"] },
+      { include: ["rules"] },
+    )
+    // track-work has no rules currently, so count should be 1 (just config.rules)
+    expect(result).toContain('count="1"')
   })
 })

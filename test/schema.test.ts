@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test"
-import { validateConfig, desugarFileInjections, type ValidatedConfig } from "../src/config/schema"
+import { validateConfig, desugarFileInjections, applyPlugins, type ValidatedConfig } from "../src/config/schema"
 import type { RCTConfig, InjectionEntry } from "../src/config/types"
 
 describe("validateConfig", () => {
@@ -189,6 +189,50 @@ describe("desugarFileInjections", () => {
     expect(sessionMeta).toHaveLength(1)
     expect(sessionMeta[0].wrapper).toBe("custom")
   })
+})
+
+describe("applyPlugins", () => {
+    test("returns config unchanged when no plugins activated", () => {
+        const config = validateConfig({ files: [{ alias: "mine", path: "mine.xml" }] })
+        const result = applyPlugins(config)
+        expect(result.files).toHaveLength(1)
+        expect(result.rules).toBeUndefined()
+    })
+
+    test("merges track-work plugin files into config.files", () => {
+        const config = validateConfig({ globals: { plugins: ["track-work"] } })
+        const result = applyPlugins(config)
+        const aliases = (result.files ?? []).map(f => f.alias)
+        expect(aliases).toContain("chores")
+        expect(aliases).toContain("plans")
+    })
+
+    test("merges plugin files alongside existing config files", () => {
+        const config = validateConfig({
+            globals: { plugins: ["track-work"] },
+            files: [{ alias: "my-file", path: "my-file.xml" }],
+        })
+        const result = applyPlugins(config)
+        const aliases = (result.files ?? []).map(f => f.alias)
+        expect(aliases).toContain("my-file")
+        expect(aliases).toContain("chores")
+    })
+
+    test("desugar after applyPlugins generates injections for plugin files with injectOn", () => {
+        const config = validateConfig({ globals: { plugins: ["track-work"] } })
+        const applied = applyPlugins(config)
+        const desugared = desugarFileInjections(applied)
+        const refs = (desugared.injections ?? []).flatMap(i => i.inject)
+        expect(refs).toContain("chores")
+        expect(refs).toContain("plans")
+    })
+
+    test("ignores unknown plugin names", () => {
+        const config = validateConfig({ globals: { plugins: ["nonexistent-plugin"] } })
+        expect(() => applyPlugins(config)).not.toThrow()
+        const result = applyPlugins(config)
+        expect(result.files ?? []).toHaveLength(0)
+    })
 })
 
 describe("staleCheck", () => {

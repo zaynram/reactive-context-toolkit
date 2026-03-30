@@ -1,4 +1,5 @@
 import { fs } from "#util/fs"
+import plugins from "#plugin"
 import type {
   RCTConfig,
   GlobalsConfig,
@@ -6,6 +7,8 @@ import type {
   Match,
   HookEvent,
   InjectionEntry,
+  FileEntry,
+  RuleEntry,
 } from "./types"
 
 export type ValidatedConfig = { globals: Required<GlobalsConfig> } & RCTConfig
@@ -70,6 +73,27 @@ export function validateConfig(config: RCTConfig): ValidatedConfig {
   }
 
   return { ...config, globals }
+}
+
+export function applyPlugins(config: ValidatedConfig): ValidatedConfig {
+  const pluginNames = config.globals.plugins ?? []
+  if (pluginNames.length === 0) return config
+
+  const mergedFiles: FileEntry[] = [...(config.files ?? [])]
+  const mergedRules: RuleEntry[] = [...(config.rules ?? [])]
+
+  for (const name of pluginNames) {
+    if (!(name in plugins)) continue
+    const plugin = plugins[name]
+    if (plugin.files) mergedFiles.push(...plugin.files)
+    if (plugin.rules) mergedRules.push(...plugin.rules)
+  }
+
+  return {
+    ...config,
+    files: mergedFiles,
+    rules: mergedRules.length > 0 ? mergedRules : config.rules,
+  }
 }
 
 export function desugarFileInjections(config: ValidatedConfig): ValidatedConfig {

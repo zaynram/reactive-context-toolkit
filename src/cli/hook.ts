@@ -125,21 +125,23 @@ async function main(eventArg?: string) {
             ? rawInjectOn
             : [rawInjectOn ?? "SessionStart"]
         if (testEvents.includes(event)) {
-            const cmd = resolveTestCommand(desugared)
-            if (cmd) {
+            const cmdInfo = resolveTestCommand(desugared)
+            if (cmdInfo) {
                 const sessionId =
                     (payload as Record<string, string>).session_id ?? "unknown"
                 const cacheEnabled = testConfig.cache === true
                 const cacheTTL = testConfig.cacheTTL ?? 300
 
-                let result = cacheEnabled
-                    ? getCachedResult(sessionId, cmd, cacheTTL)
+                let rawResult = cacheEnabled
+                    ? getCachedResult(sessionId, cmdInfo.command, cacheTTL)
                     : null
-                if (!result) {
-                    result = runTest(cmd, CLAUDE_PROJECT_DIR)
-                    if (cacheEnabled) setCachedResult(sessionId, cmd, result)
+                if (!rawResult) {
+                    rawResult = runTest(cmdInfo.command, CLAUDE_PROJECT_DIR)
+                    if (cacheEnabled) setCachedResult(sessionId, cmdInfo.command, rawResult)
                 }
-                testResult = formatTestResult(result, testConfig.brief)
+
+                const result = { ...rawResult, tool: cmdInfo.tool }
+                testResult = formatTestResult(result, testConfig, globals)
             }
         }
     }

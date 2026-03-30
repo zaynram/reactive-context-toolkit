@@ -7,11 +7,20 @@ import {
     setCachedResult,
 } from "#test/runner"
 import type { RCTConfig, TestResult } from "#test/runner"
+import type { GlobalsConfig } from "#config/types"
+
+const defaultGlobals: Required<GlobalsConfig> = {
+    format: "xml",
+    wrapper: "context",
+    briefByDefault: false,
+    minify: true,
+    plugins: [],
+}
 
 describe("resolveTestCommand", () => {
     test("returns string for string config", () => {
         const config: RCTConfig = { test: "bun test --coverage" }
-        expect(resolveTestCommand(config)).toBe("bun test --coverage")
+        expect(resolveTestCommand(config)?.command).toBe("bun test --coverage")
     })
 
     test('resolves "bun test" from lang.typescript with bun tool having scripts:true', () => {
@@ -23,7 +32,7 @@ describe("resolveTestCommand", () => {
                 },
             },
         }
-        expect(resolveTestCommand(config)).toBe("bun test")
+        expect(resolveTestCommand(config)?.command).toBe("bun test")
     })
 
     test("resolves pixi run test for pixi tool", () => {
@@ -35,7 +44,7 @@ describe("resolveTestCommand", () => {
                 },
             },
         }
-        expect(resolveTestCommand(config)).toBe("pixi run test")
+        expect(resolveTestCommand(config)?.command).toBe("pixi run test")
     })
 
     test("resolves cargo test for cargo tool", () => {
@@ -47,7 +56,7 @@ describe("resolveTestCommand", () => {
                 },
             },
         }
-        expect(resolveTestCommand(config)).toBe("cargo test")
+        expect(resolveTestCommand(config)?.command).toBe("cargo test")
     })
 
     test("returns null when no test configured", () => {
@@ -62,7 +71,8 @@ describe("resolveTestCommand", () => {
 
     test("returns command from TestConfig object", () => {
         const config: RCTConfig = { test: { command: "pytest -x" } }
-        expect(resolveTestCommand(config)).toBe("pytest -x")
+        expect(resolveTestCommand(config)?.command).toBe("pytest -x")
+        expect(resolveTestCommand(config)?.tool).toBe("custom")
     })
 
     test("auto-detects when TestConfig.command is true", () => {
@@ -74,7 +84,36 @@ describe("resolveTestCommand", () => {
                 },
             },
         }
-        expect(resolveTestCommand(config)).toBe("bun test")
+        expect(resolveTestCommand(config)?.command).toBe("bun test")
+    })
+})
+
+describe("resolveTestCommand returns tool info", () => {
+    test("returns tool name for lang-detected command", () => {
+        const config: RCTConfig = {
+            test: true,
+            lang: { typescript: { tools: [{ name: "bun", scripts: true }] } },
+        }
+        const info = resolveTestCommand(config)
+        expect(info).not.toBeNull()
+        expect(info!.command).toBe("bun test")
+        expect(info!.tool).toBe("bun")
+    })
+
+    test("returns 'custom' tool for explicit command string", () => {
+        const config: RCTConfig = { test: "pytest -x" }
+        const info = resolveTestCommand(config)
+        expect(info!.command).toBe("pytest -x")
+        expect(info!.tool).toBe("custom")
+    })
+
+    test("returns cargo tool for rust lang", () => {
+        const config: RCTConfig = {
+            test: true,
+            lang: { rust: { tools: [{ name: "cargo", tasks: true }] } },
+        }
+        const info = resolveTestCommand(config)
+        expect(info!.tool).toBe("cargo")
     })
 })
 
@@ -105,26 +144,76 @@ describe("formatTestResult", () => {
             exitCode: 0,
             output: "all good",
         }
-        const formatted = formatTestResult(result, "Result: {status} (code {exitCode})")
+        const formatted = formatTestResult(
+            result,
+            { command: "bun test", brief: "Result: {status} (code {exitCode})" },
+            defaultGlobals,
+        )
         expect(formatted).toBe("Result: pass (code 0)")
     })
 
-    test("with default format for pass", () => {
+    test("xml format pass produces self-closing test tag", () => {
         const result: TestResult = {
             status: "pass",
             exitCode: 0,
             output: "",
         }
-        expect(formatTestResult(result)).toBe("test: pass")
+        const out = formatTestResult(result, { command: "bun test" }, defaultGlobals)
+        expect(out).toContain("<test")
+        expect(out).toContain('status="pass"')
     })
 
-    test("with default format for fail", () => {
+    test("xml format fail includes exitCode", () => {
         const result: TestResult = {
             status: "fail",
             exitCode: 1,
             output: "error",
         }
-        expect(formatTestResult(result)).toBe("test: fail (exit 1)")
+        const out = formatTestResult(result, { command: "bun test" }, defaultGlobals)
+        expect(out).toContain('status="fail"')
+        expect(out).toContain('exitCode="1"')
+    })
+})
+
+describe("formatTestResult with format", () => {
+    test("xml format pass produces self-closing test tag with tool and status", () => {
+        const result: TestResult = { status: "pass", exitCode: 0, output: "", tool: "bun" }
+        const out = formatTestResult(result, { command: "bun test" }, defaultGlobals)
+        expect(out).toContain("<test")
+        expect(out).toContain('tool="bun"')
+        expect(out).toContain('status="pass"')
+    })
+
+    test("xml format fail includes exitCode attribute", () => {
+        const result: TestResult = { status: "fail", exitCode: 1, output: "", tool: "bun" }
+        const out = formatTestResult(result, { command: "bun test" }, defaultGlobals)
+        expect(out).toContain('exitCode="1"')
+    })
+
+    test("json format produces json object with tool and status", () => {
+        const result: TestResult = { status: "pass", exitCode: 0, output: "", tool: "cargo" }
+        const jsonGlobals = { ...defaultGlobals, format: "json" as const }
+        const out = formatTestResult(result, { command: "cargo test" }, jsonGlobals)
+        const parsed = JSON.parse(out)
+        expect(parsed.test.tool).toBe("cargo")
+        expect(parsed.test.status).toBe("pass")
+    })
+
+    test("brief template supports {tool} substitution", () => {
+        const result: TestResult = { status: "pass", exitCode: 0, output: "", tool: "pixi" }
+        const out = formatTestResult(
+            result,
+            { command: "pixi run test", brief: "[{tool}] {status}" },
+            defaultGlobals,
+        )
+        expect(out).toBe("[pixi] pass")
+    })
+
+    test("TestConfig.format overrides globals.format", () => {
+        const result: TestResult = { status: "pass", exitCode: 0, output: "", tool: "bun" }
+        const out = formatTestResult(result, { command: "bun test", format: "json" }, defaultGlobals)
+        const parsed = JSON.parse(out)
+        expect(parsed.test).toBeDefined()
     })
 })
 

@@ -5,8 +5,10 @@ import type {
     RCTConfig,
     TestConfig,
     LangEntry,
-    LangTool,
+    Format,
+    GlobalsConfig,
 } from "#config/types"
+import { xml } from "#util/xml"
 
 export type { RCTConfig }
 
@@ -14,6 +16,12 @@ export interface TestResult {
     status: "pass" | "fail"
     exitCode: number
     output: string
+    tool?: string
+}
+
+export interface TestCommandInfo {
+    command: string
+    tool: string
 }
 
 const TOOL_TEST_COMMANDS: Record<string, string> = {
@@ -29,7 +37,7 @@ const TOOL_TEST_COMMANDS: Record<string, string> = {
     rustup: "cargo test",
 }
 
-function findFirstToolCommand(config: RCTConfig): string | null {
+function findFirstToolInfo(config: RCTConfig): TestCommandInfo | null {
     if (!config.lang) return null
 
     const langEntries: (LangEntry | undefined)[] = [
@@ -44,26 +52,26 @@ function findFirstToolCommand(config: RCTConfig): string | null {
         for (const tool of entry.tools) {
             if (!tool.tasks && !tool.scripts) continue
             const cmd = TOOL_TEST_COMMANDS[tool.name]
-            if (cmd) return cmd
+            if (cmd) return { command: cmd, tool: tool.name }
         }
     }
 
     return null
 }
 
-export function resolveTestCommand(config: RCTConfig): string | null {
+export function resolveTestCommand(config: RCTConfig): TestCommandInfo | null {
     if (!config.test) return null
 
     // String shorthand
-    if (typeof config.test === "string") return config.test
+    if (typeof config.test === "string") return { command: config.test, tool: "custom" }
 
     // Boolean true => auto-detect
-    if (config.test === true) return findFirstToolCommand(config)
+    if (config.test === true) return findFirstToolInfo(config)
 
     // TestConfig object
     const testConfig = config.test as TestConfig
-    if (typeof testConfig.command === "string") return testConfig.command
-    if (testConfig.command === true) return findFirstToolCommand(config)
+    if (typeof testConfig.command === "string") return { command: testConfig.command, tool: "custom" }
+    if (testConfig.command === true) return findFirstToolInfo(config)
 
     return null
 }
@@ -84,15 +92,39 @@ export function runTest(command: string, rootDir: string): TestResult {
     }
 }
 
-export function formatTestResult(result: TestResult, brief?: string): string {
+export function formatTestResult(
+    result: TestResult,
+    testConfig: TestConfig,
+    globals: Required<GlobalsConfig>,
+): string {
+    const brief = testConfig.brief
     if (brief) {
         return brief
             .replace(/\{status\}/g, result.status)
             .replace(/\{exitCode\}/g, String(result.exitCode))
             .replace(/\{output\}/g, result.output)
+            .replace(/\{tool\}/g, result.tool ?? "unknown")
     }
-    if (result.status === "pass") return "test: pass"
-    return `test: fail (exit ${result.exitCode})`
+
+    const format: Format = testConfig.format ?? globals.format
+    const toolAttr = result.tool ?? "unknown"
+    const attrs: Record<string, string> = {
+        tool: toolAttr,
+        status: result.status,
+        ...(result.status === "fail" && { exitCode: String(result.exitCode) }),
+    }
+
+    if (format === "json") {
+        return JSON.stringify({
+            test: {
+                tool: toolAttr,
+                status: result.status,
+                ...(result.status === "fail" && { exitCode: result.exitCode }),
+            },
+        })
+    }
+
+    return xml.inline("test", attrs)
 }
 
 // -- Cache --

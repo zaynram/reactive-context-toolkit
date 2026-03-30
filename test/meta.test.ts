@@ -2,7 +2,7 @@ import { describe, test, expect } from "bun:test"
 import { generateMeta } from "../src/engine/meta"
 import { buildFileRegistry } from "../src/config/files"
 import type { RCTConfig, MetaConfig, GlobalsConfig } from "../src/config/types"
-import type { FileRegistry, ReferenceFile } from "../src/config/files"
+import type { FileRegistry, ReferenceFile } from "../src/types"
 
 function makeRef(alias: string, filePath: string, brief?: string): ReferenceFile {
   return {

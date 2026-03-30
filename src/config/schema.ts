@@ -81,6 +81,7 @@ export function applyPlugins(config: ValidatedConfig): ValidatedConfig {
 
   const mergedFiles: FileEntry[] = [...(config.files ?? [])]
   const mergedRules: RuleEntry[] = [...(config.rules ?? [])]
+  const hadRules = config.rules?.length ?? 0
 
   for (const name of pluginNames) {
     if (!(name in plugins)) continue
@@ -92,7 +93,7 @@ export function applyPlugins(config: ValidatedConfig): ValidatedConfig {
   return {
     ...config,
     files: mergedFiles,
-    rules: mergedRules.length > 0 ? mergedRules : config.rules,
+    rules: mergedRules.length > hadRules ? mergedRules : config.rules,
   }
 }
 

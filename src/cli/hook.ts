@@ -139,12 +139,7 @@ async function main(eventArg?: string) {
                     result = runTest(cmd, CLAUDE_PROJECT_DIR)
                     if (cacheEnabled) setCachedResult(sessionId, cmd, result)
                 }
-                testResult = formatTestResult(
-                    result,
-                    typeof testConfig === "object"
-                        ? (testConfig as any).brief
-                        : undefined,
-                )
+                testResult = formatTestResult(result, testConfig.brief)
             }
         }
     }

@@ -66,6 +66,15 @@ describe("validateConfig", () => {
 })
 
 describe("desugarFileInjections", () => {
+  test("derives alias using stem (no extension) for files without explicit alias", () => {
+    const config = validateConfig({
+      files: [{ path: "dev/scope.xml", injectOn: "SessionStart" }],
+    })
+    const result = desugarFileInjections(config)
+    expect(result.injections).toHaveLength(1)
+    expect(result.injections![0].inject[0]).toBe("scope")
+  })
+
   test("creates injection from file.injectOn", () => {
     const config: ValidatedConfig = {
       globals: { format: "xml", wrapper: "context", briefByDefault: false },

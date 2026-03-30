@@ -1,4 +1,5 @@
 import path from "path"
+import { fs } from "#util/fs"
 import type {
   RCTConfig,
   GlobalsConfig,
@@ -15,6 +16,7 @@ const DEFAULT_GLOBALS: Required<GlobalsConfig> = {
   wrapper: "context",
   briefByDefault: false,
   minify: true,
+  plugins: [],
 }
 
 function validateRegex(pattern: string, context: string): void {
@@ -77,7 +79,7 @@ export function desugarFileInjections(config: ValidatedConfig): ValidatedConfig 
   const newInjections: InjectionEntry[] = []
 
   for (const file of files) {
-    const alias = file.alias ?? path.basename(file.path)
+    const alias = file.alias ?? fs.stem(file.path)
 
     // Desugar file-level injectOn
     if (file.injectOn) {
@@ -102,7 +104,7 @@ export function desugarFileInjections(config: ValidatedConfig): ValidatedConfig 
     if (file.metaFiles) {
       for (const meta of file.metaFiles) {
         if (!meta.injectOn) continue
-        const metaAlias = meta.alias ?? meta.path
+        const metaAlias = meta.alias ?? fs.stem(meta.path)
         const colonRef = `${alias}:${metaAlias}`
         const events: HookEvent[] = Array.isArray(meta.injectOn)
           ? meta.injectOn

@@ -49,6 +49,8 @@ const defaultGlobals: Required<GlobalsConfig> = {
   format: "xml",
   wrapper: "context",
   briefByDefault: false,
+  minify: true,
+  plugins: [],
 }
 
 const choresRef = makeRef("chores", "/project/dev/chores.xml", "Active chores")

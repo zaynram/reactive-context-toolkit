@@ -1,4 +1,3 @@
-import path from "path"
 import { fs } from "#util/fs"
 import type {
   RCTConfig,

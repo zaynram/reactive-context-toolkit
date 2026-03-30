@@ -2,11 +2,11 @@ import { describe, test, expect } from "bun:test"
 import { spawnSync } from "child_process"
 import path from "path"
 
-const HOOK_SCRIPT = path.resolve(__dirname, "../src/hook.ts")
+const INDEX_PATH = path.resolve(__dirname, "../src/cli/index.ts")
 const FIXTURE_DIR = path.resolve(__dirname, "fixtures/project")
 
 function runHook(event: string, stdin?: string): { stdout: string; exitCode: number } {
-  const result = spawnSync("bun", ["run", HOOK_SCRIPT, event], {
+  const result = spawnSync("bun", ["run", INDEX_PATH, "hook", event], {
     cwd: FIXTURE_DIR,
     env: { ...process.env, CLAUDE_PROJECT_DIR: FIXTURE_DIR },
     input: stdin,
@@ -16,7 +16,7 @@ function runHook(event: string, stdin?: string): { stdout: string; exitCode: num
   return { stdout: result.stdout?.trim() ?? "", exitCode: result.status ?? 1 }
 }
 
-describe("integration: hook.ts subprocess", () => {
+describe("integration: cli subprocess", () => {
   test("SessionStart outputs file content from fixture config", () => {
     const { stdout, exitCode } = runHook("SessionStart")
     expect(exitCode).toBe(0)

@@ -6,10 +6,11 @@ import type {
     HookEventOrArray,
     GlobalsConfig,
 } from "#config/types"
-import { getPixiTasks, getPixiEnvironment } from "./pixi"
 import { getBunScripts, getBunWorkspace } from "./bun"
+import { getPixiTasks, getPixiEnvironment } from "./pixi"
 import { getCargoInfo } from "./cargo"
 import { readFileSync, existsSync } from "fs"
+import path from "path"
 import { xml } from "#util"
 
 function eventMatches(
@@ -22,32 +23,28 @@ function eventMatches(
     return target === event
 }
 
-function evaluateToolResults(
-    tool: LangTool,
-    rootDir: string,
-): string[] {
+function evaluateToolResults(tool: LangTool, cwd: string): string[] {
     const results: string[] = []
 
     switch (tool.name) {
         case "bun":
         case "npm":
         case "pnpm":
-            if (tool.scripts !== false) results.push(getBunScripts(tool, rootDir))
-            if (tool.workspace) results.push(getBunWorkspace(tool, rootDir))
+            if (tool.scripts !== false) results.push(getBunScripts(tool, cwd))
+            if (tool.workspace) results.push(getBunWorkspace(tool, cwd))
             break
         case "pixi":
-            if (tool.tasks !== false) results.push(getPixiTasks(tool, rootDir))
-            if (tool.environment) results.push(getPixiEnvironment(tool, rootDir))
+            if (tool.tasks !== false) results.push(getPixiTasks(tool, cwd))
+            if (tool.environment) results.push(getPixiEnvironment(tool, cwd))
+            break
+        case "cargo":
+            results.push(getCargoInfo(tool, cwd))
             break
         case "uv":
         case "pip":
-        case "pipx":
-            // Python package managers without task runner support — no output
-            break
-        case "cargo":
-        case "cargo-binstall":
-        case "rustup":
-            results.push(getCargoInfo(tool, rootDir))
+        case "ruff":
+        case "clippy":
+            // No extractable runtime output for these tools
             break
     }
 
@@ -57,8 +54,8 @@ function evaluateToolResults(
 export function evaluateLang(
     lang: LangConfig,
     event: HookEvent,
-    rootDir: string,
-    globals: GlobalsConfig,
+    cwd: string,
+    globals?: GlobalsConfig,
 ): string[] {
     const results: string[] = []
 
@@ -78,26 +75,32 @@ export function evaluateLang(
             for (const tool of entry.tools) {
                 const toolInjectOn = tool.injectOn ?? langInjectOn
                 if (!eventMatches(event, toolInjectOn)) continue
-                results.push(...evaluateToolResults(tool, rootDir))
+                results.push(...evaluateToolResults(tool, cwd))
             }
         }
 
         // Process config entries
         if (entry.config) {
             for (const cfg of entry.config) {
+                const fullPath = path.isAbsolute(cfg.path)
+                    ? cfg.path
+                    : path.join(cwd, cfg.path)
+
                 if (cfg.inject) {
                     if (!eventMatches(event, langInjectOn)) continue
                     try {
-                        const content = readFileSync(cfg.path, "utf-8")
+                        const content = readFileSync(fullPath, "utf-8")
                         results.push(
-                            xml.open("config", { name: cfg.name }) + content + xml.close("config"),
+                            xml.open("config", { name: cfg.name }) +
+                                content +
+                                xml.close("config"),
                         )
                     } catch {
                         // Skip unreadable configs
                     }
                 }
                 if (cfg.extractPaths) {
-                    const extracted = extractTsconfigPaths(cfg.path)
+                    const extracted = extractTsconfigPaths(fullPath)
                     if (extracted) results.push(extracted)
                 }
             }
@@ -118,7 +121,12 @@ export function extractTsconfigPaths(configPath: string): string | null {
 
         const aliases = Object.entries(paths)
             .map(([name, targets]) =>
-                xml.inline("path-alias", { name, target: String(Array.isArray(targets) ? targets[0] : targets) }),
+                xml.inline("path-alias", {
+                    name,
+                    target: String(
+                        Array.isArray(targets) ? targets[0] : targets,
+                    ),
+                }),
             )
             .join("")
 

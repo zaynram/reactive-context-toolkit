@@ -27,7 +27,7 @@ describe("detectProject", () => {
   test("finds tsconfig and bun lock -> typescript with bun", () => {
     setup({
       "tsconfig.json": "{}",
-      "package.json": '{"name":"test"}',
+      "package.json": '{"name":"test","version":"1.0.0","scripts":{"test":"bun test"}}',
       "bun.lock": "",
     })
     const result = detectProject(TMP_DIR)
@@ -63,20 +63,19 @@ describe("detectProject", () => {
     expect(result.testCommand).toBe("cargo test")
   })
 
-  test("detects common reference files", () => {
+  test("files list is empty (file detection is plugin-driven, not auto-detected)", () => {
     setup({
       "dev/chores.xml": "<chores/>",
       "dev/scope.xml": "<scope/>",
     })
     const result = detectProject(TMP_DIR)
-    expect(result.files).toHaveLength(2)
-    expect(result.files[0].alias).toBe("chores")
-    expect(result.files[1].alias).toBe("scope")
+    expect(result.files).toHaveLength(0)
   })
 
   test("finds npm lock -> npm", () => {
     setup({
-      "package.json": '{"name":"test"}',
+      "tsconfig.json": "{}",
+      "package.json": '{"name":"test","version":"1.0.0","scripts":{"test":"npm test"}}',
       "package-lock.json": "{}",
     })
     const result = detectProject(TMP_DIR)
@@ -86,7 +85,8 @@ describe("detectProject", () => {
 
   test("finds pnpm lock -> pnpm", () => {
     setup({
-      "package.json": '{"name":"test"}',
+      "tsconfig.json": "{}",
+      "package.json": '{"name":"test","version":"1.0.0","scripts":{"test":"pnpm test"}}',
       "pnpm-lock.yaml": "",
     })
     const result = detectProject(TMP_DIR)

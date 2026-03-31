@@ -23,10 +23,10 @@ describe("buildFileRegistry", () => {
     expect(all.length).toBe(3)
   })
 
-  test("uses filename as key when alias absent", () => {
+  test("uses filename stem as key when alias absent", () => {
     const reg = buildFileRegistry(entries, ROOT)
-    // "dev/scope.xml" has no alias, so use filename "scope.xml"
-    const file = reg.get("scope.xml")
+    // "dev/scope.xml" has no alias, so use stem "scope" (extension stripped)
+    const file = reg.get("scope")
     expect(file).toBeDefined()
     expect(file!.path).toContain("scope.xml")
   })

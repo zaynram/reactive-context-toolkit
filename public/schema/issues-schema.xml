@@ -1,0 +1,9 @@
+<issues-schema>
+    <candidates>
+        <candidate id="slug-id" priority="low|medium|high" status="open">Summary of the actionable item. Concise; full detail goes in the GH issue on promotion.<promotion-requirements>What must be true before this is worth promoting.</promotion-requirements>
+        </candidate>
+    </candidates>
+    <promoted>
+        <issue id="slug-id" gh="number" status="open|in-progress|closed">Summary carried forward from candidate stage.</issue>
+    </promoted>
+</issues-schema>

@@ -2,11 +2,11 @@ import { describe, it, expect } from "bun:test"
 import { spawnSync } from "child_process"
 import path from "path"
 
-const HOOK_PATH = path.resolve(__dirname, "../src/hook.ts")
+const INDEX_PATH = path.resolve(__dirname, "../src/cli/index.ts")
 const FIXTURE_DIR = path.resolve(__dirname, "fixtures/project")
 
 function runHook(event: string, stdin?: string, env?: Record<string, string>) {
-  const result = spawnSync("bun", ["run", HOOK_PATH, event], {
+  const result = spawnSync("bun", ["run", INDEX_PATH, "hook", event], {
     cwd: FIXTURE_DIR,
     env: {
       ...process.env,

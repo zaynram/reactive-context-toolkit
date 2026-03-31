@@ -43,3 +43,19 @@ declare namespace XML {
     type Tree = `${OpenTag}${string}${CloseTag}`
     type Element = "" | Tree | InlineTag
 }
+
+declare interface ReferenceFile {
+    alias: string
+    path: string
+    brief?: string
+    read: () => string
+    staleCheck?: FileEntry["staleCheck"]
+}
+
+declare interface FileRegistry {
+    get(alias: string): ReferenceFile | undefined
+    getRef(ref: string): { file: ReferenceFile; useBrief: boolean } | undefined
+    select(...aliases: string[]): ReferenceFile[]
+    all(): ReferenceFile[]
+    matchPath(filePath: string): ReferenceFile | undefined
+}

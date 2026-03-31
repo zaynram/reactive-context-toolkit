@@ -12,16 +12,6 @@ interface DetectionResult {
 
 type NodePackageManager = "bun" | "pnpm" | "npm"
 
-type ConfigFileName = Parameters<typeof fs.config>[0]
-
-function isNodePM(x: unknown): x is NodePackageManager {
-    return x === "bun" || x === "pnpm" || x === "npm"
-}
-
-function isConfigFile(s: string): s is ConfigFileName {
-    return /\.(json|toml|yaml|lock[b]?)$/.test(s) && fs.exists(fs.resolve(s))
-}
-
 export function detectProject(root: string): DetectionResult {
     const lang: LangConfig = {}
     const files: { alias: string; path: string }[] = []

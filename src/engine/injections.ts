@@ -68,7 +68,7 @@ export function evaluateInjections(
         if (format === "json") {
           content = JSON.stringify({ [wrapper]: content })
         } else {
-          content = xml.open(wrapper) + content + xml.close(wrapper)
+          content = xml.wrap(wrapper, { inner: content })
         }
       }
 

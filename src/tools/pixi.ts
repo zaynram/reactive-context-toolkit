@@ -93,7 +93,7 @@ export function getPixiTasks(tool: LangTool, cwd: string): string {
                 }),
             )
             .join("")
-        return xml.open("pixi-tasks") + inner + xml.close("pixi-tasks")
+        return xml.wrap("pixi-tasks", { inner })
     } catch {
         return xml.inline("pixi-tasks", {
             unavailable: "pixi not found or command failed",

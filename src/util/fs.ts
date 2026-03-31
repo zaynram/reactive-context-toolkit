@@ -1,9 +1,8 @@
 import { existsSync, readFileSync } from "fs"
 import { minify, normalize } from "./general"
 import path from "path"
-import { CLAUDE_PROJECT_DIR, RCT_PREFIX, LANGUAGES } from "#constants"
+import { CLAUDE_PROJECT_DIR, RCT_PREFIX } from "#constants"
 import type { ReferenceFile } from "#types"
-import { LangConfigFile, LangTool } from "#config"
 
 const ROOT = CLAUDE_PROJECT_DIR
 
@@ -12,44 +11,11 @@ interface ResolveOptions {
     root?: string
 }
 
-export function isReferenceFile(x: unknown): x is ReferenceFile {
-    return Boolean(
-        x &&
-        typeof x === "object" &&
-        ["alias", "path", "read"].every(p => p in x),
-    )
-}
-
 export function source(relativePath: string | string[]) {
     if (typeof relativePath !== "string")
         relativePath = path.join(...relativePath)
     return path.resolve(RCT_PREFIX, relativePath)
 }
-
-export function manifest(language: SupportedLanguage): LangConfigFile {
-    switch (language) {
-        case "python":
-            const path = ["pyproject.toml", "requirements.txt"]
-                .map(f => resolve(f))
-                .find(fs.exists)!
-            return {
-                path,
-                name: stem(path),
-            }
-        case "rust":
-            return {
-                name: "cargo-toml",
-                path: resolve("Cargo.toml"),
-            }
-        case "javascript":
-        case "typescript":
-            return {
-                name: "package-json",
-                path: resolve("package.json"),
-            }
-    }
-}
-
 
 export function config(
     name: `${string}.${"json" | "toml" | "yaml" | `lock${"" | "b"}`}`,
@@ -99,6 +65,5 @@ export const fs = {
     source,
     name: path.basename,
     exists: existsSync,
-    manifest,
 }
 export default fs

@@ -91,9 +91,7 @@ export function evaluateLang(
                     try {
                         const content = readFileSync(fullPath, "utf-8")
                         results.push(
-                            xml.open("config", { name: cfg.name }) +
-                                content +
-                                xml.close("config"),
+                            xml.wrap("config", { attrs: { name: cfg.name }, inner: content }),
                         )
                     } catch {
                         // Skip unreadable configs
@@ -131,7 +129,7 @@ export function extractTsconfigPaths(configPath: string): string | null {
             .join("")
 
         if (!aliases) return null
-        return xml.open("path-aliases") + aliases + xml.close("path-aliases")
+        return xml.wrap("path-aliases", { inner: aliases })
     } catch {
         return null
     }

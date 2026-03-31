@@ -20,7 +20,7 @@ export function getBunScripts(tool: LangTool, cwd: string): string {
         const inner = entries<string>(scripts)
             .map(([name, command]) => xml.inline("script", { name, command }))
             .join("")
-        return xml.open("scripts") + inner + xml.close("scripts")
+        return xml.wrap("scripts", { inner })
     } catch {
         return xml.inline("scripts")
     }
@@ -36,7 +36,7 @@ export function getBunWorkspace(tool: LangTool, cwd: string): string {
         const inner = workspaces
             .map(w => xml.inline("workspace", { path: w }))
             .join("")
-        return xml.open("workspaces") + inner + xml.close("workspaces")
+        return xml.wrap("workspaces", { inner })
     } catch {
         return xml.inline("workspaces")
     }

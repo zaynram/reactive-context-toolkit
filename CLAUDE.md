@@ -57,7 +57,6 @@ src/
 │   ├── cargo.ts         # Re-exports getCargoInfo from #tools/cargo
 │   └── pixi.ts          # Re-exports getPixiTasks, getPixiEnvironment from #tools/pixi
 ├── tools/
-│   ├── index.ts         # LangTool registry — per-language tool detection (filters by file existence)
 │   ├── bun.ts           # LangTool def + getBunScripts(tool,cwd), getBunWorkspace(tool,cwd)
 │   ├── cargo.ts         # LangTool def + getCargoInfo(tool,cwd) — sync Cargo.toml reader
 │   ├── clippy.ts        # LangTool definition

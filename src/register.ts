@@ -34,7 +34,7 @@ export async function dynamic<
         process.stdin.on("end", () => {
             try {
                 resolve({
-                    ...(JSON.parse(data) ?? {}),
+                    ...JSON.parse(data),
                     inject: standard,
                 })
             } catch (e: unknown) {

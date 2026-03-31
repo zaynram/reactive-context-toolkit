@@ -1,4 +1,4 @@
-import type { HookEvent, GlobalsConfig, MinifyConfig } from "#config/types"
+import type { HookEvent, GlobalsConfig } from "#config/types"
 import { minify, condense } from "#util/general"
 
 export interface ComposeInput {

@@ -55,7 +55,7 @@ export function evaluateLang(
     lang: LangConfig,
     event: HookEvent,
     cwd: string,
-    globals?: GlobalsConfig,
+    _globals?: GlobalsConfig,
 ): string[] {
     const results: string[] = []
 

@@ -4,7 +4,7 @@ import {
   evaluateMatch,
   extractTargetValue,
 } from "../src/engine/evaluate"
-import type { MatchCondition, Match, MatchTarget } from "../src/config/types"
+import type { MatchCondition, Match } from "../src/config/types"
 
 describe("evaluateCondition", () => {
   test("regex operator matches", () => {

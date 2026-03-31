@@ -2,7 +2,6 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs"
 import path from "path"
 import type { RCTConfig, LangConfig, LangEntry, LangTool } from "../config/types"
-import { fs } from "#util"
 
 interface DetectionResult {
     lang: LangConfig

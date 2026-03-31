@@ -1,7 +1,8 @@
 #!/usr/bin/env bun
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs"
+import { readFileSync, writeFileSync, mkdirSync } from "fs"
 import path from "path"
 import type { RCTConfig, LangConfig, LangEntry, LangTool } from "../config/types"
+import { fs } from "#util"
 
 interface DetectionResult {
     lang: LangConfig
@@ -16,8 +17,8 @@ export function detectProject(root: string): DetectionResult {
     const files: { alias: string; path: string }[] = []
     const testCmds: string[] = []
 
-    const at = (name: string) => path.join(root, name)
-    const has = (name: string) => existsSync(at(name))
+    const at = (name: string) => fs.resolve(name, { root })
+    const has = (name: string) => fs.exists(at(name))
 
     // Detect TypeScript/JavaScript
     const hasPkg = has("package.json")
@@ -111,7 +112,7 @@ export function generateConfig(detection: DetectionResult): RCTConfig {
 export function mergeSettings(settingsPath: string, config: RCTConfig): void {
     // Read existing settings.json
     let settings: Record<string, any> = {}
-    if (existsSync(settingsPath)) {
+    if (fs.exists(settingsPath)) {
         try {
             settings = JSON.parse(readFileSync(settingsPath, "utf-8"))
         } catch {
@@ -197,7 +198,7 @@ export function mergeSettings(settingsPath: string, config: RCTConfig): void {
 
     // Ensure directory exists
     const dir = path.dirname(settingsPath)
-    if (!existsSync(dir)) {
+    if (!fs.exists(dir)) {
         mkdirSync(dir, { recursive: true })
     }
 
@@ -211,15 +212,15 @@ export default function initializeRCT() {
     const detection = detectProject(root)
     const config = generateConfig(detection)
 
-    const configPath = path.join(root, "rct.config.json")
-    if (!existsSync(configPath)) {
+    const configPath = fs.resolve("rct.config.json", { root })
+    if (!fs.exists(configPath)) {
         writeFileSync(configPath, JSON.stringify(config, null, 2), "utf-8")
         console.log(`Created ${configPath}`)
     } else {
         console.log(`Config already exists at ${configPath}`)
     }
 
-    const settingsPath = path.join(root, ".claude", "settings.json")
+    const settingsPath = fs.resolve([".claude", "settings.json"], { root })
     mergeSettings(settingsPath, config)
     console.log(`Updated ${settingsPath}`)
 }

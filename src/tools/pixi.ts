@@ -2,7 +2,6 @@ import { execSync } from "child_process"
 import path from "path"
 import type { LangTool } from "#config/types"
 import { xml, fs } from "#util"
-import { CLAUDE_PROJECT_DIR } from "#constants"
 const tool: LangTool = {
     name: "pixi",
     config: fs.resolve("pixi.toml"),
@@ -46,12 +45,12 @@ function validateTask(o: unknown): PixiTask {
     throw TypeError(`Received invalid task object: ${o}`)
 }
 
-export function getPixiTasks(): string {
+export function getPixiTasks(tool: LangTool, cwd: string): string {
+    const resolvedCwd = tool.manifest ? path.dirname(tool.manifest) : cwd
     try {
-        const cwd = CLAUDE_PROJECT_DIR
         const items = execSync("pixi task list --json", {
             encoding: "utf-8",
-            cwd,
+            cwd: resolvedCwd,
             stdio: ["ignore", "pipe", "ignore"],
         }).trim()
 
@@ -102,12 +101,12 @@ export function getPixiTasks(): string {
     }
 }
 
-export function getPixiEnvironment(): string {
+export function getPixiEnvironment(tool: LangTool, cwd: string): string {
+    const resolvedCwd = tool.manifest ? path.dirname(tool.manifest) : cwd
     try {
-        const cwd = CLAUDE_PROJECT_DIR
         const output = execSync("pixi info --json", {
             encoding: "utf-8",
-            cwd,
+            cwd: resolvedCwd,
             stdio: ["ignore", "pipe", "ignore"],
         }).trim()
 

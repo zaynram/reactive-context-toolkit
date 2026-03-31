@@ -6,9 +6,9 @@ import type {
     HookEventOrArray,
     GlobalsConfig,
 } from "#config/types"
-import { getBunScripts, getBunWorkspace } from "./bun"
-import { getPixiTasks, getPixiEnvironment } from "./pixi"
-import { getCargoInfo } from "./cargo"
+import { getBunScripts, getBunWorkspace } from "#tools/bun"
+import { getPixiTasks, getPixiEnvironment } from "#tools/pixi"
+import { getCargoInfo } from "#tools/cargo"
 import { readFileSync, existsSync } from "fs"
 import path from "path"
 import { xml } from "#util"

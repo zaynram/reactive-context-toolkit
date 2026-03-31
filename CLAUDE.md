@@ -15,7 +15,7 @@ Always read the usage directives outlined in [mcp-task-orchestrator-and-superpow
 ```sh
 bun install                                        # install dependencies
 bun run build                                      # build dist/hook.js (hook subprocess)
-bun test                                           # run all tests (43 test files in test/)
+bun test                                           # run all tests (20 test files in test/)
 bun test <pattern>                                 # run a single test file or matching tests
 bun run src/cli/index.ts hook <HookEvent>          # run the hook entrypoint manually
 ```
@@ -26,23 +26,25 @@ bun run src/cli/index.ts hook <HookEvent>          # run the hook entrypoint man
 
 ```
 src/
+├── index.ts             # Public barrel: exports all config, engine, lang, test, util, plugin symbols
 ├── cli/
 │   ├── index.ts         # rct CLI dispatcher: routes `rct init` and `rct hook <event>`
 │   ├── hook.ts          # Hook entrypoint: reads event from argv[2], stdin payload,
 │   │                    # orchestrates all evaluation, writes JSON to stdout
-│   └── init.ts          # initializeRCT(): detects project stack, writes rct.config.json,
+│   └── init.ts          # initializeRCT(): detectProject() (sync), writes rct.config.json,
 │                        # patches .claude/settings.json with hook commands
 ├── plugin/
 │   ├── index.ts         # Plugin registry (maps name → RCTPlugin)
 │   ├── types.ts         # RCTPlugin interface: { name, files?, rules? }
+│   ├── public.ts        # getSchemaPath(), createFromTemplate() — public asset helpers
 │   ├── issueScope.ts    # Built-in "issue-scope" plugin
 │   └── trackWork.ts     # Built-in "track-work" plugin
 ├── config/
-│   ├── loader.ts        # Loads rct.config.{json,ts,js} from CLAUDE_PROJECT_DIR
-│   ├── schema.ts        # validateConfig(), desugarFileInjections(), applyStaleCheck()
+│   ├── loader.ts        # loadConfig() — loads rct.config.{json,ts,js} from CLAUDE_PROJECT_DIR
+│   ├── schema.ts        # validateConfig(), applyPlugins(), desugarFileInjections(), applyStaleCheck()
 │   ├── types.ts         # All RCT config types (RCTConfig, InjectionEntry, RuleEntry, …)
 │   ├── files.ts         # buildFileRegistry() — resolves FileEntry paths to content
-│   └── index.ts
+│   └── index.ts         # Re-exports from loader, schema, files, types
 ├── engine/
 │   ├── rules.ts         # evaluateRules() — block/warn decisions
 │   ├── injections.ts    # evaluateInjections() — selects and renders FileRefs
@@ -50,36 +52,33 @@ src/
 │   ├── meta.ts          # generateMeta() — injects RCT config summary as XML
 │   └── compose.ts       # composeOutput() — assembles final JSON for Claude Code
 ├── lang/
-│   ├── index.ts         # evaluateLang(lang,event,cwd,globals) — dispatches to per-tool extractors; extractTsconfigPaths()
-│   ├── bun.ts           # getBunScripts(tool,cwd), getBunWorkspace(tool,cwd)
-│   ├── cargo.ts         # getCargoInfo(tool,cwd) — synchronous Cargo.toml reader
-│   ├── pixi.ts          # getPixiTasks(tool,cwd), getPixiEnvironment(tool,cwd)
-│   ├── typescript.ts    # auto-detection LangEntry for TypeScript projects
-│   ├── javascript.ts    # auto-detection LangEntry for JavaScript projects
-│   ├── python.ts        # auto-detection LangEntry for Python projects
-│   └── rust.ts          # auto-detection LangEntry for Rust projects
+│   ├── index.ts         # evaluateLang(lang,event,cwd,globals) — dispatches to tools; extractTsconfigPaths()
+│   ├── bun.ts           # Re-exports getBunScripts, getBunWorkspace from #tools/bun
+│   ├── cargo.ts         # Re-exports getCargoInfo from #tools/cargo
+│   └── pixi.ts          # Re-exports getPixiTasks, getPixiEnvironment from #tools/pixi
 ├── tools/
 │   ├── index.ts         # LangTool registry — per-language tool detection (filters by file existence)
-│   ├── bun.ts           # bun LangTool definition
-│   ├── cargo.ts         # cargo LangTool definition
-│   ├── clippy.ts        # clippy LangTool definition
-│   ├── npm.ts           # npm LangTool definition
-│   ├── pip.ts           # pip LangTool definition
-│   ├── pixi.ts          # pixi LangTool definition + task/env detection
-│   ├── pnpm.ts          # pnpm LangTool definition
-│   ├── ruff.ts          # ruff LangTool definition
-│   └── uv.ts            # uv LangTool definition
+│   ├── bun.ts           # LangTool def + getBunScripts(tool,cwd), getBunWorkspace(tool,cwd)
+│   ├── cargo.ts         # LangTool def + getCargoInfo(tool,cwd) — sync Cargo.toml reader
+│   ├── clippy.ts        # LangTool definition
+│   ├── npm.ts           # LangTool definition
+│   ├── pip.ts           # LangTool definition
+│   ├── pixi.ts          # LangTool def + getPixiTasks(tool,cwd), getPixiEnvironment(tool,cwd)
+│   ├── pnpm.ts          # LangTool definition
+│   ├── ruff.ts          # LangTool definition
+│   └── uv.ts            # LangTool definition
 ├── test/
 │   └── runner.ts        # resolveTestCommand(), runTest(), formatTestResult(), cache
 ├── register.ts          # standard() / dynamic() / block() typed output helpers
+├── constants.ts         # CLAUDE_PROJECT_DIR, RCT_PREFIX, LANGUAGES
 ├── util/
 │   ├── xml.ts           # xml.open(), xml.close(), xml.inline(), xml.escape()
-│   ├── fs.ts            # fs helpers
-│   └── general.ts       # normalize(), minify(), condense()
-└── types.d.ts           # RC namespace type declarations for hook I/O
+│   ├── fs.ts            # fs helpers: resolve, read, config, manifest, source, stem
+│   └── general.ts       # normalize(), minify(), condense(), matchesTool()
+└── types.d.ts           # RC namespace type declarations for hook I/O; ReferenceFile, FileRegistry
 
 rct.config.schema.json   # JSON Schema draft 2020-12 for rct.config.json
-test/                    # test files (config, engine, lang, integration, init, compose)
+test/                    # 20 test files (config, engine, lang, integration, init, compose)
 docs/specs/              # Design specs written before implementation
 ```
 

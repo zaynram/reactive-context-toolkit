@@ -1,6 +1,5 @@
 #!/usr/bin/env bun
 import { readFileSync, writeFileSync, mkdirSync } from "fs"
-import path from "path"
 import type { RCTConfig, LangConfig, LangEntry, LangTool } from "../config/types"
 import { fs } from "#util"
 
@@ -197,7 +196,7 @@ export function mergeSettings(settingsPath: string, config: RCTConfig): void {
     }
 
     // Ensure directory exists
-    const dir = path.dirname(settingsPath)
+    const dir = fs.dir(settingsPath)
     if (!fs.exists(dir)) {
         mkdirSync(dir, { recursive: true })
     }

@@ -64,6 +64,7 @@ export const fs = {
     stem,
     source,
     name: path.basename,
+    dir: path.dirname,
     exists: existsSync,
 }
 export default fs

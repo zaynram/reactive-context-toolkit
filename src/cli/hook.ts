@@ -166,14 +166,19 @@ async function main(eventArg?: string) {
 
     // Evaluate plugin contexts
     const pluginContextResults: string[] = []
-    for (const { name, fn } of extensions.contexts) {
-        const result = await withTimeout(
-            () => fn(event, pluginInput),
-            PLUGIN_TIMEOUT_MS,
-            `plugin '${name}' context`,
+    if (extensions.contexts.length > 0) {
+        const contextPromises = extensions.contexts.map(({ name, fn }) =>
+            withTimeout(
+                () => fn(event, pluginInput),
+                PLUGIN_TIMEOUT_MS,
+                `plugin '${name}' context`,
+            ),
         )
-        if (result !== undefined) {
-            pluginContextResults.push(result)
+        const settledContexts = await Promise.allSettled(contextPromises)
+        for (const settled of settledContexts) {
+            if (settled.status === 'fulfilled' && settled.value !== undefined) {
+                pluginContextResults.push(settled.value)
+            }
         }
     }
 

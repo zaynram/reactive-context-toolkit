@@ -21,8 +21,36 @@ import {
 } from '#test/runner'
 import { composeOutput } from '#engine/compose'
 import type { HookEvent, TestConfig, LangTestConfig } from '#config/types'
+import type { PluginExtensions } from '#config/schema'
+import type { PluginHookInput } from '#plugin/types'
 
 const SYNC_EVENTS: HookEvent[] = ['SessionStart', 'Setup']
+const PLUGIN_TIMEOUT_MS = 5000
+
+async function withTimeout<T>(
+    fn: () => T | Promise<T>,
+    ms: number,
+    label: string,
+): Promise<T | undefined> {
+    try {
+        return await Promise.race([
+            Promise.resolve(fn()),
+            new Promise<never>((_, reject) =>
+                setTimeout(
+                    () => reject(new Error(`${label} timed out after ${ms}ms`)),
+                    ms,
+                ),
+            ),
+        ])
+    } catch (err) {
+        console.warn(
+            `[rct] Warning: ${label}: ${err instanceof Error ? err.message : err}`,
+        )
+        return undefined
+    }
+}
+
+export { withTimeout }
 
 async function main(eventArg?: string) {
     const event = (eventArg ?? process.argv[2]) as HookEvent
@@ -73,7 +101,36 @@ async function main(eventArg?: string) {
         payload,
     )
 
-    // If block, output and exit
+    // Evaluate plugin triggers
+    const pluginInput: PluginHookInput = { toolName, payload }
+    const pluginWarnMessages: string[] = []
+
+    for (const { name, fn } of extensions.triggers) {
+        const result = await withTimeout(
+            () => fn(event, pluginInput),
+            PLUGIN_TIMEOUT_MS,
+            `plugin '${name}' trigger`,
+        )
+        if (result?.action === 'block') {
+            const output = composeOutput({
+                event,
+                blockResult: { message: result.message },
+                warnMessages: [],
+                injectionResults: [],
+                metaResult: null,
+                langResult: null,
+                testResult: null,
+                globals,
+            })
+            console.log(output)
+            process.exit(2)
+        }
+        if (result?.action === 'warn') {
+            pluginWarnMessages.push(result.message)
+        }
+    }
+
+    // If static rule blocks, output and exit
     if (ruleResult?.action === 'block') {
         const output = composeOutput({
             event,
@@ -99,9 +156,24 @@ async function main(eventArg?: string) {
         globals,
     )
 
-    // Warn messages
-    const warnMessages =
-        ruleResult?.action === 'warn' ? ruleResult.messages : []
+    // Evaluate plugin contexts
+    const pluginContextResults: string[] = []
+    for (const { name, fn } of extensions.contexts) {
+        const result = await withTimeout(
+            () => fn(event, pluginInput),
+            PLUGIN_TIMEOUT_MS,
+            `plugin '${name}' context`,
+        )
+        if (result !== undefined) {
+            pluginContextResults.push(result)
+        }
+    }
+
+    // Warn messages (static rules + plugin triggers)
+    const warnMessages = [
+        ...(ruleResult?.action === 'warn' ? ruleResult.messages : []),
+        ...pluginWarnMessages,
+    ]
 
     // Meta
     let metaResult: string | null = null
@@ -212,6 +284,7 @@ async function main(eventArg?: string) {
         blockResult: null,
         warnMessages,
         injectionResults,
+        pluginContextResults,
         metaResult,
         langResult,
         testResult,

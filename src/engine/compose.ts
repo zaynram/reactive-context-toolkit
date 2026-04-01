@@ -6,6 +6,7 @@ export interface ComposeInput {
     blockResult: { message: string } | null
     warnMessages: string[]
     injectionResults: string[]
+    pluginContextResults?: string[]
     metaResult: string | null
     langResult: string | null
     testResult: string | null
@@ -43,6 +44,7 @@ export function composeOutput(input: ComposeInput): string {
         blockResult,
         warnMessages,
         injectionResults,
+        pluginContextResults = [],
         metaResult,
         langResult,
         testResult,
@@ -63,6 +65,7 @@ export function composeOutput(input: ComposeInput): string {
     // Collect all context strings
     const parts: string[] = [
         ...injectionResults,
+        ...pluginContextResults,
         ...warnMessages,
         ...(metaResult ? [metaResult] : []),
         ...(langResult ? [langResult] : []),

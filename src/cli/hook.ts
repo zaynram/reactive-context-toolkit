@@ -32,7 +32,7 @@ async function withTimeout<T>(
     label: string,
 ): Promise<T | undefined> {
     const TIMEOUT_SENTINEL = Symbol('timeout')
-    let timer: ReturnType<typeof setTimeout>
+    let timer: ReturnType<typeof setTimeout> | undefined
     try {
         const result = await Promise.race([
             Promise.resolve(fn()),
@@ -51,7 +51,7 @@ async function withTimeout<T>(
         )
         return undefined
     } finally {
-        clearTimeout(timer!)
+        if (timer !== undefined) clearTimeout(timer)
     }
 }
 
@@ -60,7 +60,9 @@ export { withTimeout }
 async function main(eventArg?: string) {
     const event = (eventArg ?? process.argv[2]) as HookEvent
     if (!event) {
-        console.error('[rct] Error: No hook event specified. Usage: rct hook <HookEvent>')
+        console.error(
+            '[rct] Error: No hook event specified. Usage: rct hook <HookEvent>',
+        )
         process.exit(1)
     }
 
@@ -99,15 +101,7 @@ async function main(eventArg?: string) {
         }
     }
 
-    // Evaluate rules
-    const ruleResult = evaluateRules(
-        desugared.rules ?? [],
-        event,
-        toolName,
-        payload,
-    )
-
-    // Evaluate plugin triggers
+    // Evaluate plugin triggers (before static rules — early exit on block)
     const pluginInput: PluginHookInput = { toolName, payload }
     const pluginWarnMessages: string[] = []
 
@@ -135,6 +129,14 @@ async function main(eventArg?: string) {
             pluginWarnMessages.push(result.message)
         }
     }
+
+    // Evaluate static rules
+    const ruleResult = evaluateRules(
+        desugared.rules ?? [],
+        event,
+        toolName,
+        payload,
+    )
 
     // If static rule blocks, output and exit
     if (ruleResult?.action === 'block') {

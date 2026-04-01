@@ -44,17 +44,27 @@ describe('RCTPlugin context function', () => {
         expect(result).toBe('<tmux>pane layout here</tmux>')
     })
 
-    test('context that throws is caught and warned (not fatal)', async () => {
+    test('context that throws is caught by withTimeout (not fatal)', async () => {
         const plugin: RCTPlugin = {
             name: 'throwing-context',
             context: () => {
                 throw new Error('context exploded')
             },
         }
-        // The function itself throws — the pipeline must catch it
-        expect(() => plugin.context!('SessionStart', { payload: {} })).toThrow(
-            'context exploded',
+        // withTimeout catches the error and returns undefined with a warning
+        const warns: string[] = []
+        const origWarn = console.warn
+        console.warn = (...args: unknown[]) => warns.push(String(args[0]))
+
+        const result = await withTimeout(
+            () => plugin.context!('SessionStart', { payload: {} }),
+            5000,
+            'test-context',
         )
+
+        console.warn = origWarn
+        expect(result).toBeUndefined()
+        expect(warns.some((w) => w.includes('context exploded'))).toBe(true)
     })
 
     test('async context functions are awaited', async () => {
@@ -148,16 +158,27 @@ describe('RCTPlugin trigger function', () => {
         expect(result.message).toBe('Be careful with this tool')
     })
 
-    test('trigger that throws is caught and warned (not fatal)', () => {
+    test('trigger that throws is caught by withTimeout (not fatal)', async () => {
         const plugin: RCTPlugin = {
             name: 'throwing-trigger',
             trigger: () => {
                 throw new Error('trigger exploded')
             },
         }
-        expect(() => plugin.trigger!('PreToolUse', { payload: {} })).toThrow(
-            'trigger exploded',
+        // withTimeout catches the error and returns undefined with a warning
+        const warns: string[] = []
+        const origWarn = console.warn
+        console.warn = (...args: unknown[]) => warns.push(String(args[0]))
+
+        const result = await withTimeout(
+            () => plugin.trigger!('PreToolUse', { payload: {} }),
+            5000,
+            'test-trigger',
         )
+
+        console.warn = origWarn
+        expect(result).toBeUndefined()
+        expect(warns.some((w) => w.includes('trigger exploded'))).toBe(true)
     })
 
     test('async trigger functions are awaited', async () => {

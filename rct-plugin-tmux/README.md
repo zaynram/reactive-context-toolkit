@@ -9,11 +9,7 @@ MCP server for tmux pane control, packaged as an [rct](https://github.com/nickar
 Enable in your `rct.config.json`:
 
 ```json
-{
-    "globals": {
-        "plugins": ["tmux"]
-    }
-}
+{ "globals": { "plugins": ["tmux"] } }
 ```
 
 ### As a standalone package
@@ -25,11 +21,7 @@ bun add rct-plugin-tmux
 Then reference in config:
 
 ```json
-{
-    "globals": {
-        "plugins": ["rct-plugin-tmux"]
-    }
-}
+{ "globals": { "plugins": ["rct-plugin-tmux"] } }
 ```
 
 ## MCP Server Setup
@@ -44,17 +36,14 @@ The setup command writes this to `.mcp.json`:
 ```json
 {
     "mcpServers": {
-        "rct-tmux": {
-            "command": "bunx",
-            "args": ["rct-tmux", "serve"]
-        }
+        "rct-tmux": { "command": "bunx", "args": ["rct-tmux", "serve"] }
     }
 }
 ```
 
 ## Tools
 
-All tools target panes using tmux's standard addressing: `session:window.pane` (e.g., `dev:0.1`). When `$TMUX` is set, tools default to the current session.
+All tools target panes using tmux's standard addressing: `session:window.pane` (e.g., `dev:0.1`). You must specify explicit targets where required (e.g., for `tmux_read`, `tmux_send`, and `tmux_close`). `tmux_list` lists all sessions and panes by default.
 
 ### tmux_list
 
@@ -99,11 +88,11 @@ Create a new pane by splitting an existing one. Returns the new pane's target.
 
 ### tmux_close
 
-Close a pane. Refuses to close the last pane in a session.
+Close a pane. Refuses to close the last pane in its window.
 
-| Parameter | Type   | Required | Description  |
-| --------- | ------ | -------- | ------------ |
-| target    | string | yes      | Pane target  |
+| Parameter | Type   | Required | Description |
+| --------- | ------ | -------- | ----------- |
+| target    | string | yes      | Pane target |
 
 ## Error Handling
 

@@ -1,17 +1,6 @@
-import { describe, expect, it, mock, beforeEach } from 'bun:test'
-import {
-    parseListPanes,
-    validateTarget,
-    getCurrentSession,
-    isAvailable,
-    hasSession,
-    exec,
-} from '../src/lib/tmux'
-import {
-    TmuxNotFoundError,
-    InvalidTargetError,
-    type PaneInfo,
-} from '../src/lib/types'
+import { describe, expect, it } from 'bun:test'
+import { parseListPanes, validateTarget } from '../src/lib/tmux'
+import { InvalidTargetError } from '../src/lib/types'
 
 describe('parseListPanes', () => {
     it('parses a single pane', () => {

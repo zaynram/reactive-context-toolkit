@@ -1,11 +1,6 @@
-import {
-    type PaneInfo,
-    TmuxNotFoundError,
-    InvalidTargetError,
-    NoSessionError,
-} from './types'
+import { type PaneInfo, TmuxNotFoundError, InvalidTargetError } from './types'
 
-const TARGET_RE = /^[a-zA-Z0-9_:.\/$@%-]+$/
+const TARGET_RE = /^[a-zA-Z0-9_:./$@%-]+$/
 
 export async function exec(
     args: string[],

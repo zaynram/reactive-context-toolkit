@@ -17,7 +17,13 @@ export async function handleSplit(params: SplitParams) {
 
     if (params.target) args.push('-t', params.target)
     args.push(dir)
-    if (params.percent) args.push('-p', String(params.percent))
+    if (params.percent !== undefined) {
+        const rounded = Math.round(params.percent)
+        if (rounded < 1 || rounded > 100) {
+            return err('Invalid percent: must be between 1 and 100')
+        }
+        args.push('-p', String(rounded))
+    }
     args.push('-d', '-P', '-F', '#{session_name}:#{window_index}.#{pane_index}')
     if (params.command) args.push(params.command)
 

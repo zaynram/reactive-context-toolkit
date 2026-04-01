@@ -126,7 +126,7 @@ describe('tmux_read', () => {
     it('returns error for invalid target', async () => {
         setupMocks()
         const result = await handleRead({ target: ';rm -rf /' })
-        expect(mcpError(result)).toContain('Invalid pane target')
+        expect(mcpError(result)).toContain('Invalid tmux target')
     })
 
     it('returns error when tmux not installed', async () => {
@@ -184,7 +184,7 @@ describe('tmux_send', () => {
     it('returns error for invalid target', async () => {
         setupMocks()
         const result = await handleSend({ target: '$(whoami)', keys: 'test' })
-        expect(mcpError(result)).toContain('Invalid pane target')
+        expect(mcpError(result)).toContain('Invalid tmux target')
     })
 
     it('returns error when tmux not installed', async () => {
@@ -254,7 +254,7 @@ describe('tmux_close', () => {
         mcpText(result)
     })
 
-    it('refuses to close last pane in session', async () => {
+    it('refuses to close last pane in window', async () => {
         setupMocks()
         // list-panes returns only 1 pane
         mockExec.mockResolvedValueOnce({
@@ -268,7 +268,7 @@ describe('tmux_close', () => {
     it('returns error for invalid target', async () => {
         setupMocks()
         const result = await handleClose({ target: ';rm -rf /' })
-        expect(mcpError(result)).toContain('Invalid pane target')
+        expect(mcpError(result)).toContain('Invalid tmux target')
     })
 
     it('returns error when tmux not installed', async () => {

@@ -78,7 +78,7 @@ export function createServer() {
 
     server.tool(
         'tmux_close',
-        'Close a tmux pane (refuses to close last pane in session)',
+        'Close a tmux pane (refuses to close last pane in its window)',
         { target: z.string().describe('Pane to close') },
         async ({ target }) => handleClose({ target }),
     )
@@ -92,7 +92,9 @@ export async function startServer() {
         const transport = new StdioServerTransport()
         await server.connect(transport)
     } catch (err) {
-        console.error(`[rct-tmux] Failed to start MCP server: ${err instanceof Error ? err.message : err}`)
+        console.error(
+            `[rct-tmux] Failed to start MCP server: ${err instanceof Error ? err.message : err}`,
+        )
         process.exit(1)
     }
 }

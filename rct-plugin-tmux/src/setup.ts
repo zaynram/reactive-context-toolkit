@@ -10,10 +10,23 @@ export async function runSetup() {
     let data: Record<string, unknown> = {}
     if (await file.exists()) {
         try {
-            data = await file.json()
+            const parsed = await file.json()
+            if (
+                typeof parsed !== 'object'
+                || parsed === null
+                || Array.isArray(parsed)
+            ) {
+                console.warn(
+                    `[rct-tmux] Warning: ${mcpPath} is not a JSON object — starting fresh`,
+                )
+            } else {
+                data = parsed as Record<string, unknown>
+            }
         } catch {
             const raw = await file.text()
-            console.warn(`[rct-tmux] Warning: ${mcpPath} contains invalid JSON — backing up and starting fresh`)
+            console.warn(
+                `[rct-tmux] Warning: ${mcpPath} contains invalid JSON — backing up and starting fresh`,
+            )
             await Bun.write(`${mcpPath}.bak`, raw)
             data = {}
         }

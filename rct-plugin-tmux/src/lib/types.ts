@@ -16,7 +16,7 @@ export class TmuxNotFoundError extends Error {
 export class InvalidTargetError extends Error {
     constructor(target: string) {
         super(
-            `Invalid pane target '${target}'. Use format: session:window.pane`,
+            `Invalid tmux target '${target}'. Expected format: session:window.pane (e.g., dev:0.1)`,
         )
         this.name = 'InvalidTargetError'
     }

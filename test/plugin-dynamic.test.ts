@@ -350,9 +350,9 @@ describe('withTimeout', () => {
 
         const result = await withTimeout(
             () =>
-                new Promise<string>((resolve) =>
-                    setTimeout(() => resolve('late'), 10000),
-                ),
+                // Simulate a never-resolving operation without scheduling timers,
+                // so the test exercises the timeout path without background work.
+                new Promise<string>(() => {}),
             50,
             'slow-fn',
         )

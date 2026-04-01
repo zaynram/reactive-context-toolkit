@@ -6,13 +6,13 @@ import {
     type LangEntry,
     FileEntry,
     RuleEntry,
-} from "#config/types"
-import type { FileRegistry } from "#types"
-import { xml } from "#util"
-import plugins from "#plugin"
-import { RCTPlugin } from "#plugin/types"
+} from '#config/types'
+import type { FileRegistry } from '#types'
+import { xml } from '#util'
+import plugins from '#plugin'
+import { RCTPlugin } from '#plugin/types'
 
-type MetaSection = "files" | "lang" | "test" | "rules"
+type MetaSection = 'files' | 'lang' | 'test' | 'rules'
 
 interface FileMeta {
     alias: string
@@ -61,8 +61,8 @@ function buildFilesSection(
 ): FileMeta[] {
     return [
         ...(config.files ?? []),
-        ...getPluginSectionValues<FileEntry>(config, "files"),
-    ].map(f => {
+        ...getPluginSectionValues<FileEntry>(config, 'files'),
+    ].map((f) => {
         const alias = f.alias ?? f.path
         const ref = registry.get(alias)
         const entry: FileMeta = { alias, path: f.path }
@@ -80,7 +80,7 @@ function buildLangSection(lang: LangConfig): LangMeta[] {
         LangEntry,
     ][]) {
         if (!entry) continue
-        const tools = (entry.tools ?? []).map(t => t.name)
+        const tools = (entry.tools ?? []).map((t) => t.name)
         result.push({ language, tools })
     }
     return result
@@ -93,46 +93,46 @@ function buildTestSection(config: RCTConfig): TestMeta {
 function buildRulesSection(config: RCTConfig): RulesMeta {
     const rules = [
         ...(config.rules ?? []),
-        ...getPluginSectionValues<RuleEntry>(config, "rules"),
+        ...getPluginSectionValues<RuleEntry>(config, 'rules'),
     ]
-    const actions = [...new Set(rules.map(r => r.action))]
+    const actions = [...new Set(rules.map((r) => r.action))]
     return { count: rules.length, actions }
 }
 
 function formatXml(sections: SectionData): string {
     const parts: string[] = []
-    parts.push(xml.open("rct-meta"))
+    parts.push(xml.open('rct-meta'))
 
     if (sections.files) {
-        parts.push(xml.open("files"))
+        parts.push(xml.open('files'))
         for (const f of sections.files) {
             parts.push(
-                xml.inline("file", {
+                xml.inline('file', {
                     alias: f.alias,
                     path: f.path,
                     ...(f.brief && { brief: f.brief }),
                 }),
             )
         }
-        parts.push(xml.close("files"))
+        parts.push(xml.close('files'))
     }
 
     if (sections.lang) {
-        parts.push(xml.open("lang"))
+        parts.push(xml.open('lang'))
         for (const l of sections.lang) {
             parts.push(
-                xml.inline("language", {
+                xml.inline('language', {
                     name: l.language,
-                    tools: l.tools.join(", "),
+                    tools: l.tools.join(', '),
                 }),
             )
         }
-        parts.push(xml.close("lang"))
+        parts.push(xml.close('lang'))
     }
 
     if (sections.test) {
         parts.push(
-            xml.inline("test", {
+            xml.inline('test', {
                 configured: String(sections.test.configured),
             }),
         )
@@ -140,15 +140,15 @@ function formatXml(sections: SectionData): string {
 
     if (sections.rules) {
         parts.push(
-            xml.inline("rules", {
+            xml.inline('rules', {
                 count: String(sections.rules.count),
-                actions: sections.rules.actions.join(", "),
+                actions: sections.rules.actions.join(', '),
             }),
         )
     }
 
-    parts.push(xml.close("rct-meta"))
-    return parts.join("")
+    parts.push(xml.close('rct-meta'))
+    return parts.join('')
 }
 
 function formatJson(sections: SectionData): string {
@@ -159,17 +159,17 @@ function formatPath(sections: SectionData): string {
     const parts: string[] = []
 
     if (sections.files) {
-        parts.push("files:")
+        parts.push('files:')
         for (const f of sections.files) {
-            const briefStr = f.brief ? ` (${f.brief})` : ""
+            const briefStr = f.brief ? ` (${f.brief})` : ''
             parts.push(`  ${f.alias}: ${f.path}${briefStr}`)
         }
     }
 
     if (sections.lang) {
-        parts.push("lang:")
+        parts.push('lang:')
         for (const l of sections.lang) {
-            parts.push(`  ${l.language}: ${l.tools.join(", ")}`)
+            parts.push(`  ${l.language}: ${l.tools.join(', ')}`)
         }
     }
 
@@ -179,11 +179,11 @@ function formatPath(sections: SectionData): string {
 
     if (sections.rules) {
         parts.push(
-            `rules: count=${sections.rules.count}, actions=${sections.rules.actions.join(", ")}`,
+            `rules: count=${sections.rules.count}, actions=${sections.rules.actions.join(', ')}`,
         )
     }
 
-    return parts.join("\n")
+    return parts.join('\n')
 }
 
 function formatRaw(sections: SectionData): string {
@@ -191,14 +191,14 @@ function formatRaw(sections: SectionData): string {
 
     if (sections.files) {
         for (const f of sections.files) {
-            const briefStr = f.brief ? ` (${f.brief})` : ""
+            const briefStr = f.brief ? ` (${f.brief})` : ''
             parts.push(`${f.alias}: ${f.path}${briefStr}`)
         }
     }
 
     if (sections.lang) {
         for (const l of sections.lang) {
-            parts.push(`${l.language}: ${l.tools.join(", ")}`)
+            parts.push(`${l.language}: ${l.tools.join(', ')}`)
         }
     }
 
@@ -208,11 +208,11 @@ function formatRaw(sections: SectionData): string {
 
     if (sections.rules) {
         parts.push(
-            `rules: count=${sections.rules.count}, actions=${sections.rules.actions.join(", ")}`,
+            `rules: count=${sections.rules.count}, actions=${sections.rules.actions.join(', ')}`,
         )
     }
 
-    return parts.join("\n")
+    return parts.join('\n')
 }
 
 export function generateMeta(
@@ -221,36 +221,36 @@ export function generateMeta(
     globals: Required<GlobalsConfig>,
     metaConfig: MetaConfig,
 ): string {
-    const include: MetaSection[] = metaConfig.include ?? ["files", "lang"]
+    const include: MetaSection[] = metaConfig.include ?? ['files', 'lang']
     const brief = metaConfig.brief ?? true
-    const enumeration = metaConfig.contents?.enumeration ?? "xml"
+    const enumeration = metaConfig.contents?.enumeration ?? 'xml'
 
     const sections: SectionData = {}
 
-    if (include.includes("files")) {
+    if (include.includes('files')) {
         sections.files = buildFilesSection(config, registry, brief)
     }
 
-    if (include.includes("lang") && config.lang) {
+    if (include.includes('lang') && config.lang) {
         sections.lang = buildLangSection(config.lang)
     }
 
-    if (include.includes("test")) {
+    if (include.includes('test')) {
         sections.test = buildTestSection(config)
     }
 
-    if (include.includes("rules")) {
+    if (include.includes('rules')) {
         sections.rules = buildRulesSection(config)
     }
 
     switch (enumeration) {
-        case "xml":
+        case 'xml':
             return formatXml(sections)
-        case "json":
+        case 'json':
             return formatJson(sections)
-        case "path":
+        case 'path':
             return formatPath(sections)
-        case "raw":
+        case 'raw':
             return formatRaw(sections)
         default:
             return formatXml(sections)

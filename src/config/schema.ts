@@ -1,172 +1,177 @@
-import { fs } from "#util/fs"
-import plugins from "#plugin"
+import { fs } from '#util/fs'
+import plugins from '#plugin'
 import type {
-  RCTConfig,
-  GlobalsConfig,
-  MatchCondition,
-  Match,
-  HookEvent,
-  InjectionEntry,
-  FileEntry,
-  RuleEntry,
-} from "./types"
+    RCTConfig,
+    GlobalsConfig,
+    MatchCondition,
+    Match,
+    HookEvent,
+    InjectionEntry,
+    FileEntry,
+    RuleEntry,
+} from './types'
 
 export type ValidatedConfig = { globals: Required<GlobalsConfig> } & RCTConfig
 
 const DEFAULT_GLOBALS: Required<GlobalsConfig> = {
-  format: "xml",
-  wrapper: "context",
-  briefByDefault: false,
-  minify: true,
-  plugins: [],
+    format: 'xml',
+    wrapper: 'context',
+    briefByDefault: false,
+    minify: true,
+    plugins: [],
 }
 
 function validateRegex(pattern: string, context: string): void {
-  try {
-    new RegExp(pattern)
-  } catch {
-    throw new Error(`Invalid regex pattern in ${context}: ${pattern}`)
-  }
+    try {
+        new RegExp(pattern)
+    } catch {
+        throw new Error(`Invalid regex pattern in ${context}: ${pattern}`)
+    }
 }
 
-function validateMatchCondition(condition: MatchCondition, context: string): void {
-  const operator = condition.operator ?? "regex"
-  if (operator === "regex" && typeof condition.pattern === "string") {
-    validateRegex(condition.pattern, context)
-  }
-  if (operator === "regex" && Array.isArray(condition.pattern)) {
-    for (const p of condition.pattern) {
-      if (typeof p === "string") {
-        validateRegex(p, context)
-      }
+function validateMatchCondition(
+    condition: MatchCondition,
+    context: string,
+): void {
+    const operator = condition.operator ?? 'regex'
+    if (operator === 'regex' && typeof condition.pattern === 'string') {
+        validateRegex(condition.pattern, context)
     }
-  }
+    if (operator === 'regex' && Array.isArray(condition.pattern)) {
+        for (const p of condition.pattern) {
+            if (typeof p === 'string') {
+                validateRegex(p, context)
+            }
+        }
+    }
 }
 
 function validateMatch(match: Match | undefined, context: string): void {
-  if (!match) return
-  const conditions = Array.isArray(match) ? match : [match]
-  for (const cond of conditions) {
-    validateMatchCondition(cond, context)
-  }
+    if (!match) return
+    const conditions = Array.isArray(match) ? match : [match]
+    for (const cond of conditions) {
+        validateMatchCondition(cond, context)
+    }
 }
 
 export function validateConfig(config: RCTConfig): ValidatedConfig {
-  // Validate rules
-  if (config.rules) {
-    for (const rule of config.rules) {
-      validateMatch(rule.match, `rule "${rule.description ?? rule.message}"`)
+    // Validate rules
+    if (config.rules) {
+        for (const rule of config.rules) {
+            validateMatch(
+                rule.match,
+                `rule "${rule.description ?? rule.message}"`,
+            )
+        }
     }
-  }
 
-  // Validate injections
-  if (config.injections) {
-    for (const injection of config.injections) {
-      validateMatch(injection.match, `injection "${injection.description ?? "unnamed"}"`)
+    // Validate injections
+    if (config.injections) {
+        for (const injection of config.injections) {
+            validateMatch(
+                injection.match,
+                `injection "${injection.description ?? 'unnamed'}"`,
+            )
+        }
     }
-  }
 
-  // Populate defaults
-  const globals: Required<GlobalsConfig> = {
-    ...DEFAULT_GLOBALS,
-    ...config.globals,
-  }
+    // Populate defaults
+    const globals: Required<GlobalsConfig> = {
+        ...DEFAULT_GLOBALS,
+        ...config.globals,
+    }
 
-  return { ...config, globals }
+    return { ...config, globals }
 }
 
 export function applyPlugins(config: ValidatedConfig): ValidatedConfig {
-  const pluginNames = config.globals.plugins ?? []
-  if (pluginNames.length === 0) return config
+    const pluginNames = config.globals.plugins ?? []
+    if (pluginNames.length === 0) return config
 
-  const mergedFiles: FileEntry[] = [...(config.files ?? [])]
-  const mergedRules: RuleEntry[] = [...(config.rules ?? [])]
-  const hadRules = config.rules?.length ?? 0
+    const mergedFiles: FileEntry[] = [...(config.files ?? [])]
+    const mergedRules: RuleEntry[] = [...(config.rules ?? [])]
+    const hadRules = config.rules?.length ?? 0
 
-  for (const name of pluginNames) {
-    if (!(name in plugins)) continue
-    const plugin = plugins[name]
-    if (plugin.files) mergedFiles.push(...plugin.files)
-    if (plugin.rules) mergedRules.push(...plugin.rules)
-  }
+    for (const name of pluginNames) {
+        if (!(name in plugins)) continue
+        const plugin = plugins[name]
+        if (plugin.files) mergedFiles.push(...plugin.files)
+        if (plugin.rules) mergedRules.push(...plugin.rules)
+    }
 
-  return {
-    ...config,
-    files: mergedFiles,
-    rules: mergedRules.length > hadRules ? mergedRules : config.rules,
-  }
+    return {
+        ...config,
+        files: mergedFiles,
+        rules: mergedRules.length > hadRules ? mergedRules : config.rules,
+    }
 }
 
-export function desugarFileInjections(config: ValidatedConfig): ValidatedConfig {
-  const files = config.files ?? []
-  const existingInjections = [...(config.injections ?? [])]
-  const newInjections: InjectionEntry[] = []
+export function desugarFileInjections(
+    config: ValidatedConfig,
+): ValidatedConfig {
+    const files = config.files ?? []
+    const existingInjections = [...(config.injections ?? [])]
+    const newInjections: InjectionEntry[] = []
 
-  for (const file of files) {
-    const alias = file.alias ?? fs.stem(file.path)
+    for (const file of files) {
+        const alias = file.alias ?? fs.stem(file.path)
 
-    // Desugar file-level injectOn
-    if (file.injectOn) {
-      const events: HookEvent[] = Array.isArray(file.injectOn)
-        ? file.injectOn
-        : [file.injectOn]
+        // Desugar file-level injectOn
+        if (file.injectOn) {
+            const events: HookEvent[] =
+                Array.isArray(file.injectOn) ? file.injectOn : [file.injectOn]
 
-      for (const event of events) {
-        const alreadyExists = existingInjections.some(
-          (inj) => inj.on === event && inj.inject.includes(alias),
-        )
-        if (!alreadyExists) {
-          newInjections.push({
-            on: event,
-            inject: [alias],
-          })
+            for (const event of events) {
+                const alreadyExists = existingInjections.some(
+                    (inj) => inj.on === event && inj.inject.includes(alias),
+                )
+                if (!alreadyExists) {
+                    newInjections.push({ on: event, inject: [alias] })
+                }
+            }
         }
-      }
+
+        // Desugar metaFile-level injectOn
+        if (file.metaFiles) {
+            for (const meta of file.metaFiles) {
+                if (!meta.injectOn) continue
+                const metaAlias = meta.alias ?? fs.stem(meta.path)
+                const colonRef = `${alias}:${metaAlias}`
+                const events: HookEvent[] =
+                    Array.isArray(meta.injectOn) ?
+                        meta.injectOn
+                    :   [meta.injectOn]
+
+                for (const event of events) {
+                    const alreadyExists = existingInjections.some(
+                        (inj) =>
+                            inj.on === event && inj.inject.includes(colonRef),
+                    )
+                    if (!alreadyExists) {
+                        newInjections.push({ on: event, inject: [colonRef] })
+                    }
+                }
+            }
+        }
     }
 
-    // Desugar metaFile-level injectOn
-    if (file.metaFiles) {
-      for (const meta of file.metaFiles) {
-        if (!meta.injectOn) continue
-        const metaAlias = meta.alias ?? fs.stem(meta.path)
-        const colonRef = `${alias}:${metaAlias}`
-        const events: HookEvent[] = Array.isArray(meta.injectOn)
-          ? meta.injectOn
-          : [meta.injectOn]
-
-        for (const event of events) {
-          const alreadyExists = existingInjections.some(
-            (inj) => inj.on === event && inj.inject.includes(colonRef),
-          )
-          if (!alreadyExists) {
-            newInjections.push({
-              on: event,
-              inject: [colonRef],
-            })
-          }
-        }
-      }
-    }
-  }
-
-  return {
-    ...config,
-    injections: [...existingInjections, ...newInjections],
-  }
+    return { ...config, injections: [...existingInjections, ...newInjections] }
 }
 
 export function applyStaleCheck(
-  content: string,
-  staleConfig: { dateTag: string; wrapTag: string; format?: string },
-  today: string,
+    content: string,
+    staleConfig: { dateTag: string; wrapTag: string; format?: string },
+    today: string,
 ): string {
-  const dateRegex = new RegExp(`<${staleConfig.dateTag}>(\\d{4}-\\d{2}-\\d{2})</${staleConfig.dateTag}>`)
-  const match = dateRegex.exec(content)
-  if (!match) return content
+    const dateRegex = new RegExp(
+        `<${staleConfig.dateTag}>(\\d{4}-\\d{2}-\\d{2})</${staleConfig.dateTag}>`,
+    )
+    const match = dateRegex.exec(content)
+    if (!match) return content
 
-  const extractedDate = match[1]
-  // Compare dates as strings (YYYY-MM-DD format is lexicographically comparable)
-  if (extractedDate >= today) return content
+    const extractedDate = match[1]
+    // Compare dates as strings (YYYY-MM-DD format is lexicographically comparable)
+    if (extractedDate >= today) return content
 
-  return `<${staleConfig.wrapTag} date="${extractedDate}" today="${today}">${content}</${staleConfig.wrapTag}>`
+    return `<${staleConfig.wrapTag} date="${extractedDate}" today="${today}">${content}</${staleConfig.wrapTag}>`
 }

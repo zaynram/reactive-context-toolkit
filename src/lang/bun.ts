@@ -1,1 +1,1 @@
-export { getBunScripts, getBunWorkspace } from "#tools/bun"
+export { getBunScripts, getBunWorkspace } from '#tools/bun'

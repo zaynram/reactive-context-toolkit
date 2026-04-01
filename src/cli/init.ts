@@ -1,7 +1,11 @@
 #!/usr/bin/env bun
-import { readFileSync, writeFileSync, mkdirSync } from "fs"
-import type { RCTConfig, LangConfig, LangEntry, LangTool } from "../config/types"
-import { fs } from "#util"
+import type {
+    RCTConfig,
+    LangConfig,
+    LangEntry,
+    LangTool,
+} from '../config/types'
+import { fs } from '#util'
 
 interface DetectionResult {
     lang: LangConfig
@@ -9,7 +13,7 @@ interface DetectionResult {
     files: { alias: string; path: string }[]
 }
 
-type NodePackageManager = "bun" | "pnpm" | "npm"
+type NodePackageManager = 'bun' | 'pnpm' | 'npm'
 
 export function detectProject(root: string): DetectionResult {
     const lang: LangConfig = {}
@@ -20,24 +24,23 @@ export function detectProject(root: string): DetectionResult {
     const has = (name: string) => fs.exists(at(name))
 
     // Detect TypeScript/JavaScript
-    const hasPkg = has("package.json")
-    const hasTsconfig = has("tsconfig.json")
+    const hasPkg = has('package.json')
+    const hasTsconfig = has('tsconfig.json')
 
     if (hasPkg || hasTsconfig) {
         // Detect package manager from lockfile
         let pmName: NodePackageManager | undefined
-        if (has("bun.lock") || has("bun.lockb")) pmName = "bun"
-        else if (has("pnpm-lock.yaml")) pmName = "pnpm"
-        else if (has("package-lock.json")) pmName = "npm"
+        if (has('bun.lock') || has('bun.lockb')) pmName = 'bun'
+        else if (has('pnpm-lock.yaml')) pmName = 'pnpm'
+        else if (has('package-lock.json')) pmName = 'npm'
 
-        const tool: LangTool | undefined = pmName
-            ? { name: pmName, scripts: true }
-            : undefined
+        const tool: LangTool | undefined =
+            pmName ? { name: pmName, scripts: true } : undefined
 
         // Get test command from package.json scripts
         if (tool && hasPkg) {
             try {
-                const pkg = JSON.parse(readFileSync(at("package.json"), "utf-8"))
+                const pkg = JSON.parse(fs.readRaw(at('package.json')))
                 const testScript: string | undefined = pkg?.scripts?.test
                 if (testScript) testCmds.push(testScript)
             } catch {
@@ -45,12 +48,10 @@ export function detectProject(root: string): DetectionResult {
             }
         }
 
-        const entry: LangEntry = {
-            tools: tool ? [tool] : [],
-        }
+        const entry: LangEntry = { tools: tool ? [tool] : [] }
 
         if (hasTsconfig) {
-            entry.config = [{ name: "tsconfig", path: at("tsconfig.json") }]
+            entry.config = [{ name: 'tsconfig', path: at('tsconfig.json') }]
             lang.typescript = entry
         } else {
             lang.javascript = entry
@@ -58,27 +59,27 @@ export function detectProject(root: string): DetectionResult {
     }
 
     // Detect Python
-    const hasPixiToml = has("pixi.toml")
-    const hasPyproject = has("pyproject.toml")
+    const hasPixiToml = has('pixi.toml')
+    const hasPyproject = has('pyproject.toml')
 
     if (hasPixiToml || hasPyproject) {
         const tools: LangTool[] = []
         if (hasPixiToml) {
-            tools.push({ name: "pixi", tasks: true, environment: true })
-            testCmds.push("pixi run test")
+            tools.push({ name: 'pixi', tasks: true, environment: true })
+            testCmds.push('pixi run test')
         }
         lang.python = { tools }
     }
 
     // Detect Rust
-    if (has("Cargo.toml")) {
-        lang.rust = { tools: [{ name: "cargo" }] }
-        testCmds.push("cargo test")
+    if (has('Cargo.toml')) {
+        lang.rust = { tools: [{ name: 'cargo' }] }
+        testCmds.push('cargo test')
     }
 
     return {
         lang,
-        testCommand: testCmds.length ? testCmds.join(" && ") : null,
+        testCommand: testCmds.length ? testCmds.join(' && ') : null,
         files,
     }
 }
@@ -93,27 +94,30 @@ export function generateConfig(detection: DetectionResult): RCTConfig {
     if (detection.testCommand) {
         config.test = {
             command: detection.testCommand,
-            injectOn: "SessionStart",
+            injectOn: 'SessionStart',
         }
     }
 
     if (detection.files.length > 0) {
-        config.files = detection.files.map(f => ({
+        config.files = detection.files.map((f) => ({
             alias: f.alias,
             path: f.path,
-            injectOn: "SessionStart" as const,
+            injectOn: 'SessionStart' as const,
         }))
     }
 
     return config
 }
 
-export function mergeSettings(settingsPath: string, config: RCTConfig): void {
+export async function mergeSettings(
+    settingsPath: string,
+    config: RCTConfig,
+): Promise<void> {
     // Read existing settings.json
     let settings: Record<string, any> = {}
     if (fs.exists(settingsPath)) {
         try {
-            settings = JSON.parse(readFileSync(settingsPath, "utf-8"))
+            settings = JSON.parse(fs.readRaw(settingsPath))
         } catch {
             console.error(
                 `Error: ${settingsPath} contains invalid JSON. Fix it before running rct init.`,
@@ -125,7 +129,7 @@ export function mergeSettings(settingsPath: string, config: RCTConfig): void {
     // Merge hooks (don't overwrite existing)
     if (!settings.hooks) settings.hooks = {}
 
-    const hookCommand = "bun run rct hook"
+    const hookCommand = 'bun run rct hook'
 
     // Determine which events are needed from config
     const preToolMatchers = new Set<string>()
@@ -134,24 +138,24 @@ export function mergeSettings(settingsPath: string, config: RCTConfig): void {
     for (const rule of config.rules ?? []) {
         if (rule.matcher) {
             const matchers =
-                rule.on === "PreToolUse" ? preToolMatchers : postToolMatchers
-            rule.matcher.split("|").forEach(m => matchers.add(m))
+                rule.on === 'PreToolUse' ? preToolMatchers : postToolMatchers
+            rule.matcher.split('|').forEach((m) => matchers.add(m))
         }
     }
     for (const inj of config.injections ?? []) {
         const matchers =
-            inj.on === "PreToolUse" ? preToolMatchers : postToolMatchers
+            inj.on === 'PreToolUse' ? preToolMatchers : postToolMatchers
         if (inj.matcher) {
-            inj.matcher.split("|").forEach(m => matchers.add(m))
+            inj.matcher.split('|').forEach((m) => matchers.add(m))
         }
         if (inj.matchFile) {
-            postToolMatchers.add("Read")
+            postToolMatchers.add('Read')
         }
     }
 
     // Add SessionStart hook
     const sessionHook = {
-        type: "command",
+        type: 'command',
         command: `${hookCommand} SessionStart`,
     }
     if (!settings.hooks.SessionStart) {
@@ -160,8 +164,8 @@ export function mergeSettings(settingsPath: string, config: RCTConfig): void {
 
     // Add PreToolUse hook if needed
     if (preToolMatchers.size > 0) {
-        const matcher = Array.from(preToolMatchers).join("|")
-        const hook = { type: "command", command: `${hookCommand} PreToolUse` }
+        const matcher = Array.from(preToolMatchers).join('|')
+        const hook = { type: 'command', command: `${hookCommand} PreToolUse` }
         if (!settings.hooks.PreToolUse) {
             settings.hooks.PreToolUse = [{ matcher, hooks: [hook] }]
         }
@@ -169,8 +173,8 @@ export function mergeSettings(settingsPath: string, config: RCTConfig): void {
 
     // Add PostToolUse hook if needed
     if (postToolMatchers.size > 0) {
-        const matcher = Array.from(postToolMatchers).join("|")
-        const hook = { type: "command", command: `${hookCommand} PostToolUse` }
+        const matcher = Array.from(postToolMatchers).join('|')
+        const hook = { type: 'command', command: `${hookCommand} PostToolUse` }
         if (!settings.hooks.PostToolUse) {
             settings.hooks.PostToolUse = [{ matcher, hooks: [hook] }]
         }
@@ -179,47 +183,44 @@ export function mergeSettings(settingsPath: string, config: RCTConfig): void {
     // Add hooks for other events used by injections/rules
     const otherEvents = new Set<string>()
     for (const inj of config.injections ?? []) {
-        if (!["PreToolUse", "PostToolUse", "SessionStart"].includes(inj.on)) {
+        if (!['PreToolUse', 'PostToolUse', 'SessionStart'].includes(inj.on)) {
             otherEvents.add(inj.on)
         }
     }
     for (const rule of config.rules ?? []) {
-        if (!["PreToolUse", "PostToolUse", "SessionStart"].includes(rule.on)) {
+        if (!['PreToolUse', 'PostToolUse', 'SessionStart'].includes(rule.on)) {
             otherEvents.add(rule.on)
         }
     }
     for (const event of otherEvents) {
-        const hook = { type: "command", command: `${hookCommand} ${event}` }
+        const hook = { type: 'command', command: `${hookCommand} ${event}` }
         if (!settings.hooks[event]) {
             settings.hooks[event] = [{ hooks: [hook] }]
         }
     }
 
     // Ensure directory exists
-    const dir = fs.dir(settingsPath)
-    if (!fs.exists(dir)) {
-        mkdirSync(dir, { recursive: true })
-    }
+    fs.mkdir(fs.dir(settingsPath))
 
-    writeFileSync(settingsPath, JSON.stringify(settings, null, 2), "utf-8")
+    await fs.write(settingsPath, JSON.stringify(settings, null, 2))
 }
 
 // CLI entry point
-export default function initializeRCT() {
+export default async function initializeRCT() {
     const root = process.env.CLAUDE_PROJECT_DIR ?? process.cwd()
-    console.log("Detecting project structure...")
+    console.log('Detecting project structure...')
     const detection = detectProject(root)
     const config = generateConfig(detection)
 
-    const configPath = fs.resolve("rct.config.json", { root })
+    const configPath = fs.resolve('rct.config.json', { root })
     if (!fs.exists(configPath)) {
-        writeFileSync(configPath, JSON.stringify(config, null, 2), "utf-8")
+        await fs.write(configPath, JSON.stringify(config, null, 2))
         console.log(`Created ${configPath}`)
     } else {
         console.log(`Config already exists at ${configPath}`)
     }
 
-    const settingsPath = fs.resolve([".claude", "settings.json"], { root })
-    mergeSettings(settingsPath, config)
+    const settingsPath = fs.resolve(['.claude', 'settings.json'], { root })
+    await mergeSettings(settingsPath, config)
     console.log(`Updated ${settingsPath}`)
 }

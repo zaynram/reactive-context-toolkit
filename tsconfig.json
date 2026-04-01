@@ -5,26 +5,12 @@
         "moduleResolution": "bundler",
         "strict": true,
         "noEmit": true,
-        "declaration": true,
         "esModuleInterop": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
-        "rootDir": "src",
-        "paths": {
-            "#*": [
-                "./src/*"
-            ]
-        },
-        "types": [
-            "bun-types",
-        ]
+        "paths": { "#*": ["./src/*"] },
+        "types": ["bun-types"]
     },
-    "include": [
-        "src"
-    ],
-    "exclude": [
-        "node_modules",
-        "lib",
-        "test"
-    ]
+    "include": ["src", "test"],
+    "exclude": ["node_modules", "lib"]
 }

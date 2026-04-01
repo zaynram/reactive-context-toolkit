@@ -3,24 +3,24 @@
  * Defines the shape of rct.config.json / rct.config.ts / rct.config.js
  */
 
-import { LANGUAGES } from "#constants"
+import { LANGUAGES } from '#constants'
 
 /** Hook events that support additionalContext */
 export type HookEvent =
-    | "PreToolUse"
-    | "PostToolUse"
-    | "PostToolUseFailure"
-    | "SessionStart"
-    | "UserPromptSubmit"
-    | "Setup"
-    | "SubagentStart"
-    | "Notification"
+    | 'PreToolUse'
+    | 'PostToolUse'
+    | 'PostToolUseFailure'
+    | 'SessionStart'
+    | 'UserPromptSubmit'
+    | 'Setup'
+    | 'SubagentStart'
+    | 'Notification'
 
 /** A single hook event or an array of hook events */
 export type HookEventOrArray = HookEvent | HookEvent[]
 
 /** Output format for injected context */
-export type Format = "xml" | "json"
+export type Format = 'xml' | 'json'
 
 /**
  * FileRef pattern: alias[:metaAlias][~brief]
@@ -86,23 +86,23 @@ export interface FileEntry extends MetaFileEntry {
 
 /** Targets for match conditions */
 export type MatchTarget =
-    | "file_path"
-    | "new_string"
-    | "content"
-    | "command"
-    | "user_prompt"
-    | "tool_name"
-    | "error"
+    | 'file_path'
+    | 'new_string'
+    | 'content'
+    | 'command'
+    | 'user_prompt'
+    | 'tool_name'
+    | 'error'
 
 /** Operators for match conditions */
 export type MatchOperator =
-    | "regex"
-    | "contains"
-    | "equals"
-    | "not_contains"
-    | "starts_with"
-    | "ends_with"
-    | "glob"
+    | 'regex'
+    | 'contains'
+    | 'equals'
+    | 'not_contains'
+    | 'starts_with'
+    | 'ends_with'
+    | 'glob'
 
 /** A single match condition */
 export interface MatchCondition {
@@ -130,7 +130,7 @@ export interface RuleEntry {
     /** Match condition(s) */
     match: Match
     /** Action to take on match */
-    action: "block" | "warn"
+    action: 'block' | 'warn'
     /** Message to display */
     message: string
 }
@@ -173,10 +173,10 @@ export interface LangConfigFile {
     extractPaths?: boolean
 }
 
-/** Known language tool names */
-export type PythonTool = "pixi" | "uv" | "ruff" | "pip"
-export type RustTool = "pixi" | "cargo" | "clippy"
-export type NodeTool = "bun" | `${"p" | ""}npm` | `${"j" | "t"}sconfig`
+/** Known language tool names (package managers and build tools only; linters use lang.x.config) */
+export type PythonTool = 'pixi' | 'uv' | 'pip' | 'pipx'
+export type RustTool = 'cargo' | 'cargo-binstall' | 'rustup'
+export type NodeTool = 'bun' | 'npm' | 'pnpm'
 export type LangToolName = PythonTool | RustTool | NodeTool
 
 /** Configuration for a language tool */
@@ -237,13 +237,13 @@ export interface MetaConfig {
     /** Hook event(s) that trigger meta injection */
     injectOn?: HookEventOrArray
     /** Which config sections to include in meta output */
-    include?: ("files" | "lang" | "test" | "rules")[]
+    include?: ('files' | 'lang' | 'test' | 'rules')[]
     /** Whether to use brief mode */
     brief?: boolean
     /** Content enumeration settings */
     contents?: {
         /** How to enumerate contents */
-        enumeration?: "raw" | "path" | "xml" | "json"
+        enumeration?: 'raw' | 'path' | 'xml' | 'json'
     }
 }
 

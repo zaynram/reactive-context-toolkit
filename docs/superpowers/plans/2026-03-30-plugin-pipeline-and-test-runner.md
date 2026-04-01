@@ -12,29 +12,31 @@
 
 ## File Map
 
-| File | Change |
-|---|---|
-| `src/config/schema.ts` | Fix `DEFAULT_GLOBALS` type; fix alias derivation; add `applyPlugins()` |
-| `src/cli/hook.ts` | Call `applyPlugins()` in pipeline; pass format/tool to `formatTestResult` |
-| `src/test/runner.ts` | `resolveTestCommand` returns `{command, tool}`; `formatTestResult` is format/tool-aware |
-| `src/engine/meta.ts` | Fix `getPluginSectionValues` flat-map bug |
-| `rct.config.schema.json` | Add `MinifyConfig` `$defs`, add `minify` to `GlobalsConfig`/`InjectionEntry`, fix `plugins` enum |
-| `package.json` | Add `build` script |
-| `test/schema.test.ts` | Add no-alias desugar test; add `applyPlugins` tests |
-| `test/test-runner.test.ts` | Add format/tool/brief tests |
-| `test/meta.test.ts` | Add plugin section value tests |
-| `test/integration.test.ts` | Fix stale describe label |
-| `test/plugin.test.ts` | **New** — unit tests for plugin registry, issueScope, trackWork |
+| File                       | Change                                                                                           |
+| -------------------------- | ------------------------------------------------------------------------------------------------ |
+| `src/config/schema.ts`     | Fix `DEFAULT_GLOBALS` type; fix alias derivation; add `applyPlugins()`                           |
+| `src/cli/hook.ts`          | Call `applyPlugins()` in pipeline; pass format/tool to `formatTestResult`                        |
+| `src/test/runner.ts`       | `resolveTestCommand` returns `{command, tool}`; `formatTestResult` is format/tool-aware          |
+| `src/engine/meta.ts`       | Fix `getPluginSectionValues` flat-map bug                                                        |
+| `rct.config.schema.json`   | Add `MinifyConfig` `$defs`, add `minify` to `GlobalsConfig`/`InjectionEntry`, fix `plugins` enum |
+| `package.json`             | Add `build` script                                                                               |
+| `test/schema.test.ts`      | Add no-alias desugar test; add `applyPlugins` tests                                              |
+| `test/test-runner.test.ts` | Add format/tool/brief tests                                                                      |
+| `test/meta.test.ts`        | Add plugin section value tests                                                                   |
+| `test/integration.test.ts` | Fix stale describe label                                                                         |
+| `test/plugin.test.ts`      | **New** — unit tests for plugin registry, issueScope, trackWork                                  |
 
 ---
 
 ## Task 1: Fix `DEFAULT_GLOBALS` type error and alias derivation mismatch
 
 **Files:**
+
 - Modify: `src/config/schema.ts`
 - Test: `test/schema.test.ts`
 
 Two bugs in `schema.ts`:
+
 1. `DEFAULT_GLOBALS` is typed `Required<GlobalsConfig>` but omits `plugins`, causing a compile-time type error.
 2. `desugarFileInjections` derives alias via `path.basename(file.path)` (keeps extension), while `buildFileRegistry` uses `fs.stem` (strips extension). For alias-less entries this means generated `FileRef` values like `"scope.xml"` never resolve in the registry which stores `"scope"`.
 
@@ -43,14 +45,14 @@ Two bugs in `schema.ts`:
 In `test/schema.test.ts`, add to the `desugarFileInjections` describe block:
 
 ```ts
-test("derives alias using stem (no extension) for files without explicit alias", () => {
+test('derives alias using stem (no extension) for files without explicit alias', () => {
     const config = validateConfig({
-        files: [{ path: "dev/scope.xml", injectOn: "SessionStart" }],
+        files: [{ path: 'dev/scope.xml', injectOn: 'SessionStart' }],
     })
     const result = desugarFileInjections(config)
     // The generated injection ref must be "scope", not "scope.xml"
     expect(result.injections).toHaveLength(1)
-    expect(result.injections![0].inject[0]).toBe("scope")
+    expect(result.injections![0].inject[0]).toBe('scope')
 })
 ```
 
@@ -67,11 +69,13 @@ Expected: FAIL — the current `path.basename` returns `"scope.xml"`, not `"scop
 In `src/config/schema.ts`:
 
 Add import at top:
+
 ```ts
-import { fs } from "#util/fs"
+import { fs } from '#util/fs'
 ```
 
 Change line 80:
+
 ```ts
 // Before:
 const alias = file.alias ?? path.basename(file.path)
@@ -80,6 +84,7 @@ const alias = file.alias ?? fs.stem(file.path)
 ```
 
 Also change the metaFile alias derivation at line 105 similarly:
+
 ```ts
 // Before:
 const metaAlias = meta.alias ?? meta.path
@@ -93,8 +98,8 @@ In `src/config/schema.ts`, `DEFAULT_GLOBALS` must satisfy `Required<GlobalsConfi
 
 ```ts
 const DEFAULT_GLOBALS: Required<GlobalsConfig> = {
-    format: "xml",
-    wrapper: "context",
+    format: 'xml',
+    wrapper: 'context',
     briefByDefault: false,
     minify: true,
     plugins: [],
@@ -115,8 +120,8 @@ After Task 1 adds `plugins: string[]` to `Required<GlobalsConfig>`, the existing
 
 ```ts
 const defaultGlobals: Required<GlobalsConfig> = {
-    format: "xml",
-    wrapper: "context",
+    format: 'xml',
+    wrapper: 'context',
     briefByDefault: false,
     minify: true,
     plugins: [],
@@ -137,6 +142,7 @@ git commit -m "fix: align alias derivation between desugar and registry; fix DEF
 ## Task 2: Fix `getPluginSectionValues` flatten bug in `meta.ts`
 
 **Files:**
+
 - Modify: `src/engine/meta.ts`
 - Test: `test/meta.test.ts`
 
@@ -147,44 +153,51 @@ git commit -m "fix: align alias derivation between desugar and registry; fix DEF
 In `test/meta.test.ts`, add the following import if `buildFileRegistry` is not already imported:
 
 ```ts
-import { buildFileRegistry } from "../src/config/files"
+import { buildFileRegistry } from '../src/config/files'
 ```
 
 Then add to the `generateMeta` describe block:
 
 ```ts
-test("includes plugin-contributed files in files section", () => {
+test('includes plugin-contributed files in files section', () => {
     const config: RCTConfig = {
-        globals: { plugins: ["track-work"] },
-        files: [{ alias: "my-file", path: "my-file.xml" }],
+        globals: { plugins: ['track-work'] },
+        files: [{ alias: 'my-file', path: 'my-file.xml' }],
     }
     const registry = buildFileRegistry([])
     const result = generateMeta(
         config,
         registry,
-        { ...defaultGlobals, plugins: ["track-work"] },
-        { include: ["files"] },
+        { ...defaultGlobals, plugins: ['track-work'] },
+        { include: ['files'] },
     )
     // track-work plugin contributes "chores" and "plans" files
-    expect(result).toContain("chores")
-    expect(result).toContain("plans")
+    expect(result).toContain('chores')
+    expect(result).toContain('plans')
     // Original file should also appear
-    expect(result).toContain("my-file")
+    expect(result).toContain('my-file')
 })
 
-test("includes plugin-contributed rules in rules section", () => {
+test('includes plugin-contributed rules in rules section', () => {
     // issueScope has no rules currently, but we can test that the section
     // doesn't crash when plugins are active
     const config: RCTConfig = {
-        globals: { plugins: ["track-work"] },
-        rules: [{ on: "PreToolUse", match: { target: "tool_name", pattern: "Bash" }, action: "warn", message: "test" }],
+        globals: { plugins: ['track-work'] },
+        rules: [
+            {
+                on: 'PreToolUse',
+                match: { target: 'tool_name', pattern: 'Bash' },
+                action: 'warn',
+                message: 'test',
+            },
+        ],
     }
     const registry = buildFileRegistry([])
     const result = generateMeta(
         config,
         registry,
-        { ...defaultGlobals, plugins: ["track-work"] },
-        { include: ["rules"] },
+        { ...defaultGlobals, plugins: ['track-work'] },
+        { include: ['rules'] },
     )
     expect(result).toContain('count="1"')
 })
@@ -235,6 +248,7 @@ git commit -m "fix: flatten plugin section values in meta; add plugin meta tests
 ## Task 3: Add `applyPlugins()` and wire into hook pipeline
 
 **Files:**
+
 - Modify: `src/config/schema.ts`
 - Modify: `src/cli/hook.ts`
 - Test: `test/schema.test.ts`
@@ -246,46 +260,54 @@ Plugins declare `files` (with `injectOn`) and `rules`. These must be merged into
 In `test/schema.test.ts`, add a new `describe("applyPlugins", ...)` block:
 
 ```ts
-import { validateConfig, desugarFileInjections, applyPlugins } from "../src/config/schema"
+import {
+    validateConfig,
+    desugarFileInjections,
+    applyPlugins,
+} from '../src/config/schema'
 
-describe("applyPlugins", () => {
-    test("returns config unchanged when no plugins activated", () => {
-        const config = validateConfig({ files: [{ alias: "mine", path: "mine.xml" }] })
+describe('applyPlugins', () => {
+    test('returns config unchanged when no plugins activated', () => {
+        const config = validateConfig({
+            files: [{ alias: 'mine', path: 'mine.xml' }],
+        })
         const result = applyPlugins(config)
         expect(result.files).toHaveLength(1)
         expect(result.rules).toBeUndefined()
     })
 
-    test("merges track-work plugin files into config.files", () => {
-        const config = validateConfig({ globals: { plugins: ["track-work"] } })
+    test('merges track-work plugin files into config.files', () => {
+        const config = validateConfig({ globals: { plugins: ['track-work'] } })
         const result = applyPlugins(config)
-        const aliases = (result.files ?? []).map(f => f.alias)
-        expect(aliases).toContain("chores")
-        expect(aliases).toContain("plans")
+        const aliases = (result.files ?? []).map((f) => f.alias)
+        expect(aliases).toContain('chores')
+        expect(aliases).toContain('plans')
     })
 
-    test("merges plugin files alongside existing config files", () => {
+    test('merges plugin files alongside existing config files', () => {
         const config = validateConfig({
-            globals: { plugins: ["track-work"] },
-            files: [{ alias: "my-file", path: "my-file.xml" }],
+            globals: { plugins: ['track-work'] },
+            files: [{ alias: 'my-file', path: 'my-file.xml' }],
         })
         const result = applyPlugins(config)
-        const aliases = (result.files ?? []).map(f => f.alias)
-        expect(aliases).toContain("my-file")
-        expect(aliases).toContain("chores")
+        const aliases = (result.files ?? []).map((f) => f.alias)
+        expect(aliases).toContain('my-file')
+        expect(aliases).toContain('chores')
     })
 
-    test("desugar after applyPlugins generates injections for plugin files with injectOn", () => {
-        const config = validateConfig({ globals: { plugins: ["track-work"] } })
+    test('desugar after applyPlugins generates injections for plugin files with injectOn', () => {
+        const config = validateConfig({ globals: { plugins: ['track-work'] } })
         const applied = applyPlugins(config)
         const desugared = desugarFileInjections(applied)
-        const refs = (desugared.injections ?? []).flatMap(i => i.inject)
-        expect(refs).toContain("chores")
-        expect(refs).toContain("plans")
+        const refs = (desugared.injections ?? []).flatMap((i) => i.inject)
+        expect(refs).toContain('chores')
+        expect(refs).toContain('plans')
     })
 
-    test("ignores unknown plugin names", () => {
-        const config = validateConfig({ globals: { plugins: ["nonexistent-plugin"] } })
+    test('ignores unknown plugin names', () => {
+        const config = validateConfig({
+            globals: { plugins: ['nonexistent-plugin'] },
+        })
         expect(() => applyPlugins(config)).not.toThrow()
         const result = applyPlugins(config)
         expect(result.files ?? []).toHaveLength(0)
@@ -306,8 +328,8 @@ Expected: FAIL — `applyPlugins` is not exported.
 Add to `src/config/schema.ts` (after the existing imports):
 
 ```ts
-import plugins from "#plugin"
-import type { FileEntry, RuleEntry } from "./types"
+import plugins from '#plugin'
+import type { FileEntry, RuleEntry } from './types'
 
 export function applyPlugins(config: ValidatedConfig): ValidatedConfig {
     const pluginNames = config.globals.plugins ?? []
@@ -336,15 +358,19 @@ export function applyPlugins(config: ValidatedConfig): ValidatedConfig {
 In `src/cli/hook.ts`, add import:
 
 ```ts
-import { validateConfig, desugarFileInjections, applyPlugins } from "#config/schema"
+import {
+    validateConfig,
+    desugarFileInjections,
+    applyPlugins,
+} from '#config/schema'
 ```
 
 Change the pipeline setup (after `validateConfig`):
 
 ```ts
 const validated = validateConfig(config)
-const withPlugins = applyPlugins(validated)          // NEW
-const desugared = desugarFileInjections(withPlugins)  // was: desugarFileInjections(validated)
+const withPlugins = applyPlugins(validated) // NEW
+const desugared = desugarFileInjections(withPlugins) // was: desugarFileInjections(validated)
 ```
 
 - [ ] **Step 5: Run all tests**
@@ -367,6 +393,7 @@ git commit -m "feat: add applyPlugins() and wire plugin contributions into hook 
 ## Task 4: Add plugin unit tests
 
 **Files:**
+
 - Create: `test/plugin.test.ts`
 
 - [ ] **Step 1: Write plugin unit tests**
@@ -374,70 +401,72 @@ git commit -m "feat: add applyPlugins() and wire plugin contributions into hook 
 Create `test/plugin.test.ts`:
 
 ```ts
-import { describe, expect, test } from "bun:test"
-import pluginRegistry from "../src/plugin/index"
-import type { RCTPlugin } from "../src/plugin/types"
+import { describe, expect, test } from 'bun:test'
+import pluginRegistry from '../src/plugin/index'
+import type { RCTPlugin } from '../src/plugin/types'
 
-describe("plugin registry", () => {
-    test("contains track-work and issue-scope", () => {
-        expect("track-work" in pluginRegistry).toBe(true)
-        expect("issue-scope" in pluginRegistry).toBe(true)
+describe('plugin registry', () => {
+    test('contains track-work and issue-scope', () => {
+        expect('track-work' in pluginRegistry).toBe(true)
+        expect('issue-scope' in pluginRegistry).toBe(true)
     })
 
-    test("each plugin has a name matching its registry key", () => {
+    test('each plugin has a name matching its registry key', () => {
         for (const [key, plugin] of Object.entries(pluginRegistry)) {
             expect(plugin.name).toBe(key)
         }
     })
 })
 
-describe("track-work plugin", () => {
-    const plugin: RCTPlugin = pluginRegistry["track-work"]
+describe('track-work plugin', () => {
+    const plugin: RCTPlugin = pluginRegistry['track-work']
 
     test("has name 'track-work'", () => {
-        expect(plugin.name).toBe("track-work")
+        expect(plugin.name).toBe('track-work')
     })
 
-    test("contributes chores and plans files", () => {
-        const aliases = (plugin.files ?? []).map(f => f.alias)
-        expect(aliases).toContain("chores")
-        expect(aliases).toContain("plans")
+    test('contributes chores and plans files', () => {
+        const aliases = (plugin.files ?? []).map((f) => f.alias)
+        expect(aliases).toContain('chores')
+        expect(aliases).toContain('plans')
     })
 
-    test("chores file has injectOn: SessionStart", () => {
-        const chores = (plugin.files ?? []).find(f => f.alias === "chores")
-        expect(chores?.injectOn).toBe("SessionStart")
+    test('chores file has injectOn: SessionStart', () => {
+        const chores = (plugin.files ?? []).find((f) => f.alias === 'chores')
+        expect(chores?.injectOn).toBe('SessionStart')
     })
 
-    test("chores and plans have entry-schema metaFile", () => {
+    test('chores and plans have entry-schema metaFile', () => {
         for (const file of plugin.files ?? []) {
-            expect(file.metaFiles?.some(m => m.alias === "entry-schema")).toBe(true)
+            expect(
+                file.metaFiles?.some((m) => m.alias === 'entry-schema'),
+            ).toBe(true)
         }
     })
 })
 
-describe("issue-scope plugin", () => {
-    const plugin: RCTPlugin = pluginRegistry["issue-scope"]
+describe('issue-scope plugin', () => {
+    const plugin: RCTPlugin = pluginRegistry['issue-scope']
 
     test("has name 'issue-scope'", () => {
-        expect(plugin.name).toBe("issue-scope")
+        expect(plugin.name).toBe('issue-scope')
     })
 
-    test("contributes scope and candidates files", () => {
-        const aliases = (plugin.files ?? []).map(f => f.alias)
-        expect(aliases).toContain("scope")
-        expect(aliases).toContain("candidates")
+    test('contributes scope and candidates files', () => {
+        const aliases = (plugin.files ?? []).map((f) => f.alias)
+        expect(aliases).toContain('scope')
+        expect(aliases).toContain('candidates')
     })
 
-    test("scope file has injectOn: SessionStart", () => {
-        const scope = (plugin.files ?? []).find(f => f.alias === "scope")
-        expect(scope?.injectOn).toBe("SessionStart")
+    test('scope file has injectOn: SessionStart', () => {
+        const scope = (plugin.files ?? []).find((f) => f.alias === 'scope')
+        expect(scope?.injectOn).toBe('SessionStart')
     })
 
-    test("scope file has staleCheck configured", () => {
-        const scope = (plugin.files ?? []).find(f => f.alias === "scope")
+    test('scope file has staleCheck configured', () => {
+        const scope = (plugin.files ?? []).find((f) => f.alias === 'scope')
         expect(scope?.staleCheck).toBeDefined()
-        expect(scope?.staleCheck?.dateTag).toBe("date")
+        expect(scope?.staleCheck?.dateTag).toBe('date')
     })
 })
 ```
@@ -462,16 +491,19 @@ git commit -m "test: add plugin registry, issueScope, and trackWork unit tests"
 ## Task 5: Update test runner — format-aware, tool-aware, minify-aware
 
 **Files:**
+
 - Modify: `src/test/runner.ts`
 - Modify: `src/cli/hook.ts`
 - Test: `test/test-runner.test.ts`
 
 **Current problems:**
+
 1. `resolveTestCommand` returns only the command string — the tool that resolved it (bun, cargo, etc.) is lost.
 2. `formatTestResult` produces a bare string like `"test: pass"` — it does not wrap output in XML or JSON, ignores `TestConfig.format`, and does not support `{tool}` in brief templates.
 3. `hook.ts` calls `formatTestResult(result, (testConfig as any).brief)` — the `as any` cast is wrong (testConfig is already `TestConfig`), and `format` from `testConfig` is never passed.
 
 **Design after fix:**
+
 - `resolveTestCommand` returns `{ command: string; tool: string } | null`. For explicit string commands, `tool` is `"custom"`.
 - `formatTestResult` signature becomes: `formatTestResult(result: TestResult, testConfig: TestConfig, globals: Required<GlobalsConfig>): string`
 - Brief templates support `{tool}` in addition to `{status}`, `{exitCode}`, `{output}`.
@@ -484,80 +516,119 @@ git commit -m "test: add plugin registry, issueScope, and trackWork unit tests"
 In `test/test-runner.test.ts`, add:
 
 ```ts
-import type { GlobalsConfig } from "#config/types"
+import type { GlobalsConfig } from '#config/types'
 
 const defaultGlobals: Required<GlobalsConfig> = {
-    format: "xml",
-    wrapper: "context",
+    format: 'xml',
+    wrapper: 'context',
     briefByDefault: false,
     minify: true,
     plugins: [],
 }
 
-describe("resolveTestCommand returns tool info", () => {
-    test("returns tool name for lang-detected command", () => {
+describe('resolveTestCommand returns tool info', () => {
+    test('returns tool name for lang-detected command', () => {
         const config: RCTConfig = {
             test: true,
-            lang: { typescript: { tools: [{ name: "bun", scripts: true }] } },
+            lang: { typescript: { tools: [{ name: 'bun', scripts: true }] } },
         }
         const info = resolveTestCommand(config)
         expect(info).not.toBeNull()
-        expect(info!.command).toBe("bun test")
-        expect(info!.tool).toBe("bun")
+        expect(info!.command).toBe('bun test')
+        expect(info!.tool).toBe('bun')
     })
 
     test("returns 'custom' tool for explicit command string", () => {
-        const config: RCTConfig = { test: "pytest -x" }
+        const config: RCTConfig = { test: 'pytest -x' }
         const info = resolveTestCommand(config)
-        expect(info!.command).toBe("pytest -x")
-        expect(info!.tool).toBe("custom")
+        expect(info!.command).toBe('pytest -x')
+        expect(info!.tool).toBe('custom')
     })
 
-    test("returns cargo tool for rust lang", () => {
+    test('returns cargo tool for rust lang', () => {
         const config: RCTConfig = {
             test: true,
-            lang: { rust: { tools: [{ name: "cargo", tasks: true }] } },
+            lang: { rust: { tools: [{ name: 'cargo', tasks: true }] } },
         }
         const info = resolveTestCommand(config)
-        expect(info!.tool).toBe("cargo")
+        expect(info!.tool).toBe('cargo')
     })
 })
 
-describe("formatTestResult with format", () => {
-    test("xml format pass produces self-closing test tag", () => {
-        const result: TestResult = { status: "pass", exitCode: 0, output: "", tool: "bun" }
-        const testConfig = { command: "bun test" as const }
+describe('formatTestResult with format', () => {
+    test('xml format pass produces self-closing test tag', () => {
+        const result: TestResult = {
+            status: 'pass',
+            exitCode: 0,
+            output: '',
+            tool: 'bun',
+        }
+        const testConfig = { command: 'bun test' as const }
         const out = formatTestResult(result, testConfig, defaultGlobals)
         expect(out).toContain('<test')
         expect(out).toContain('tool="bun"')
         expect(out).toContain('status="pass"')
     })
 
-    test("xml format fail includes exitCode attribute", () => {
-        const result: TestResult = { status: "fail", exitCode: 1, output: "", tool: "bun" }
-        const out = formatTestResult(result, { command: "bun test" }, defaultGlobals)
+    test('xml format fail includes exitCode attribute', () => {
+        const result: TestResult = {
+            status: 'fail',
+            exitCode: 1,
+            output: '',
+            tool: 'bun',
+        }
+        const out = formatTestResult(
+            result,
+            { command: 'bun test' },
+            defaultGlobals,
+        )
         expect(out).toContain('exitCode="1"')
     })
 
-    test("json format produces json object", () => {
-        const result: TestResult = { status: "pass", exitCode: 0, output: "", tool: "cargo" }
-        const jsonGlobals = { ...defaultGlobals, format: "json" as const }
-        const out = formatTestResult(result, { command: "cargo test" }, jsonGlobals)
+    test('json format produces json object', () => {
+        const result: TestResult = {
+            status: 'pass',
+            exitCode: 0,
+            output: '',
+            tool: 'cargo',
+        }
+        const jsonGlobals = { ...defaultGlobals, format: 'json' as const }
+        const out = formatTestResult(
+            result,
+            { command: 'cargo test' },
+            jsonGlobals,
+        )
         const parsed = JSON.parse(out)
-        expect(parsed.test.tool).toBe("cargo")
-        expect(parsed.test.status).toBe("pass")
+        expect(parsed.test.tool).toBe('cargo')
+        expect(parsed.test.status).toBe('pass')
     })
 
-    test("brief template supports {tool} substitution", () => {
-        const result: TestResult = { status: "pass", exitCode: 0, output: "", tool: "pixi" }
-        const testConfig = { command: "pixi run test" as const, brief: "[{tool}] {status}" }
+    test('brief template supports {tool} substitution', () => {
+        const result: TestResult = {
+            status: 'pass',
+            exitCode: 0,
+            output: '',
+            tool: 'pixi',
+        }
+        const testConfig = {
+            command: 'pixi run test' as const,
+            brief: '[{tool}] {status}',
+        }
         const out = formatTestResult(result, testConfig, defaultGlobals)
-        expect(out).toBe("[pixi] pass")
+        expect(out).toBe('[pixi] pass')
     })
 
-    test("format override in TestConfig takes precedence over globals", () => {
-        const result: TestResult = { status: "pass", exitCode: 0, output: "", tool: "bun" }
-        const testConfig = { command: "bun test" as const, format: "json" as const }
+    test('format override in TestConfig takes precedence over globals', () => {
+        const result: TestResult = {
+            status: 'pass',
+            exitCode: 0,
+            output: '',
+            tool: 'bun',
+        }
+        const testConfig = {
+            command: 'bun test' as const,
+            format: 'json' as const,
+        }
         const out = formatTestResult(result, testConfig, defaultGlobals)
         const parsed = JSON.parse(out)
         expect(parsed.test).toBeDefined()
@@ -576,14 +647,21 @@ bun test test/test-runner.test.ts --test-name-pattern "returns tool info|with fo
 In `src/test/runner.ts`:
 
 ```ts
-import type { RCTConfig, TestConfig, LangEntry, LangTool, Format, GlobalsConfig } from "#config/types"
-import { xml } from "#util/xml"
+import type {
+    RCTConfig,
+    TestConfig,
+    LangEntry,
+    LangTool,
+    Format,
+    GlobalsConfig,
+} from '#config/types'
+import { xml } from '#util/xml'
 
 export interface TestResult {
-    status: "pass" | "fail"
+    status: 'pass' | 'fail'
     exitCode: number
     output: string
-    tool?: string   // optional: set by hook.ts after resolveTestCommand; absent in raw runTest output
+    tool?: string // optional: set by hook.ts after resolveTestCommand; absent in raw runTest output
 }
 
 export interface TestCommandInfo {
@@ -617,14 +695,14 @@ function findFirstToolInfo(config: RCTConfig): TestCommandInfo | null {
 export function resolveTestCommand(config: RCTConfig): TestCommandInfo | null {
     if (!config.test) return null
 
-    if (typeof config.test === "string")
-        return { command: config.test, tool: "custom" }
+    if (typeof config.test === 'string')
+        return { command: config.test, tool: 'custom' }
 
     if (config.test === true) return findFirstToolInfo(config)
 
     const testConfig = config.test as TestConfig
-    if (typeof testConfig.command === "string")
-        return { command: testConfig.command, tool: "custom" }
+    if (typeof testConfig.command === 'string')
+        return { command: testConfig.command, tool: 'custom' }
     if (testConfig.command === true) return findFirstToolInfo(config)
 
     return null
@@ -645,25 +723,25 @@ export function formatTestResult(
     }
 
     const format: Format = testConfig.format ?? globals.format
-    const toolAttr = result.tool ?? "unknown"
+    const toolAttr = result.tool ?? 'unknown'
     const attrs: Record<string, string> = {
         tool: toolAttr,
         status: result.status,
-        ...(result.status === "fail" && { exitCode: String(result.exitCode) }),
+        ...(result.status === 'fail' && { exitCode: String(result.exitCode) }),
     }
 
-    if (format === "json") {
+    if (format === 'json') {
         return JSON.stringify({
             test: {
                 tool: toolAttr,
                 status: result.status,
-                ...(result.status === "fail" && { exitCode: result.exitCode }),
+                ...(result.status === 'fail' && { exitCode: result.exitCode }),
             },
         })
     }
 
     // Default: xml
-    return xml.inline("test", attrs)
+    return xml.inline('test', attrs)
 }
 ```
 
@@ -676,20 +754,20 @@ In `src/cli/hook.ts`, update the test runner section:
 let testResult: string | null = null
 if (desugared.test) {
     const testConfig: TestConfig =
-        typeof desugared.test === "object" && desugared.test !== true
+        typeof desugared.test === 'object' && desugared.test !== true
             ? (desugared.test as TestConfig)
             : { command: desugared.test as true | string }
 
     const rawInjectOn = testConfig.injectOn
     const testEvents: HookEvent[] = Array.isArray(rawInjectOn)
         ? rawInjectOn
-        : [rawInjectOn ?? "SessionStart"]
+        : [rawInjectOn ?? 'SessionStart']
 
     if (testEvents.includes(event)) {
         const cmdInfo = resolveTestCommand(desugared)
         if (cmdInfo) {
             const sessionId =
-                (payload as Record<string, string>).session_id ?? "unknown"
+                (payload as Record<string, string>).session_id ?? 'unknown'
             const cacheEnabled = testConfig.cache === true
             const cacheTTL = testConfig.cacheTTL ?? 300
 
@@ -719,7 +797,7 @@ import {
     formatTestResult,
     getCachedResult,
     setCachedResult,
-} from "#test/runner"
+} from '#test/runner'
 ```
 
 - [ ] **Step 5: Update all existing `resolveTestCommand` tests**
@@ -728,18 +806,18 @@ The 8 existing `resolveTestCommand` tests assert against a plain string (`"bun t
 
 ```ts
 // Old pattern (replace all 8):
-expect(resolveTestCommand(config)).toBe("bun test --coverage")
+expect(resolveTestCommand(config)).toBe('bun test --coverage')
 // New pattern:
-expect(resolveTestCommand(config)?.command).toBe("bun test --coverage")
+expect(resolveTestCommand(config)?.command).toBe('bun test --coverage')
 
 // For null check tests — no change needed:
 expect(resolveTestCommand(config)).toBeNull()
 
 // Add tool assertions to the lang-detection tests:
-expect(resolveTestCommand(config)?.tool).toBe("bun")   // for bun lang test
-expect(resolveTestCommand(config)?.tool).toBe("pixi")  // for pixi lang test
-expect(resolveTestCommand(config)?.tool).toBe("cargo") // for cargo lang test
-expect(resolveTestCommand(config)?.tool).toBe("custom") // for explicit string tests
+expect(resolveTestCommand(config)?.tool).toBe('bun') // for bun lang test
+expect(resolveTestCommand(config)?.tool).toBe('pixi') // for pixi lang test
+expect(resolveTestCommand(config)?.tool).toBe('cargo') // for cargo lang test
+expect(resolveTestCommand(config)?.tool).toBe('custom') // for explicit string tests
 ```
 
 - [ ] **Step 6: Update existing `formatTestResult` tests**
@@ -748,18 +826,23 @@ The old `formatTestResult` tests called it with `(result, brief?)`. Update them 
 
 ```ts
 // Old:
-formatTestResult(result, "Result: {status} (code {exitCode})")
+formatTestResult(result, 'Result: {status} (code {exitCode})')
 // New:
-formatTestResult(result, { command: "bun test", brief: "Result: {status} (code {exitCode})" }, defaultGlobals)
+formatTestResult(
+    result,
+    { command: 'bun test', brief: 'Result: {status} (code {exitCode})' },
+    defaultGlobals,
+)
 
 // Old:
-formatTestResult(result)  // no brief → "test: pass"
+formatTestResult(result) // no brief → "test: pass"
 // New:
-formatTestResult(result, { command: "bun test" }, defaultGlobals)
+formatTestResult(result, { command: 'bun test' }, defaultGlobals)
 // Expect: '<test tool="custom" status="pass"/>' for xml format
 ```
 
 Update the three existing `formatTestResult` tests in `test/test-runner.test.ts` to:
+
 - Use the new signature
 - Update pass default expectation to `xml.inline("test", { tool: "custom", status: "pass" })`
 - Update fail default expectation to `xml.inline("test", { tool: "custom", status: "fail", exitCode: "1" })`
@@ -784,9 +867,11 @@ git commit -m "feat: format/tool-aware test result formatting with {tool} brief 
 ## Task 6: Fix JSON schema (`minify` missing, `plugins` enum too narrow)
 
 **Files:**
+
 - Modify: `rct.config.schema.json`
 
 Two issues:
+
 1. `MinifyConfig` has no `$defs` entry, and `globals.minify` / `InjectionEntry.minify` are absent from the schema, but both objects have `additionalProperties: false`. This means any config using `minify` fails validation.
 2. `globals.plugins` items are restricted to an enum `["track-work", "issue-scope"]` in the schema but typed as `string[]` in TypeScript. New plugins added to the codebase would require a schema update. The schema should remove the enum and use `type: "string"` with a description listing the built-ins.
 
@@ -795,28 +880,32 @@ Two issues:
 In `test/schema.test.ts`, add:
 
 ```ts
-describe("validateConfig with minify", () => {
-    test("accepts boolean minify in globals", () => {
+describe('validateConfig with minify', () => {
+    test('accepts boolean minify in globals', () => {
         // validateConfig doesn't run JSON schema, but the schema file is referenced
         // by consumers — test that the round-trip shape is accepted by our TypeScript types
         const config = validateConfig({ globals: { minify: false } })
         expect(config.globals.minify).toBe(false)
     })
 
-    test("accepts MinifyConfig object in globals", () => {
+    test('accepts MinifyConfig object in globals', () => {
         const config = validateConfig({
-            globals: { minify: { enabled: true, separator: " ", preserveNewlines: true } },
+            globals: {
+                minify: {
+                    enabled: true,
+                    separator: ' ',
+                    preserveNewlines: true,
+                },
+            },
         })
-        expect(typeof config.globals.minify).toBe("object")
+        expect(typeof config.globals.minify).toBe('object')
     })
 
-    test("accepts minify boolean on InjectionEntry", () => {
+    test('accepts minify boolean on InjectionEntry', () => {
         const config = validateConfig({
-            injections: [{
-                on: "SessionStart",
-                inject: ["file"],
-                minify: false,
-            }],
+            injections: [
+                { on: 'SessionStart', inject: ['file'], minify: false },
+            ],
         })
         expect(config.injections![0].minify).toBe(false)
     })
@@ -908,9 +997,10 @@ git commit -m "fix: add MinifyConfig to JSON schema; fix plugins to accept any s
 ## Task 7: Add `build` script to `package.json`
 
 **Files:**
+
 - Modify: `package.json`
 
-CLAUDE.md documents `bun run build` as producing `dist/hook.js` — the hook subprocess file that Claude Code invokes. The build target should be `src/cli/hook.ts` (the hook entrypoint, not the CLI dispatcher) built to `dist/hook.js`. Bun-native consumers use the `bin` entry (`src/cli/index.ts`) directly; the build artifact is for pre-compiled distribution.
+CLAUDE.md documents `bun run build` as producing `dist/rct.js` — the hook subprocess file that Claude Code invokes. The build target should be `src/cli/hook.ts` (the hook entrypoint, not the CLI dispatcher) built to `dist/rct.js`. Bun-native consumers use the `bin` entry (`src/cli/index.ts`) directly; the build artifact is for pre-compiled distribution.
 
 - [ ] **Step 1: Add build script**
 
@@ -918,7 +1008,7 @@ In `package.json`, update `scripts`:
 
 ```json
 "scripts": {
-    "build": "bun build src/cli/hook.ts --outfile dist/hook.js --target bun --minify",
+    "build": "bun build src/cli/hook.ts --outfile dist/rct.js --target bun --minify",
     "test": "bun test"
 }
 ```
@@ -929,7 +1019,7 @@ In `package.json`, update `scripts`:
 bun run build
 ```
 
-Expected: `dist/hook.js` created without errors.
+Expected: `dist/rct.js` created without errors.
 
 - [ ] **Step 3: Commit**
 
@@ -943,6 +1033,7 @@ git commit -m "fix: restore build script pointing to src/cli/index.ts"
 ## Task 8: Fix stale describe label and run full test suite
 
 **Files:**
+
 - Modify: `test/integration.test.ts`
 
 - [ ] **Step 1: Fix stale label**
@@ -976,6 +1067,7 @@ git commit -m "fix: update stale integration test describe label"
 ## Task 9: Export plugin types from public barrel + final audit
 
 **Files:**
+
 - Modify: `src/index.ts`
 
 The `RCTPlugin` type and plugin utilities are not exported from the public barrel, making it impossible for consumers to type-check custom plugins without reaching into internal paths.
@@ -984,8 +1076,8 @@ The `RCTPlugin` type and plugin utilities are not exported from the public barre
 
 ```ts
 // Plugins
-export type { RCTPlugin } from "./plugin/types"
-export { default as pluginRegistry } from "./plugin/index"
+export type { RCTPlugin } from './plugin/types'
+export { default as pluginRegistry } from './plugin/index'
 ```
 
 - [ ] **Step 2: Add exports test**
@@ -993,11 +1085,11 @@ export { default as pluginRegistry } from "./plugin/index"
 In `test/exports.test.ts`, add:
 
 ```ts
-import { pluginRegistry } from "../src/index"
-import type { RCTPlugin } from "../src/index"
+import { pluginRegistry } from '../src/index'
+import type { RCTPlugin } from '../src/index'
 
-test("pluginRegistry is exported from barrel", () => {
-    expect("track-work" in pluginRegistry).toBe(true)
+test('pluginRegistry is exported from barrel', () => {
+    expect('track-work' in pluginRegistry).toBe(true)
 })
 ```
 

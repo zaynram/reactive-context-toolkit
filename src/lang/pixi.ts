@@ -1,1 +1,1 @@
-export { getPixiTasks, getPixiEnvironment } from "#tools/pixi"
+export { getPixiTasks, getPixiEnvironment } from '#tools/pixi'

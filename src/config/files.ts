@@ -1,8 +1,10 @@
-import { fs } from "#util"
-import type { FileEntry, MetaFileEntry } from "./types"
-import { normalize } from "#util/general"
-import type { ReferenceFile, FileRegistry } from "#types"
-import { CLAUDE_PROJECT_DIR } from "#constants"
+import { fs } from '#util'
+import type { FileEntry, MetaFileEntry } from './types'
+import { normalize } from '#util/general'
+import type { ReferenceFile, FileRegistry } from '#types'
+import { CLAUDE_PROJECT_DIR } from '#constants'
+
+export type { ReferenceFile, FileRegistry }
 
 function deriveAlias(entry: MetaFileEntry): string {
     return entry.alias ?? fs.stem(entry.path)
@@ -57,13 +59,13 @@ export function buildFileRegistry(
             let useBrief = false
             let key = ref
 
-            if (key.endsWith("~brief")) {
+            if (key.endsWith('~brief')) {
                 useBrief = true
                 key = key.slice(0, -6)
             }
 
             // Check colon notation for meta files
-            if (key.includes(":")) {
+            if (key.includes(':')) {
                 const metaFile = metaFiles.get(key)
                 if (metaFile) return { file: metaFile, useBrief }
                 return undefined
@@ -76,7 +78,7 @@ export function buildFileRegistry(
 
         select(...aliases: string[]): ReferenceFile[] {
             return aliases
-                .map(a => files.get(a))
+                .map((a) => files.get(a))
                 .filter((f): f is ReferenceFile => f !== undefined)
         },
 

@@ -1,1 +1,1 @@
-export { getCargoInfo } from "#tools/cargo"
+export { getCargoInfo } from '#tools/cargo'

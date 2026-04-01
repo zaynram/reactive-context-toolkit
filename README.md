@@ -1,17 +1,17 @@
 # reactive-context-toolkit
 
-A Claude Code hook library that reactively injects context into your AI sessions based on configurable rules, events, and file references.
+A zero-dependency Claude Code hook library that reactively injects context into AI sessions based on configurable rules, events, and file references.
 
 ## What It Does
 
-RCT runs as a Claude Code hook handler. It reads an `rct.config.json` in your project and, on each hook event (session start, tool use, prompt submit, etc.), decides what context to add to Claude's prompt — or whether to block a tool call entirely.
+RCT runs as a Claude Code hook handler. It reads an `rct.config.{json,ts,js}` in your project and, on each hook event, decides what context to add to Claude's prompt — or whether to block a tool call entirely.
 
-- **Context injection** — inject file contents as XML into Claude's `additionalContext` based on event and match conditions
+- **Context injection** — inject file contents (XML or JSON) into Claude's `additionalContext` based on event and match conditions
 - **Rules** — block or warn when Claude attempts a matched tool use
-- **Language ecosystem** — auto-inject bun scripts, pixi tasks, cargo info, and tsconfig path aliases
-- **Test integration** — run your test suite and inject the result into session context
+- **Language ecosystem** — auto-surface bun scripts, pixi tasks, cargo info, and tsconfig path aliases
+- **Test integration** — run your test suite and inject results into session context, with optional caching
 - **Stale detection** — flag dated files that have gone out of date
-- **Plugins** — built-in `track-work` and `issue-scope` plugins add file and rule contributions
+- **Plugins** — built-in `track-work` and `issue-scope` plugins contribute files and rules
 
 ## Getting Started
 
@@ -20,7 +20,7 @@ bun add github:zaynram/reactive-context-toolkit
 bunx rct init
 ```
 
-`rct init` auto-detects your project stack (TS/JS/Python/Rust), writes an `rct.config.json`, and patches `.claude/settings.json` with the required hook commands. RCT has no production dependencies — the hook subprocess (`dist/hook.js`) runs entirely on Bun.
+`rct init` detects your project stack (TS/JS/Python/Rust), writes an `rct.config.json`, and patches `.claude/settings.json` with the required hook commands. RCT has zero production dependencies — the hook subprocess (`dist/rct.js`) runs entirely on Bun.
 
 ## Configuration
 
@@ -28,10 +28,7 @@ bunx rct init
 
 ```json
 {
-    "globals": {
-        "format": "xml",
-        "plugins": ["track-work"]
-    },
+    "globals": { "format": "xml", "plugins": ["track-work"], "minify": true },
     "files": [
         {
             "alias": "scope",
@@ -41,11 +38,7 @@ bunx rct init
         }
     ],
     "injections": [
-        {
-            "on": "PostToolUse",
-            "matchFile": "*.ts",
-            "inject": ["scope"]
-        }
+        { "on": "PostToolUse", "matchFile": "*.ts", "inject": ["scope"] }
     ],
     "rules": [
         {
@@ -67,20 +60,40 @@ bunx rct init
             ]
         }
     },
-    "test": { "command": "bun test", "injectOn": "SessionStart" }
+    "test": { "command": "bun test", "injectOn": "SessionStart", "cache": true }
 }
 ```
 
+### Config sections
+
+| Section      | Purpose                                                                    |
+| ------------ | -------------------------------------------------------------------------- |
+| `globals`    | Format (`xml`\|`json`), wrapper tag, `briefByDefault`, `minify`, `plugins` |
+| `files`      | Register files with aliases; `injectOn` auto-creates injection entries     |
+| `injections` | Explicit injection rules with event/match/file filtering                   |
+| `rules`      | Block or warn on matched tool use                                          |
+| `lang`       | Per-language tool and config declarations                                  |
+| `test`       | Test command with optional caching (`cache`, `cacheTTL`)                   |
+| `meta`       | Inject a summary of the config itself                                      |
+
 ## Hook Events
 
-RCT supports all Claude Code hook events: `SessionStart`, `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `UserPromptSubmit`, `SubagentStart`, `Notification`, `Setup`.
+`SessionStart` · `PreToolUse` · `PostToolUse` · `PostToolUseFailure` · `UserPromptSubmit` · `SubagentStart` · `Notification` · `Setup`
+
+## Match System
+
+Rules and injections use a match condition system:
+
+- **Targets**: `file_path`, `new_string`, `content`, `command`, `user_prompt`, `tool_name`, `error`
+- **Operators**: `regex` (default), `contains`, `equals`, `not_contains`, `starts_with`, `ends_with`, `glob`
+- Multiple conditions = AND logic; multiple patterns within a condition = OR logic
 
 ## FileRef Syntax
 
 Inject references use the pattern `alias[:metaAlias][~brief]`:
 
 - `scope` — full content of the `scope` file
-- `scope~brief` — brief/summary mode (uses `brief` field from file entry)
+- `scope~brief` — brief/summary mode
 - `scope:changelog` — a meta-file attached to `scope`
 
 ## Plugins
@@ -91,19 +104,58 @@ Enable built-in plugins via `globals.plugins`:
 { "globals": { "plugins": ["track-work", "issue-scope"] } }
 ```
 
-- **`track-work`** — registers `chores` (`dev/chores.xml`) and `plans` (`.claude/plans/index.xml`) files with `injectOn: SessionStart`
-- **`issue-scope`** — registers `scope` (`.claude/context/scope.xml`) and `candidates` (`.claude/context/issues.xml`) with stale-check on scope
+- **`track-work`** — registers `chores` (`dev/chores.xml`) and `plans` (`.claude/plans/index.xml`)
+- **`issue-scope`** — registers `scope` (`.claude/context/scope.xml`, with stale check) and `candidates` (`.claude/context/issues.xml`)
 
-Plugin files and rules are merged into the config at evaluation time, so they participate in injection and rule evaluation like any manually declared entry.
+Plugin files and rules are merged at evaluation time via `applyPlugins()`.
 
 ## Public API
 
-RCT ships a barrel export at `src/index.ts` for programmatic use:
+RCT exports a barrel at `src/index.ts` for programmatic use:
 
 ```ts
 import {
-    loadConfig, validateConfig, buildFileRegistry,
-    evaluateRules, evaluateInjections, evaluateLang,
-    composeOutput, pluginRegistry,
-} from "reactive-context-toolkit"
+    // Config
+    loadConfig,
+    validateConfig,
+    desugarFileInjections,
+    applyPlugins,
+    buildFileRegistry,
+    // Engine
+    evaluateRules,
+    evaluateInjections,
+    evaluateMatch,
+    evaluateCondition,
+    generateMeta,
+    composeOutput,
+    // Lang
+    evaluateLang,
+    // Test
+    resolveTestCommand,
+    runTest,
+    formatTestResult,
+    // Register
+    standard,
+    dynamic,
+    block,
+    // Utilities
+    fs,
+    xml,
+    normalize,
+    minify,
+    condense,
+    // Plugin
+    pluginRegistry,
+} from 'reactive-context-toolkit'
+
+// Type imports
+import type {
+    RCTConfig,
+    RCTPlugin,
+    HookEvent,
+    FileRef,
+    RuleEntry,
+    InjectionEntry,
+    MatchCondition,
+} from 'reactive-context-toolkit'
 ```

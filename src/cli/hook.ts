@@ -1,23 +1,27 @@
 #!/usr/bin/env bun
-import { loadConfig } from "#config/loader"
-import { CLAUDE_PROJECT_DIR } from "#constants"
-import { validateConfig, desugarFileInjections, applyPlugins } from "#config/schema"
-import { buildFileRegistry } from "#config/files"
-import { evaluateRules } from "#engine/rules"
-import { evaluateInjections } from "#engine/injections"
-import { generateMeta } from "#engine/meta"
-import { evaluateLang } from "#lang"
+import { loadConfig } from '#config/loader'
+import { CLAUDE_PROJECT_DIR } from '#constants'
+import {
+    validateConfig,
+    desugarFileInjections,
+    applyPlugins,
+} from '#config/schema'
+import { buildFileRegistry } from '#config/files'
+import { evaluateRules } from '#engine/rules'
+import { evaluateInjections } from '#engine/injections'
+import { generateMeta } from '#engine/meta'
+import { evaluateLang } from '#lang'
 import {
     resolveTestCommand,
     runTest,
     formatTestResult,
     getCachedResult,
     setCachedResult,
-} from "#test/runner"
-import { composeOutput } from "#engine/compose"
-import type { HookEvent, TestConfig } from "#config/types"
+} from '#test/runner'
+import { composeOutput } from '#engine/compose'
+import type { HookEvent, TestConfig } from '#config/types'
 
-const SYNC_EVENTS: HookEvent[] = ["SessionStart", "Setup"]
+const SYNC_EVENTS: HookEvent[] = ['SessionStart', 'Setup']
 
 async function main(eventArg?: string) {
     const event = (eventArg ?? process.argv[2]) as HookEvent
@@ -37,14 +41,14 @@ async function main(eventArg?: string) {
 
     // Read stdin for async events
     if (!SYNC_EVENTS.includes(event)) {
-        const stdin = await new Promise<string>(resolve => {
-            let data = ""
+        const stdin = await new Promise<string>((resolve) => {
+            let data = ''
             process.stdin.on(
-                "data",
+                'data',
                 (chunk: Buffer | string) => (data += chunk),
             )
-            process.stdin.on("end", () => resolve(data))
-            process.stdin.on("error", () => resolve("{}"))
+            process.stdin.on('end', () => resolve(data))
+            process.stdin.on('error', () => resolve('{}'))
         })
         try {
             payload = JSON.parse(stdin) ?? {}
@@ -63,10 +67,10 @@ async function main(eventArg?: string) {
     )
 
     // If block, output and exit
-    if (ruleResult?.action === "block") {
+    if (ruleResult?.action === 'block') {
         const output = composeOutput({
             event,
-            blockResult: { message: ruleResult.messages.join("\n") },
+            blockResult: { message: ruleResult.messages.join('\n') },
             warnMessages: [],
             injectionResults: [],
             metaResult: null,
@@ -90,14 +94,15 @@ async function main(eventArg?: string) {
 
     // Warn messages
     const warnMessages =
-        ruleResult?.action === "warn" ? ruleResult.messages : []
+        ruleResult?.action === 'warn' ? ruleResult.messages : []
 
     // Meta
     let metaResult: string | null = null
     if (desugared.meta) {
-        const metaEvents = Array.isArray(desugared.meta.injectOn)
-            ? desugared.meta.injectOn
-            : [desugared.meta.injectOn ?? "SessionStart"]
+        const metaEvents =
+            Array.isArray(desugared.meta.injectOn) ?
+                desugared.meta.injectOn
+            :   [desugared.meta.injectOn ?? 'SessionStart']
         if (metaEvents.includes(event)) {
             metaResult = generateMeta(
                 desugared,
@@ -109,36 +114,44 @@ async function main(eventArg?: string) {
     }
 
     // Lang
-    const langResults = desugared.lang
-        ? evaluateLang(desugared.lang, event, CLAUDE_PROJECT_DIR, globals)
-        : []
-    const langResult = langResults.length > 0 ? langResults.join("\n") : null
+    const langResults =
+        desugared.lang ?
+            evaluateLang(desugared.lang, event, CLAUDE_PROJECT_DIR, globals)
+        :   []
+    const langResult = langResults.length > 0 ? langResults.join('\n') : null
 
     // Test
     let testResult: string | null = null
     if (desugared.test) {
         const testConfig: TestConfig =
-            desugared.test !== true && typeof desugared.test === "object"
-                ? (desugared.test as TestConfig)
-                : { command: desugared.test as true | string }
+            desugared.test !== true && typeof desugared.test === 'object' ?
+                (desugared.test as TestConfig)
+            :   { command: desugared.test as true | string }
         const rawInjectOn = testConfig.injectOn
-        const testEvents: HookEvent[] = Array.isArray(rawInjectOn)
-            ? rawInjectOn
-            : [rawInjectOn ?? "SessionStart"]
+        const testEvents: HookEvent[] =
+            Array.isArray(rawInjectOn) ? rawInjectOn : (
+                [rawInjectOn ?? 'SessionStart']
+            )
         if (testEvents.includes(event)) {
             const cmdInfo = resolveTestCommand(desugared)
             if (cmdInfo) {
                 const sessionId =
-                    (payload as Record<string, string>).session_id ?? "unknown"
+                    (payload as Record<string, string>).session_id ?? 'unknown'
                 const cacheEnabled = testConfig.cache === true
                 const cacheTTL = testConfig.cacheTTL ?? 300
 
-                let rawResult = cacheEnabled
-                    ? getCachedResult(sessionId, cmdInfo.command, cacheTTL)
-                    : null
+                let rawResult =
+                    cacheEnabled ?
+                        getCachedResult(sessionId, cmdInfo.command, cacheTTL)
+                    :   null
                 if (!rawResult) {
                     rawResult = runTest(cmdInfo.command, CLAUDE_PROJECT_DIR)
-                    if (cacheEnabled) setCachedResult(sessionId, cmdInfo.command, rawResult)
+                    if (cacheEnabled)
+                        await setCachedResult(
+                            sessionId,
+                            cmdInfo.command,
+                            rawResult,
+                        )
                 }
 
                 const result = { ...rawResult, tool: cmdInfo.tool }

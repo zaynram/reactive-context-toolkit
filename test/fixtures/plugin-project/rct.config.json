@@ -1,0 +1,10 @@
+{
+    "globals": {
+        "format": "xml",
+        "plugins": [
+            "./plugins/block-trigger.ts",
+            "./plugins/warn-trigger.ts",
+            "./plugins/context-plugin.ts"
+        ]
+    }
+}

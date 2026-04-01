@@ -9,18 +9,13 @@ export async function handleList(params: ListParams) {
     const check = await preflight()
     if (check) return check
 
-    const args = [
-        'list-panes',
-        '-a',
-        '-F',
-        '#{session_name}:#{window_index}.#{pane_index}\t#{pane_width}\t#{pane_height}\t#{pane_current_command}\t#{pane_active}',
-    ]
-    if (params.session) {
-        args.push('-t', params.session)
-    }
+    const fmt = '#{session_name}:#{window_index}.#{pane_index}\t#{pane_width}\t#{pane_height}\t#{pane_current_command}\t#{pane_active}'
+    const args = params.session
+        ? ['list-panes', '-t', params.session, '-F', fmt]
+        : ['list-panes', '-a', '-F', fmt]
 
-    const { stdout, exitCode } = await exec(args)
-    if (exitCode !== 0) return err(`tmux list-panes failed: ${stdout}`)
+    const { stdout, stderr, exitCode } = await exec(args)
+    if (exitCode !== 0) return err(`tmux list-panes failed: ${stderr || stdout}`)
 
     const panes = parseListPanes(stdout)
     return ok(JSON.stringify(panes, null, 2))

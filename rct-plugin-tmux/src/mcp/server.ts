@@ -24,6 +24,8 @@ export function createServer() {
             target: z.string().describe('Pane target (e.g., session:0.1)'),
             lines: z
                 .number()
+                .int()
+                .min(1)
                 .optional()
                 .describe('Number of lines to capture (default: 50)'),
             history: z
@@ -60,6 +62,9 @@ export function createServer() {
                 .describe('Split direction (default: vertical)'),
             percent: z
                 .number()
+                .int()
+                .min(1)
+                .max(100)
                 .optional()
                 .describe('Size percentage (default: 50)'),
             command: z
@@ -82,7 +87,12 @@ export function createServer() {
 }
 
 export async function startServer() {
-    const server = createServer()
-    const transport = new StdioServerTransport()
-    await server.connect(transport)
+    try {
+        const server = createServer()
+        const transport = new StdioServerTransport()
+        await server.connect(transport)
+    } catch (err) {
+        console.error(`[rct-tmux] Failed to start MCP server: ${err instanceof Error ? err.message : err}`)
+        process.exit(1)
+    }
 }

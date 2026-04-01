@@ -12,7 +12,9 @@ export async function runSetup() {
         try {
             data = await file.json()
         } catch {
-            // Malformed JSON — start fresh
+            const raw = await file.text()
+            console.warn(`[rct-tmux] Warning: ${mcpPath} contains invalid JSON — backing up and starting fresh`)
+            await Bun.write(`${mcpPath}.bak`, raw)
             data = {}
         }
     }

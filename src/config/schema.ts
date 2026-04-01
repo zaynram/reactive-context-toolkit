@@ -1,5 +1,6 @@
 import { fs } from '#util/fs'
 import { resolvePlugin } from '#plugin/resolve'
+import type { RCTPlugin } from '#plugin/types'
 import type {
     RCTConfig,
     GlobalsConfig,
@@ -10,6 +11,16 @@ import type {
     FileEntry,
     RuleEntry,
 } from './types'
+
+export interface PluginExtensions {
+    contexts: Array<{ name: string; fn: NonNullable<RCTPlugin['context']> }>
+    triggers: Array<{ name: string; fn: NonNullable<RCTPlugin['trigger']> }>
+}
+
+export interface ApplyPluginsResult {
+    config: ValidatedConfig
+    extensions: PluginExtensions
+}
 
 export type ValidatedConfig = { globals: Required<GlobalsConfig> } & RCTConfig
 
@@ -99,9 +110,11 @@ export function validateConfig(config: RCTConfig): ValidatedConfig {
 
 export async function applyPlugins(
     config: ValidatedConfig,
-): Promise<ValidatedConfig> {
+): Promise<ApplyPluginsResult> {
+    const extensions: PluginExtensions = { contexts: [], triggers: [] }
     const pluginNames = config.globals.plugins ?? []
-    if (pluginNames.length === 0) return config
+    if (pluginNames.length === 0)
+        return { config, extensions }
 
     const mergedFiles: FileEntry[] = [...(config.files ?? [])]
     const mergedRules: RuleEntry[] = [...(config.rules ?? [])]
@@ -112,6 +125,10 @@ export async function applyPlugins(
             const { plugin } = await resolvePlugin(name)
             if (plugin.files) mergedFiles.push(...plugin.files)
             if (plugin.rules) mergedRules.push(...plugin.rules)
+            if (plugin.context)
+                extensions.contexts.push({ name, fn: plugin.context })
+            if (plugin.trigger)
+                extensions.triggers.push({ name, fn: plugin.trigger })
         } catch (err) {
             console.warn(
                 `[rct] Failed to resolve plugin '${name}': ${err instanceof Error ? err.message : err}`,
@@ -119,11 +136,13 @@ export async function applyPlugins(
         }
     }
 
-    return {
+    const merged: ValidatedConfig = {
         ...config,
         files: mergedFiles,
         rules: mergedRules.length > hadRules ? mergedRules : config.rules,
     }
+
+    return { config: merged, extensions }
 }
 
 export function desugarFileInjections(

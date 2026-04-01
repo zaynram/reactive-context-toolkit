@@ -12,6 +12,7 @@ export {
     desugarFileInjections,
     applyPlugins,
 } from '#config/schema'
+export type { PluginExtensions, ApplyPluginsResult } from '#config/schema'
 
 /** Build the alias-to-content Map used by injections and meta. Composable for custom pipelines. */
 export { buildFileRegistry } from '#config/files'

@@ -403,7 +403,7 @@ export default async function initializeRCT(args: string[] = []) {
 
     // Apply plugins and desugar to get full config for mergeSettings
     const validated = validateConfig(config)
-    const withPlugins = await applyPlugins(validated)
+    const { config: withPlugins } = await applyPlugins(validated)
     const fullConfig = desugarFileInjections(withPlugins)
 
     const settingsPath = fs.resolve(['.claude', 'settings.json'], { root })

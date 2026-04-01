@@ -315,14 +315,14 @@ describe('applyPlugins', () => {
         const config = validateConfig({
             files: [{ alias: 'mine', path: 'mine.xml' }],
         })
-        const result = await applyPlugins(config)
+        const { config: result } = await applyPlugins(config)
         expect(result.files).toHaveLength(1)
         expect(result.rules).toBeUndefined()
     })
 
     test('merges track-work plugin files into config.files', async () => {
         const config = validateConfig({ globals: { plugins: ['track-work'] } })
-        const result = await applyPlugins(config)
+        const { config: result } = await applyPlugins(config)
         const aliases = (result.files ?? []).map((f) => f.alias)
         expect(aliases).toContain('chores')
         expect(aliases).toContain('plans')
@@ -333,7 +333,7 @@ describe('applyPlugins', () => {
             globals: { plugins: ['track-work'] },
             files: [{ alias: 'my-file', path: 'my-file.xml' }],
         })
-        const result = await applyPlugins(config)
+        const { config: result } = await applyPlugins(config)
         const aliases = (result.files ?? []).map((f) => f.alias)
         expect(aliases).toContain('my-file')
         expect(aliases).toContain('chores')
@@ -341,7 +341,7 @@ describe('applyPlugins', () => {
 
     test('desugar after applyPlugins generates injections for plugin files with injectOn', async () => {
         const config = validateConfig({ globals: { plugins: ['track-work'] } })
-        const applied = await applyPlugins(config)
+        const { config: applied } = await applyPlugins(config)
         const desugared = desugarFileInjections(applied)
         const refs = (desugared.injections ?? []).flatMap((i) => i.inject)
         expect(refs).toContain('chores')
@@ -352,7 +352,7 @@ describe('applyPlugins', () => {
         const config = validateConfig({
             globals: { plugins: ['nonexistent-plugin'] },
         })
-        const result = await applyPlugins(config)
+        const { config: result } = await applyPlugins(config)
         expect(result.files ?? []).toHaveLength(0)
     })
 })

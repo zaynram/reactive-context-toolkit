@@ -122,18 +122,29 @@ export async function applyPlugins(
     for (const name of pluginNames) {
         try {
             const { plugin } = await resolvePlugin(name)
+            const displayName = typeof plugin.name === 'string' ? plugin.name : String(name)
             if (plugin.files) mergedFiles.push(...plugin.files)
             if (plugin.rules) mergedRules.push(...plugin.rules)
-            if (plugin.context)
+            if (typeof plugin.context === 'function') {
                 extensions.contexts.push({
-                    name: plugin.name ?? name,
+                    name: displayName,
                     fn: plugin.context,
                 })
-            if (plugin.trigger)
+            } else if (plugin.context) {
+                console.warn(
+                    `[rct] Warning: Plugin '${displayName}' has a non-function 'context' property; ignoring.`,
+                )
+            }
+            if (typeof plugin.trigger === 'function') {
                 extensions.triggers.push({
-                    name: plugin.name ?? name,
+                    name: displayName,
                     fn: plugin.trigger,
                 })
+            } else if (plugin.trigger) {
+                console.warn(
+                    `[rct] Warning: Plugin '${displayName}' has a non-function 'trigger' property; ignoring.`,
+                )
+            }
         } catch (err) {
             console.warn(
                 `[rct] Warning: Failed to resolve plugin '${name}': ${err instanceof Error ? err.message : err}`,

@@ -117,7 +117,11 @@ export { normalize, minify, condense } from '#util/general'
 
 // Plugin
 
-export type { RCTPlugin } from '#plugin/types'
+export type {
+    RCTPlugin,
+    PluginHookInput,
+    PluginTriggerResult,
+} from '#plugin/types'
 
 /** Registry mapping plugin names to their RCTPlugin instances. */
 export { default as pluginRegistry } from '#plugin/index'

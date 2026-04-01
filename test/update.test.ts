@@ -59,11 +59,7 @@ describe('rct update', () => {
             'tsconfig.json': '{}',
             'Cargo.toml': '[package]\nname = "test"',
             'rct.config.json': JSON.stringify({
-                lang: {
-                    node: {
-                        tools: [{ name: 'bun', scripts: true }],
-                    },
-                },
+                lang: { node: { tools: [{ name: 'bun', scripts: true }] } },
             }),
         })
 
@@ -298,9 +294,7 @@ describe('rct update', () => {
             'bun.lock': '',
             'tsconfig.json': '{}',
             'rct.config.json': JSON.stringify({
-                lang: {
-                    node: { tools: [{ name: 'bun', scripts: true }] },
-                },
+                lang: { node: { tools: [{ name: 'bun', scripts: true }] } },
             }),
         })
 

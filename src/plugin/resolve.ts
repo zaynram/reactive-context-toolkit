@@ -18,7 +18,10 @@ class PluginValidationError extends Error {
     }
 }
 
-function validatePlugin(plugin: unknown, ref: string): asserts plugin is RCTPlugin {
+function validatePlugin(
+    plugin: unknown,
+    ref: string,
+): asserts plugin is RCTPlugin {
     if (!plugin || typeof plugin !== 'object' || !('name' in plugin)) {
         throw new PluginValidationError(
             `Plugin '${ref}' must export an object with a 'name' property.`,
@@ -34,9 +37,8 @@ export async function resolvePlugin(ref: string): Promise<ResolvedPlugin> {
 
     // 2. Local file (starts with . or /)
     if (ref.startsWith('.') || ref.startsWith('/')) {
-        const fullPath = path.isAbsolute(ref)
-            ? ref
-            : path.resolve(CLAUDE_PROJECT_DIR, ref)
+        const fullPath =
+            path.isAbsolute(ref) ? ref : path.resolve(CLAUDE_PROJECT_DIR, ref)
         try {
             const mod = await import(fullPath)
             const plugin = mod.default ?? mod
@@ -60,8 +62,6 @@ export async function resolvePlugin(ref: string): Promise<ResolvedPlugin> {
     } catch (err: unknown) {
         if (err instanceof PluginValidationError) throw err
         const detail = err instanceof Error ? `: ${err.message}` : ''
-        throw new Error(
-            `Failed to load plugin '${ref}'${detail}`,
-        )
+        throw new Error(`Failed to load plugin '${ref}'${detail}`)
     }
 }

@@ -17,8 +17,7 @@ afterEach(() => {
 const writePkg = (obj: Record<string, unknown>) =>
     writeFileSync(join(tmp, 'package.json'), JSON.stringify(obj))
 
-const touch = (name: string) =>
-    writeFileSync(join(tmp, name), '')
+const touch = (name: string) => writeFileSync(join(tmp, name), '')
 
 describe('deriveFromProject', () => {
     test('detects node from package.json with name+version', () => {
@@ -61,7 +60,11 @@ describe('deriveFromProject', () => {
     })
 
     test('derives test command for bun project', () => {
-        writePkg({ name: 'app', version: '1.0.0', scripts: { test: 'bun test' } })
+        writePkg({
+            name: 'app',
+            version: '1.0.0',
+            scripts: { test: 'bun test' },
+        })
         touch('bun.lock')
         const result = deriveFromProject(tmp)
         expect(result.test).not.toBeNull()

@@ -136,6 +136,7 @@ End users create `rct.config.json` (or `.ts`/`.js`) via `rct init`:
 Plugins are declarative (contribute `files[]` and `rules[]`). Extensions are imperative (custom hook scripts using `createHook()` or `standard`/`dynamic`/`block`).
 
 **Built-in plugins** (`globals.plugins`):
+
 - **`track-work`** — registers `chores` (`dev/chores.xml`) and `plans` (`.claude/plans/index.xml`)
 - **`issue-scope`** — registers `scope` (`.claude/context/scope.xml`, with stale check) and `candidates` (`.claude/context/issues.xml`)
 

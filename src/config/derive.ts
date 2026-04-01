@@ -1,4 +1,11 @@
-import type { LangConfig, LangEntry, LangTool, TestConfig, FileEntry, GlobalsConfig } from './types'
+import type {
+    LangConfig,
+    LangEntry,
+    LangTool,
+    TestConfig,
+    FileEntry,
+    GlobalsConfig,
+} from './types'
 import { fs } from '#util/fs'
 
 type NodePackageManager = 'bun' | 'pnpm' | 'npm'
@@ -33,9 +40,9 @@ export function deriveFromProject(root: string): DerivedConfig {
     const hasTsconfig = has('tsconfig.json')
     const hasJsconfig = has('jsconfig.json')
     const isNodeProject =
-        hasTsconfig ||
-        hasJsconfig ||
-        (pkg?.name && (pkg?.version || pkg?.private || pkg?.scripts))
+        hasTsconfig
+        || hasJsconfig
+        || (pkg?.name && (pkg?.version || pkg?.private || pkg?.scripts))
 
     if (isNodeProject) {
         // Detect package manager from lockfile
@@ -56,9 +63,13 @@ export function deriveFromProject(root: string): DerivedConfig {
 
         // Auto-detect config files
         if (hasTsconfig) {
-            entry.config = [{ name: 'tsconfig', path: 'tsconfig.json', extractPaths: true }]
+            entry.config = [
+                { name: 'tsconfig', path: 'tsconfig.json', extractPaths: true },
+            ]
         } else if (hasJsconfig) {
-            entry.config = [{ name: 'jsconfig', path: 'jsconfig.json', extractPaths: true }]
+            entry.config = [
+                { name: 'jsconfig', path: 'jsconfig.json', extractPaths: true },
+            ]
         }
 
         lang.node = entry
@@ -85,9 +96,9 @@ export function deriveFromProject(root: string): DerivedConfig {
 
     // Build test config
     const test: TestConfig | null =
-        testCmds.length > 0
-            ? { command: testCmds.join(' && '), injectOn: 'SessionStart' }
-            : null
+        testCmds.length > 0 ?
+            { command: testCmds.join(' && '), injectOn: 'SessionStart' }
+        :   null
 
     return { lang, test, files, globals: {} }
 }

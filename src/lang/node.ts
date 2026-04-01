@@ -36,8 +36,7 @@ export function evaluateNode(
                 case 'pnpm':
                     if (tool.scripts !== false)
                         results.push(getBunScripts(tool, cwd))
-                    if (tool.workspace)
-                        results.push(getBunWorkspace(tool, cwd))
+                    if (tool.workspace) results.push(getBunWorkspace(tool, cwd))
                     break
             }
         }

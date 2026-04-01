@@ -8,7 +8,11 @@ import type {
 import { readdirSync } from 'fs'
 import { fs } from '#util'
 import { deriveFromProject, type DerivedConfig } from '#config/derive'
-import { validateConfig, applyPlugins, desugarFileInjections } from '#config/schema'
+import {
+    validateConfig,
+    applyPlugins,
+    desugarFileInjections,
+} from '#config/schema'
 import { ask, confirm, select } from './prompt'
 import plugins from '#plugin/index'
 import { Glob } from 'bun'
@@ -126,7 +130,8 @@ function collectRequiredEvents(config: RCTConfig): Set<string> {
         for (const entry of Object.values(config.lang)) {
             if (!entry) continue
             const on = entry.injectOn
-            if (on) (Array.isArray(on) ? on : [on]).forEach((e) => events.add(e))
+            if (on)
+                (Array.isArray(on) ? on : [on]).forEach((e) => events.add(e))
             for (const tool of entry.tools ?? []) {
                 const ton = tool.injectOn
                 if (ton)
@@ -199,10 +204,7 @@ export async function mergeSettings(
     for (const event of requiredEvents) {
         if (settings.hooks[event]) continue // don't overwrite existing
 
-        const hook = {
-            type: 'command',
-            command: `${hookCommand} ${event}`,
-        }
+        const hook = { type: 'command', command: `${hookCommand} ${event}` }
 
         if (event === 'PreToolUse' && preToolMatchers.size > 0) {
             const matcher = Array.from(preToolMatchers).join('|')
@@ -260,9 +262,7 @@ function buildConfigFromDerived(
     const config: RCTConfig = {}
 
     // Globals
-    const globals: RCTConfig['globals'] = {
-        format: overrides?.format ?? 'xml',
-    }
+    const globals: RCTConfig['globals'] = { format: overrides?.format ?? 'xml' }
     if (overrides?.plugins && overrides.plugins.length > 0) {
         globals.plugins = overrides.plugins
     }
@@ -277,7 +277,7 @@ function buildConfigFromDerived(
     if (derived.test) {
         config.test = { ...derived.test }
         if (overrides?.testCache) {
-            (config.test as any).cache = true
+            ;(config.test as any).cache = true
         }
     }
 
@@ -397,10 +397,7 @@ export default async function initializeRCT(args: string[] = []) {
     }
 
     // Write config with _derived key
-    const configWithDerived = {
-        ...config,
-        _derived: derived,
-    }
+    const configWithDerived = { ...config, _derived: derived }
     await fs.write(configPath, JSON.stringify(configWithDerived, null, 2))
     console.log(`Created ${configPath}`)
 

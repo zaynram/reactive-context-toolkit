@@ -72,15 +72,15 @@ Re-derives config from your project, merges with existing config preserving your
 
 ### Config sections
 
-| Section | Purpose |
-|---|---|
-| `globals` | Format (`xml`\|`json`), wrapper tag, `briefByDefault`, `minify`, `plugins` |
-| `files` | Register files with aliases; `injectOn` auto-creates injection entries |
-| `injections` | Explicit injection rules with event/match/file filtering |
-| `rules` | Block or warn on matched tool use |
-| `lang` | Per-language declarations (`node`/`python`/`rust`) with `tools`, `config`, `test` |
-| `test` | Top-level test defaults (`injectOn`, `cache`, `cacheTTL`); per-language overrides in `lang.*.test` |
-| `meta` | Inject a summary of the config itself |
+| Section      | Purpose                                                                                            |
+| ------------ | -------------------------------------------------------------------------------------------------- |
+| `globals`    | Format (`xml`\|`json`), wrapper tag, `briefByDefault`, `minify`, `plugins`                         |
+| `files`      | Register files with aliases; `injectOn` auto-creates injection entries                             |
+| `injections` | Explicit injection rules with event/match/file filtering                                           |
+| `rules`      | Block or warn on matched tool use                                                                  |
+| `lang`       | Per-language declarations (`node`/`python`/`rust`) with `tools`, `config`, `test`                  |
+| `test`       | Top-level test defaults (`injectOn`, `cache`, `cacheTTL`); per-language overrides in `lang.*.test` |
+| `meta`       | Inject a summary of the config itself                                                              |
 
 ### Languages
 
@@ -130,8 +130,21 @@ import { definePlugin } from 'reactive-context-toolkit'
 
 export default definePlugin({
     name: 'my-plugin',
-    files: [{ alias: 'guidelines', path: 'docs/guidelines.md', injectOn: 'SessionStart' }],
-    rules: [{ on: 'PreToolUse', match: { target: 'file_path', pattern: '\\.sql$' }, action: 'warn', message: 'Check with DBA' }],
+    files: [
+        {
+            alias: 'guidelines',
+            path: 'docs/guidelines.md',
+            injectOn: 'SessionStart',
+        },
+    ],
+    rules: [
+        {
+            on: 'PreToolUse',
+            match: { target: 'file_path', pattern: '\\.sql$' },
+            action: 'warn',
+            message: 'Check with DBA',
+        },
+    ],
 })
 ```
 

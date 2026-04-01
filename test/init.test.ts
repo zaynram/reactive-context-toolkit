@@ -1,7 +1,12 @@
 import { describe, test, expect, beforeEach, afterEach } from 'bun:test'
 import { mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'fs'
 import path from 'path'
-import { detectProject, generateConfig, mergeSettings, discoverPlugins } from '../src/cli/init'
+import {
+    detectProject,
+    generateConfig,
+    mergeSettings,
+    discoverPlugins,
+} from '../src/cli/init'
 
 const TMP_DIR = path.resolve(__dirname, '../.tmp-init-test')
 
@@ -215,11 +220,7 @@ describe('mergeSettings', () => {
         const settingsPath = path.join(TMP_DIR, '.claude', 'settings.json')
         await mergeSettings(settingsPath, {
             files: [
-                {
-                    alias: 'readme',
-                    path: 'README.md',
-                    injectOn: 'PostToolUse',
-                },
+                { alias: 'readme', path: 'README.md', injectOn: 'PostToolUse' },
             ],
         })
 
@@ -235,10 +236,7 @@ describe('mergeSettings', () => {
         const settingsPath = path.join(TMP_DIR, '.claude', 'settings.json')
         await mergeSettings(settingsPath, {
             lang: {
-                node: {
-                    tools: [{ name: 'bun' }],
-                    injectOn: 'PreToolUse',
-                },
+                node: { tools: [{ name: 'bun' }], injectOn: 'PreToolUse' },
             },
         })
 
@@ -255,12 +253,7 @@ describe('mergeSettings', () => {
         await mergeSettings(settingsPath, {
             lang: {
                 node: {
-                    tools: [
-                        {
-                            name: 'bun',
-                            injectOn: 'UserPromptSubmit',
-                        },
-                    ],
+                    tools: [{ name: 'bun', injectOn: 'UserPromptSubmit' }],
                 },
             },
         })
@@ -276,10 +269,7 @@ describe('mergeSettings', () => {
         setup({})
         const settingsPath = path.join(TMP_DIR, '.claude', 'settings.json')
         await mergeSettings(settingsPath, {
-            test: {
-                command: 'bun test',
-                injectOn: 'UserPromptSubmit',
-            },
+            test: { command: 'bun test', injectOn: 'UserPromptSubmit' },
         })
 
         const result = JSON.parse(readFileSync(settingsPath, 'utf-8'))
@@ -293,9 +283,7 @@ describe('mergeSettings', () => {
         setup({})
         const settingsPath = path.join(TMP_DIR, '.claude', 'settings.json')
         await mergeSettings(settingsPath, {
-            meta: {
-                injectOn: 'SubagentStart',
-            },
+            meta: { injectOn: 'SubagentStart' },
         })
 
         const result = JSON.parse(readFileSync(settingsPath, 'utf-8'))
@@ -413,9 +401,7 @@ describe('initializeRCT', () => {
                 configurable: true,
             })
 
-            const { default: initializeRCT } = await import(
-                '../src/cli/init'
-            )
+            const { default: initializeRCT } = await import('../src/cli/init')
             await initializeRCT([])
 
             const configPath = path.join(TMP_DIR, 'rct.config.json')
@@ -440,9 +426,7 @@ describe('initializeRCT', () => {
     })
 
     test('_derived key is written to config', async () => {
-        setup({
-            'Cargo.toml': "[package]\nname = 'test'",
-        })
+        setup({ 'Cargo.toml': "[package]\nname = 'test'" })
 
         const origDir = process.env.CLAUDE_PROJECT_DIR
         const origIsTTY = process.stdin.isTTY
@@ -453,9 +437,7 @@ describe('initializeRCT', () => {
                 configurable: true,
             })
 
-            const { default: initializeRCT } = await import(
-                '../src/cli/init'
-            )
+            const { default: initializeRCT } = await import('../src/cli/init')
             await initializeRCT([])
 
             const configPath = path.join(TMP_DIR, 'rct.config.json')
@@ -479,9 +461,7 @@ describe('initializeRCT', () => {
     })
 
     test('re-run on existing config aborts in non-interactive mode', async () => {
-        setup({
-            'rct.config.json': '{"globals":{}}',
-        })
+        setup({ 'rct.config.json': '{"globals":{}}' })
 
         const origDir = process.env.CLAUDE_PROJECT_DIR
         const origIsTTY = process.stdin.isTTY
@@ -495,9 +475,7 @@ describe('initializeRCT', () => {
             })
             console.log = (...args: any[]) => logs.push(args.join(' '))
 
-            const { default: initializeRCT } = await import(
-                '../src/cli/init'
-            )
+            const { default: initializeRCT } = await import('../src/cli/init')
             await initializeRCT(['--yes'])
 
             // Config should be unchanged

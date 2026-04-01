@@ -160,11 +160,7 @@ function cacheDir(sessionId: string): string {
     return `/tmp/rct-cache-${sessionId.replace(/[^a-zA-Z0-9_-]/g, '_')}`
 }
 
-function cacheKey(
-    sessionId: string,
-    command: string,
-    lang?: string,
-): string {
+function cacheKey(sessionId: string, command: string, lang?: string): string {
     const parts = [lang, command].filter(Boolean).join('_')
     const key = parts.replace(/[^a-zA-Z0-9_-]/g, '_')
     return fs.join(cacheDir(sessionId), `${key}.json`)

@@ -272,11 +272,7 @@ describe('cache', () => {
     })
 
     test('same command on different languages gets separate cache entries', async () => {
-        const result: TestResult = {
-            status: 'pass',
-            exitCode: 0,
-            output: 'ok',
-        }
+        const result: TestResult = { status: 'pass', exitCode: 0, output: 'ok' }
         const failResult: TestResult = {
             status: 'fail',
             exitCode: 1,

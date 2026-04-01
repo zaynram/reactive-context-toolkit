@@ -1,5 +1,9 @@
 import { deriveFromProject } from '#config/derive'
-import { validateConfig, applyPlugins, desugarFileInjections } from '#config/schema'
+import {
+    validateConfig,
+    applyPlugins,
+    desugarFileInjections,
+} from '#config/schema'
 import { mergeSettings } from './init'
 import { fs } from '#util'
 import type { RCTConfig } from '#config/types'

@@ -754,14 +754,15 @@ In `src/cli/hook.ts`, update the test runner section:
 let testResult: string | null = null
 if (desugared.test) {
     const testConfig: TestConfig =
-        typeof desugared.test === 'object' && desugared.test !== true
-            ? (desugared.test as TestConfig)
-            : { command: desugared.test as true | string }
+        typeof desugared.test === 'object' && desugared.test !== true ?
+            (desugared.test as TestConfig)
+        :   { command: desugared.test as true | string }
 
     const rawInjectOn = testConfig.injectOn
-    const testEvents: HookEvent[] = Array.isArray(rawInjectOn)
-        ? rawInjectOn
-        : [rawInjectOn ?? 'SessionStart']
+    const testEvents: HookEvent[] =
+        Array.isArray(rawInjectOn) ? rawInjectOn : (
+            [rawInjectOn ?? 'SessionStart']
+        )
 
     if (testEvents.includes(event)) {
         const cmdInfo = resolveTestCommand(desugared)
@@ -771,9 +772,10 @@ if (desugared.test) {
             const cacheEnabled = testConfig.cache === true
             const cacheTTL = testConfig.cacheTTL ?? 300
 
-            let rawResult = cacheEnabled
-                ? getCachedResult(sessionId, cmdInfo.command, cacheTTL)
-                : null
+            let rawResult =
+                cacheEnabled ?
+                    getCachedResult(sessionId, cmdInfo.command, cacheTTL)
+                :   null
             if (!rawResult) {
                 rawResult = runTest(cmdInfo.command, CLAUDE_PROJECT_DIR)
                 if (cacheEnabled)

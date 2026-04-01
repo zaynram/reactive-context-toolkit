@@ -37,9 +37,7 @@ export async function dynamic<
             } catch (e: unknown) {
                 block({
                     stopReason:
-                        isError(e) ?
-                            e.message
-                        :   'An unknown error occurred.',
+                        isError(e) ? e.message : 'An unknown error occurred.',
                 })
             }
         })

@@ -37,8 +37,7 @@ export function createHook(handler: HookHandler): void {
             if (output) console.log(output)
             process.exit(0)
         } catch (err: unknown) {
-            const message =
-                err instanceof Error ? err.message : 'Unknown error'
+            const message = err instanceof Error ? err.message : 'Unknown error'
             console.error(`[rct] Hook handler error: ${message}`)
             console.log(
                 minify(
@@ -51,10 +50,7 @@ export function createHook(handler: HookHandler): void {
     process.stdin.on('error', (err) => {
         console.log(
             minify(
-                JSON.stringify({
-                    decision: 'block',
-                    stopReason: err.message,
-                }),
+                JSON.stringify({ decision: 'block', stopReason: err.message }),
             ),
         )
         process.exit(2)

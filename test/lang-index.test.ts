@@ -97,10 +97,7 @@ describe('auto-discovery', () => {
 
     test('does not auto-discover when entry.config is explicitly set', () => {
         const lang: LangConfig = {
-            node: {
-                tools: [{ name: 'bun', scripts: true }],
-                config: [],
-            },
+            node: { tools: [{ name: 'bun', scripts: true }], config: [] },
         }
         const results = evaluateLang(lang, 'SessionStart', fixtureDir)
         const joined = results.join('')

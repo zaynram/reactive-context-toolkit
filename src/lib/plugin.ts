@@ -9,9 +9,10 @@ export function definePlugin(plugin: RCTPlugin): RCTPlugin {
     if (plugin.files) {
         plugin.files = plugin.files.map((f) => ({
             ...f,
-            path: path.isAbsolute(f.path)
-                ? f.path
-                : path.resolve(process.cwd(), f.path),
+            path:
+                path.isAbsolute(f.path) ?
+                    f.path
+                :   path.resolve(process.cwd(), f.path),
         }))
     }
     return plugin

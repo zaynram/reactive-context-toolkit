@@ -132,9 +132,8 @@ async function main(eventArg?: string) {
     const topLevelTest: TestConfig | null =
         desugared.test && typeof desugared.test === 'object' ?
             (desugared.test as TestConfig)
-        : desugared.test ?
-            { command: desugared.test as true | string }
-        :   null
+        : desugared.test ? { command: desugared.test as true | string }
+        : null
 
     const topInjectOn = topLevelTest?.injectOn
     const testEvents: HookEvent[] =
@@ -149,9 +148,7 @@ async function main(eventArg?: string) {
         const cacheTTL = topLevelTest?.cacheTTL ?? 300
 
         // Per-language test execution
-        for (const [langName, entry] of Object.entries(
-            desugared.lang ?? {},
-        )) {
+        for (const [langName, entry] of Object.entries(desugared.lang ?? {})) {
             if (!entry) continue
             const langTest: LangTestConfig | undefined =
                 entry.test ?? (topLevelTest ? { command: true } : undefined)
@@ -180,14 +177,8 @@ async function main(eventArg?: string) {
                     )
             }
 
-            const result = {
-                ...rawResult,
-                tool: cmdInfo.tool,
-                lang: langName,
-            }
-            testResults.push(
-                formatTestResult(result, langTest, globals),
-            )
+            const result = { ...rawResult, tool: cmdInfo.tool, lang: langName }
+            testResults.push(formatTestResult(result, langTest, globals))
         }
 
         // Fallback: if no per-language tests ran but top-level exists, use v0.x behavior
@@ -196,11 +187,7 @@ async function main(eventArg?: string) {
             if (cmdInfo) {
                 let rawResult =
                     cacheEnabled ?
-                        getCachedResult(
-                            sessionId,
-                            cmdInfo.command,
-                            cacheTTL,
-                        )
+                        getCachedResult(sessionId, cmdInfo.command, cacheTTL)
                     :   null
                 if (!rawResult) {
                     rawResult = runTest(cmdInfo.command, CLAUDE_PROJECT_DIR)
@@ -218,8 +205,7 @@ async function main(eventArg?: string) {
             }
         }
     }
-    const testResult =
-        testResults.length > 0 ? testResults.join('\n') : null
+    const testResult = testResults.length > 0 ? testResults.join('\n') : null
 
     const output = composeOutput({
         event,

@@ -101,7 +101,6 @@ describe('RCT Config Types', () => {
             staleCheck: {
                 dateTag: 'last-updated',
                 wrapTag: 'file-content',
-                format: 'YYYY-MM-DD',
             },
             metaFiles: [{ path: 'meta.md', alias: 'meta' }],
         }

@@ -131,8 +131,11 @@ export async function applyPlugins(
                 extensions.triggers.push({ name, fn: plugin.trigger })
         } catch (err) {
             console.warn(
-                `[rct] Failed to resolve plugin '${name}': ${err instanceof Error ? err.message : err}`,
+                `[rct] Warning: Failed to resolve plugin '${name}': ${err instanceof Error ? err.message : err}`,
             )
+            if (process.env.RCT_DEBUG && err instanceof Error && err.stack) {
+                console.warn(err.stack)
+            }
         }
     }
 
@@ -199,7 +202,7 @@ export function desugarFileInjections(
 
 export function applyStaleCheck(
     content: string,
-    staleConfig: { dateTag: string; wrapTag: string; format?: string },
+    staleConfig: { dateTag: string; wrapTag: string },
     today: string,
 ): string {
     const dateRegex = new RegExp(

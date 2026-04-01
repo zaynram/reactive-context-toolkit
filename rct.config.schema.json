@@ -163,10 +163,6 @@
                         "wrapTag": {
                             "type": "string",
                             "description": "Tag name wrapping the content"
-                        },
-                        "format": {
-                            "type": "string",
-                            "description": "Date format string"
                         }
                     }
                 },

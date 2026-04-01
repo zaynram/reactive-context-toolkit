@@ -49,7 +49,12 @@ export function evaluateInjections(
 
         for (const ref of injection.inject) {
             const resolved = registry.getRef(ref)
-            if (!resolved) continue
+            if (!resolved) {
+                console.warn(
+                    `[rct] Warning: FileRef '${ref}' did not resolve — skipping injection`,
+                )
+                continue
+            }
 
             const { file, useBrief } = resolved
             const shouldUseBrief =

@@ -374,7 +374,7 @@ describe('discoverPlugins', () => {
     test('returns only built-in plugins when no local or installed plugins exist', () => {
         setup({})
         const result = discoverPlugins(TMP_DIR)
-        expect(result).toHaveLength(2) // issue-scope, track-work
+        expect(result).toHaveLength(3) // issue-scope, track-work, tmux
     })
 })
 

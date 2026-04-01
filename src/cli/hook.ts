@@ -31,21 +31,27 @@ async function withTimeout<T>(
     ms: number,
     label: string,
 ): Promise<T | undefined> {
+    const TIMEOUT_SENTINEL = Symbol('timeout')
+    let timer: ReturnType<typeof setTimeout>
     try {
-        return await Promise.race([
+        const result = await Promise.race([
             Promise.resolve(fn()),
-            new Promise<never>((_, reject) =>
-                setTimeout(
-                    () => reject(new Error(`${label} timed out after ${ms}ms`)),
-                    ms,
-                ),
-            ),
+            new Promise<typeof TIMEOUT_SENTINEL>((resolve) => {
+                timer = setTimeout(() => resolve(TIMEOUT_SENTINEL), ms)
+            }),
         ])
+        if (result === TIMEOUT_SENTINEL) {
+            console.warn(`[rct] Warning: ${label} timed out after ${ms}ms`)
+            return undefined
+        }
+        return result as T
     } catch (err) {
         console.warn(
             `[rct] Warning: ${label}: ${err instanceof Error ? err.message : err}`,
         )
         return undefined
+    } finally {
+        clearTimeout(timer!)
     }
 }
 
@@ -54,6 +60,7 @@ export { withTimeout }
 async function main(eventArg?: string) {
     const event = (eventArg ?? process.argv[2]) as HookEvent
     if (!event) {
+        console.error('[rct] Error: No hook event specified. Usage: rct hook <HookEvent>')
         process.exit(1)
     }
 

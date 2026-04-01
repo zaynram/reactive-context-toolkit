@@ -77,8 +77,6 @@ export interface FileEntry extends MetaFileEntry {
         dateTag: string
         /** Tag name wrapping the content */
         wrapTag: string
-        /** Date format string */
-        format?: string
     }
     /** Associated meta-files */
     metaFiles?: MetaFileEntry[]

@@ -237,35 +237,52 @@ rct's `RCTPlugin` interface only supports static `files[]` and `rules[]`. Plugin
 
 ### Solution
 
-Extend `RCTPlugin` with an optional `context` function:
+Extend `RCTPlugin` with optional `context` and `trigger` functions:
 
 ```typescript
+export interface PluginTriggerResult {
+    action: RuleAction  // 'block' | 'warn'
+    message: string
+}
+
 export interface RCTPlugin extends Pick<RCTConfig, 'rules' | 'files'> {
     name: string
     context?: (event: HookEvent, input: RC.HookInput) => string | Promise<string> | undefined
+    trigger?: (event: HookEvent, input: RC.HookInput) => PluginTriggerResult | Promise<PluginTriggerResult> | undefined
 }
 ```
 
-The hook pipeline in `cli/hook.ts` calls each plugin's `context()` function (if defined) after evaluating injections and before composing output. Returned strings are appended to the `additionalContext` assembly.
+**`context`**: Called after injection evaluation, before output composition. Returned strings are appended to `additionalContext`. Enables plugins to inject runtime-derived content (e.g., tmux layout, system state).
+
+**`trigger`**: Called during rule evaluation phase. Enables plugins to programmatically block or warn on tool use based on runtime conditions (e.g., "don't run npm test when a test watcher is already in a tmux pane"). Block results exit immediately; warn results are collected alongside static rule warnings. Severity ordering: block > warn > undefined.
+
+Both functions receive the current hook event and full input payload. Both are optional and backwards-compatible. Errors in either are caught and logged, never fatal to the pipeline.
 
 ### Changes Required
 
-1. **`src/plugin/types.ts`** — extend `RCTPlugin` interface
-2. **`src/config/schema.ts`** (`applyPlugins`) — pass through `context` functions from resolved plugins
-3. **`src/cli/hook.ts`** — call plugin `context()` functions during pipeline evaluation
-4. **Tests** — new test file for dynamic plugin content
+1. **`src/plugin/types.ts`** — extend `RCTPlugin` interface with `context` and `trigger`
+2. **`src/config/schema.ts`** (`applyPlugins`) — collect `context` and `trigger` functions from resolved plugins
+3. **`src/cli/hook.ts`** — call plugin functions during pipeline evaluation
+4. **Tests** — new test file for dynamic plugin capabilities
 
 ### Touch Point with Stream 1
 
-After Stream 2 lands, a follow-up PR updates `rct-plugin-tmux/src/index.ts` to provide:
+After Stream 2 lands, a follow-up PR updates `rct-plugin-tmux/src/index.ts`:
 
 ```typescript
 export default {
     name: 'tmux',
     context: async (event) => {
         if (event !== 'SessionStart') return undefined
-        // Run tmux list-panes, format as XML/JSON layout summary
-        return formatLayoutSummary(await listPanes())
+        try {
+            return formatLayoutSummary(await listPanes())
+        } catch {
+            return undefined
+        }
+    },
+    trigger: async (event, input) => {
+        // v2: warn if Bash command conflicts with a watched pane
+        return undefined
     }
 } satisfies RCTPlugin
 ```

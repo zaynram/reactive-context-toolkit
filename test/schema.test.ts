@@ -1,4 +1,4 @@
-import { describe, test, expect } from 'bun:test'
+import { describe, test, expect, spyOn } from 'bun:test'
 import {
     validateConfig,
     desugarFileInjections,
@@ -26,6 +26,31 @@ describe('validateConfig', () => {
         expect(result.globals.wrapper).toBe('ctx')
         expect(result.files).toHaveLength(1)
         expect(result.rules).toHaveLength(1)
+    })
+
+    test('warns on legacy typescript key', () => {
+        const warn = spyOn(console, 'warn').mockImplementation(() => {})
+        validateConfig({ lang: { typescript: { tools: [] } } } as any)
+        expect(warn).toHaveBeenCalledWith(
+            expect.stringContaining('lang.typescript is deprecated'),
+        )
+        warn.mockRestore()
+    })
+
+    test('warns on legacy javascript key', () => {
+        const warn = spyOn(console, 'warn').mockImplementation(() => {})
+        validateConfig({ lang: { javascript: { tools: [] } } } as any)
+        expect(warn).toHaveBeenCalledWith(
+            expect.stringContaining('lang.javascript is deprecated'),
+        )
+        warn.mockRestore()
+    })
+
+    test('does not warn on node key', () => {
+        const warn = spyOn(console, 'warn').mockImplementation(() => {})
+        validateConfig({ lang: { node: { tools: [] } } })
+        expect(warn).not.toHaveBeenCalled()
+        warn.mockRestore()
     })
 
     test('throws on invalid regex pattern in rules', () => {

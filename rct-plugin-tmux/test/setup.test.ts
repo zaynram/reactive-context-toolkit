@@ -50,9 +50,7 @@ describe('setup command', () => {
         await Bun.write(
             join(tempDir, '.mcp.json'),
             JSON.stringify({
-                mcpServers: {
-                    'rct-tmux': { command: 'old', args: [] },
-                },
+                mcpServers: { 'rct-tmux': { command: 'old', args: [] } },
             }),
         )
         await runSetup()

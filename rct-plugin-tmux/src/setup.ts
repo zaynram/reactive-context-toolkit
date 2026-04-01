@@ -1,9 +1,6 @@
 import { join } from 'node:path'
 
-const SERVER_ENTRY = {
-    command: 'bunx',
-    args: ['rct-tmux', 'serve'],
-} as const
+const SERVER_ENTRY = { command: 'bunx', args: ['rct-tmux', 'serve'] } as const
 
 export async function runSetup() {
     const projectDir = process.env.CLAUDE_PROJECT_DIR || process.cwd()

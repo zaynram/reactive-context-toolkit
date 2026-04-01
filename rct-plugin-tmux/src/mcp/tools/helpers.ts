@@ -1,10 +1,7 @@
 import { isAvailable, hasSession, validateTarget } from '../../lib/tmux'
 import { InvalidTargetError } from '../../lib/types'
 
-type McpResult = {
-    content: { type: 'text'; text: string }[]
-    isError?: true
-}
+type McpResult = { content: { type: 'text'; text: string }[]; isError?: true }
 
 export function ok(text: string): McpResult {
     return { content: [{ type: 'text', text }] }

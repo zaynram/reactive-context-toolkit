@@ -49,7 +49,8 @@ describe('parseListPanes', () => {
     })
 
     it('skips malformed lines', () => {
-        const output = 'dev:0.0\t100\t30\tbash\t1\nbadline\nwork:0.0\t80\t24\tvim\t0'
+        const output =
+            'dev:0.0\t100\t30\tbash\t1\nbadline\nwork:0.0\t80\t24\tvim\t0'
         const result = parseListPanes(output)
         expect(result).toHaveLength(2)
     })

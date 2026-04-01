@@ -9,10 +9,7 @@ describe('MCP server', () => {
         const [clientTransport, serverTransport] =
             InMemoryTransport.createLinkedPair()
 
-        const client = new Client({
-            name: 'test-client',
-            version: '0.1.0',
-        })
+        const client = new Client({ name: 'test-client', version: '0.1.0' })
 
         await Promise.all([
             client.connect(clientTransport),

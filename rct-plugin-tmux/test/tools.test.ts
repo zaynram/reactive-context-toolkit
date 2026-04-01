@@ -2,9 +2,8 @@ import { describe, expect, it, mock, beforeEach } from 'bun:test'
 import { parseListPanes, validateTarget } from '../src/lib/tmux'
 
 // We mock the tmux wrapper so tool tests are pure unit tests
-const mockExec = mock<
-    (args: string[]) => Promise<{ stdout: string; exitCode: number }>
->()
+const mockExec =
+    mock<(args: string[]) => Promise<{ stdout: string; exitCode: number }>>()
 const mockIsAvailable = mock<() => Promise<boolean>>()
 const mockHasSession = mock<() => Promise<boolean>>()
 
@@ -108,10 +107,7 @@ describe('tmux_read', () => {
             stdout: 'long scrollback content',
             exitCode: 0,
         })
-        const result = await handleRead({
-            target: 'dev:0.0',
-            history: true,
-        })
+        const result = await handleRead({ target: 'dev:0.0', history: true })
         expect(mcpText(result)).toContain('long scrollback')
         // Verify -S - was used for full scrollback
         const args = mockExec.mock.calls[0][0]
@@ -152,10 +148,7 @@ describe('tmux_send', () => {
     it('sends literal text with enter', async () => {
         setupMocks()
         mockExec.mockResolvedValue({ stdout: '', exitCode: 0 })
-        const result = await handleSend({
-            target: 'dev:0.0',
-            keys: 'npm test',
-        })
+        const result = await handleSend({ target: 'dev:0.0', keys: 'npm test' })
         mcpText(result)
         // First call: send-keys -l for literal text
         expect(mockExec.mock.calls[0][0]).toContain('-l')
@@ -182,11 +175,7 @@ describe('tmux_send', () => {
     it('handles special key names literally via -l', async () => {
         setupMocks()
         mockExec.mockResolvedValue({ stdout: '', exitCode: 0 })
-        await handleSend({
-            target: 'dev:0.0',
-            keys: 'Enter',
-            enter: false,
-        })
+        await handleSend({ target: 'dev:0.0', keys: 'Enter', enter: false })
         // Should use -l so "Enter" is literal text, not the Enter key
         expect(mockExec.mock.calls[0][0]).toContain('-l')
         expect(mockExec.mock.calls[0][0]).toContain('Enter')
@@ -194,19 +183,13 @@ describe('tmux_send', () => {
 
     it('returns error for invalid target', async () => {
         setupMocks()
-        const result = await handleSend({
-            target: '$(whoami)',
-            keys: 'test',
-        })
+        const result = await handleSend({ target: '$(whoami)', keys: 'test' })
         expect(mcpError(result)).toContain('Invalid pane target')
     })
 
     it('returns error when tmux not installed', async () => {
         setupMocks(false)
-        const result = await handleSend({
-            target: 'dev:0.0',
-            keys: 'test',
-        })
+        const result = await handleSend({ target: 'dev:0.0', keys: 'test' })
         expect(mcpError(result)).toContain('not installed')
     })
 })
@@ -216,10 +199,7 @@ describe('tmux_send', () => {
 describe('tmux_split', () => {
     it('splits vertically by default and returns new target', async () => {
         setupMocks()
-        mockExec.mockResolvedValue({
-            stdout: 'dev:0.1',
-            exitCode: 0,
-        })
+        mockExec.mockResolvedValue({ stdout: 'dev:0.1', exitCode: 0 })
         const result = await handleSplit({ target: 'dev:0.0' })
         const text = mcpText(result)
         expect(text).toContain('dev:0.1')
@@ -238,11 +218,7 @@ describe('tmux_split', () => {
     it('passes percent and command', async () => {
         setupMocks()
         mockExec.mockResolvedValue({ stdout: 'dev:0.1', exitCode: 0 })
-        await handleSplit({
-            target: 'dev:0.0',
-            percent: 30,
-            command: 'htop',
-        })
+        await handleSplit({ target: 'dev:0.0', percent: 30, command: 'htop' })
         const args = mockExec.mock.calls[0][0]
         expect(args).toContain('-p')
         expect(args).toContain('30')

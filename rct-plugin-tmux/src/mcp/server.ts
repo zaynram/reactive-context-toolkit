@@ -8,10 +8,7 @@ import { handleSplit } from './tools/split'
 import { handleClose } from './tools/close'
 
 export function createServer() {
-    const server = new McpServer({
-        name: 'rct-tmux',
-        version: '0.1.0',
-    })
+    const server = new McpServer({ name: 'rct-tmux', version: '0.1.0' })
 
     server.tool(
         'tmux_list',
@@ -49,8 +46,7 @@ export function createServer() {
                 .optional()
                 .describe('Append Enter key (default: true)'),
         },
-        async ({ target, keys, enter }) =>
-            handleSend({ target, keys, enter }),
+        async ({ target, keys, enter }) => handleSend({ target, keys, enter }),
     )
 
     server.tool(
@@ -78,9 +74,7 @@ export function createServer() {
     server.tool(
         'tmux_close',
         'Close a tmux pane (refuses to close last pane in session)',
-        {
-            target: z.string().describe('Pane to close'),
-        },
+        { target: z.string().describe('Pane to close') },
         async ({ target }) => handleClose({ target }),
     )
 

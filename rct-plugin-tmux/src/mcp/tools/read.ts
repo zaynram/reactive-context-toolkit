@@ -14,11 +14,12 @@ export async function handleRead(params: ReadParams) {
     const args = ['capture-pane', '-t', params.target, '-p']
     if (params.history) {
         args.push('-S', '-')
-    } else if (params.lines !== undefined) {
-        if (!Number.isInteger(params.lines) || params.lines <= 0) {
+    } else {
+        const lines = params.lines ?? 50
+        if (!Number.isInteger(lines) || lines <= 0) {
             return err('lines must be a positive integer')
         }
-        args.push('-S', `-${params.lines}`)
+        args.push('-S', `-${lines}`)
     }
 
     const { stdout, exitCode } = await exec(args)

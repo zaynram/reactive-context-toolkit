@@ -34,12 +34,11 @@ async function withTimeout<T>(
     const TIMEOUT_SENTINEL = Symbol('timeout')
     let timer: ReturnType<typeof setTimeout> | undefined
     try {
-        const result = await Promise.race([
-            Promise.resolve(fn()),
-            new Promise<typeof TIMEOUT_SENTINEL>((resolve) => {
-                timer = setTimeout(() => resolve(TIMEOUT_SENTINEL), ms)
-            }),
-        ])
+        const timeoutPromise = new Promise<typeof TIMEOUT_SENTINEL>((resolve) => {
+            timer = setTimeout(() => resolve(TIMEOUT_SENTINEL), ms)
+        })
+        const workPromise = Promise.resolve().then(fn)
+        const result = await Promise.race([workPromise, timeoutPromise])
         if (result === TIMEOUT_SENTINEL) {
             console.warn(`[rct] Warning: ${label} timed out after ${ms}ms`)
             return undefined

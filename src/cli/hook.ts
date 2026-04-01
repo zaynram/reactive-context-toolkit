@@ -32,7 +32,7 @@ async function main(eventArg?: string) {
 
     const config = await loadConfig()
     const validated = validateConfig(config)
-    const withPlugins = await applyPlugins(validated)
+    const { config: withPlugins, extensions } = await applyPlugins(validated)
     const desugared = desugarFileInjections(withPlugins)
     const registry = buildFileRegistry(desugared.files ?? [])
     const globals = desugared.globals

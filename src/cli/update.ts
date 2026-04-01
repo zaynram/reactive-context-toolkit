@@ -83,7 +83,7 @@ export default async function updateRCT(_args: string[] = []) {
 
     // Validate and resolve for settings
     const validated = validateConfig(configWithoutDerived as RCTConfig)
-    const withPlugins = await applyPlugins(validated)
+    const { config: withPlugins } = await applyPlugins(validated)
     const desugared = desugarFileInjections(withPlugins)
 
     // Write config with _derived

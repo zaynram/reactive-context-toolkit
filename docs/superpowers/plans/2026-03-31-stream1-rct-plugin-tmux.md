@@ -2,29 +2,40 @@
 
 **Spec:** `docs/superpowers/specs/2026-03-31-rct-plugin-tmux-design.md`
 **Branch:** `feat/rct-plugin-tmux`
-**Issue:** TBD (created during setup)
-**Draft PR:** TBD (created during setup)
+**Issue:** #6
+**Draft PR:** #7
 
 ## Prerequisites
 
-- [ ] Create feature branch `feat/rct-plugin-tmux` from `main`
-- [ ] Create GitHub issue for tracking
-- [ ] Create draft PR linked to issue
+- [x] Create feature branch `feat/rct-plugin-tmux` from `main`
+- [x] Create GitHub issue for tracking
+- [x] Create draft PR linked to issue
 
 ## Steps
 
+### Step 0: MCP SDK spike
+
+Verify `@modelcontextprotocol/sdk` works under Bun before investing in tool handlers.
+
+**Actions:**
+- Create a minimal MCP server with one dummy tool under Bun
+- Verify JSON-RPC initialize handshake completes via stdio
+- If SDK doesn't work on Bun, fall back to raw JSON-RPC stdio protocol
+
+**Acceptance:** Dummy MCP server starts, responds to `initialize`, and handles a tool call under Bun runtime. Spike code can be discarded after validation.
+
 ### Step 1: Scaffold package
 
-Create the `rct-plugin-tmux/` directory as a submodule-ready package.
+Create the `rct-plugin-tmux/` directory as a local package within the repo (not a submodule — submodules require a separate repository, which is unnecessary overhead for v1).
 
 **Files to create:**
-- `rct-plugin-tmux/package.json` — name, version, bin, exports, dependencies
-- `rct-plugin-tmux/tsconfig.json` — strict, ESNext, path aliases matching rct conventions
+- `rct-plugin-tmux/package.json` — name, version, bin, exports, dependencies (`@modelcontextprotocol/sdk`)
+- `rct-plugin-tmux/tsconfig.json` — strict, ESNext, Bun types
 - `rct-plugin-tmux/src/index.ts` — placeholder rct plugin export: `export default { name: 'tmux' }`
 - `rct-plugin-tmux/src/cli.ts` — CLI dispatcher: `setup` | `serve`
-- `rct-plugin-tmux/src/lib/types.ts` — `PaneInfo` interface, error types
+- `rct-plugin-tmux/src/lib/types.ts` — `PaneInfo` interface, error types (`TmuxNotFoundError`, `InvalidTargetError`, `NoSessionError`)
 
-**Acceptance:** `bun run rct-plugin-tmux/src/index.ts` doesn't error. Package exports are resolvable.
+**Acceptance:** `bun install` succeeds in package directory. `bun run rct-plugin-tmux/src/index.ts` doesn't error.
 
 ### Step 2: tmux wrapper (`src/lib/tmux.ts`)
 
@@ -35,18 +46,18 @@ Core abstraction over tmux subprocess calls. TDD: write tests first.
 - `rct-plugin-tmux/test/tmux.test.ts`
 
 **Functions:**
-- `exec(args: string[]): Promise<{ stdout: string; exitCode: number }>` — array-form `Bun.spawn()`
-- `isAvailable(): Promise<boolean>` — checks if `tmux` binary exists
-- `hasSession(): Promise<boolean>` — checks if any session is active
+- `exec(args: string[]): Promise<{ stdout: string; exitCode: number }>` — array-form `Bun.spawn()`, never shell strings
+- `isAvailable(): Promise<boolean>` — checks if `tmux` binary exists (runs `tmux -V`)
+- `hasSession(): Promise<boolean>` — checks if any session is active (`tmux list-sessions`)
 - `parseListPanes(output: string): PaneInfo[]` — tab-delimited parser
-- `validateTarget(target: string): void` — regex validation, throws `InvalidTargetError`
-- `getCurrentSession(): string | undefined` — reads `$TMUX` env var, extracts session name
+- `validateTarget(target: string): void` — regex `^[a-zA-Z0-9_:./$@%-]+$`, throws `InvalidTargetError`. Includes `$`, `@`, `%` for tmux ID-based targeting.
+- `getCurrentSession(): Promise<string | undefined>` — checks `$TMUX` is set (truthy only), then runs `tmux display-message -p '#{session_name}'` to get actual session name. Returns `undefined` if not in tmux.
 
 **Tests:**
-- `parseListPanes` with various inputs (single pane, multiple, empty)
-- `validateTarget` with valid and invalid targets
-- `exec` with mocked `Bun.spawn` for error cases (tmux not found, non-zero exit)
-- `getCurrentSession` with and without `$TMUX`
+- `parseListPanes` with various inputs (single pane, multiple sessions, empty output)
+- `validateTarget` with valid targets (`session:0.1`, `$0`, `@1`, `%2`) and invalid targets (`;rm -rf`, empty string)
+- `exec` error cases (tmux not found → `TmuxNotFoundError`, non-zero exit)
+- `getCurrentSession` with and without `$TMUX` set
 
 ### Step 3: MCP tool handlers
 
@@ -67,29 +78,41 @@ Each tool as a pure function that takes validated input and calls the tmux wrapp
 - Returns MCP-compliant result `{ content: [{ type: "text", text: ... }] }` or `{ isError: true, content: [...] }`
 - Checks tmux availability and session state, returns descriptive errors
 
+**`tmux_send` specifics:**
+- Uses `send-keys -l` for literal text (prevents "Enter", "Space", etc. from being interpreted as key names)
+- Appends `Enter` via separate `send-keys` call (without `-l`) when `enter: true`
+- Two tmux commands per send: `tmux send-keys -t <target> -l "<keys>"` then `tmux send-keys -t <target> Enter`
+
 **Tests per tool:**
 - Happy path with expected tmux output
-- tmux not installed → error response
-- No session → error response
-- Invalid target → error response
-- Tool-specific edge cases (e.g., `close` on last pane, `read` with history flag, `split` returning new pane target)
+- tmux not installed → MCP error response
+- No session → MCP error response
+- Invalid target → MCP error response
+- `send`: literal text with special key names ("Enter", "Escape") sent correctly via `-l`
+- `close`: refuses to close last pane in session
+- `read`: with and without `history` flag
+- `split`: returns new pane target from `-P -F` output
+- `list`: parses tab-delimited format string correctly
 
 ### Step 4: MCP server
 
-Wire tool handlers into an MCP server using `@modelcontextprotocol/sdk`.
+Wire tool handlers into an MCP server using `@modelcontextprotocol/sdk` (validated in Step 0).
 
 **Files to create:**
 - `rct-plugin-tmux/src/mcp/server.ts`
+- `rct-plugin-tmux/test/server.test.ts`
 
 **Implementation:**
-- Import `@modelcontextprotocol/sdk/server` and `StdioServerTransport`
+- Import `@modelcontextprotocol/sdk` server + transport
 - Register 5 tools with JSON Schema parameter definitions
 - Route tool calls to handlers from Step 3
 - Server name: `rct-tmux`
 
-**Testing:** Integration test — spawn server process, send JSON-RPC initialize + tool call, verify response. (Can be manual/smoke test if MCP protocol testing is complex.)
+**Testing:** Integration test — spawn server process via `Bun.spawn()`, send JSON-RPC `initialize` + `tools/call`, verify response structure matches MCP protocol. This is a real test, not a smoke test.
 
 ### Step 5: Setup command
+
+Independent of Steps 2-4. Can start after Step 1.
 
 **Files to create:**
 - `rct-plugin-tmux/src/setup.ts`
@@ -110,6 +133,8 @@ Wire tool handlers into an MCP server using `@modelcontextprotocol/sdk`.
 
 ### Step 6: CLI dispatcher + bin entry
 
+Depends on Step 4 (`serve`) and Step 5 (`setup`).
+
 **Files to modify:**
 - `rct-plugin-tmux/src/cli.ts` — route `setup` and `serve` subcommands
 - `rct-plugin-tmux/package.json` — verify `bin` field
@@ -119,26 +144,23 @@ Wire tool handlers into an MCP server using `@modelcontextprotocol/sdk`.
 ### Step 7: Register as rct builtin
 
 **Files to modify in rct repo:**
-- `src/plugin/index.ts` — import and register tmux plugin
-- Add git submodule reference
+- `src/plugin/index.ts` — import tmux plugin via relative path and register
+- No submodule — direct local import: `import tmux from '../../rct-plugin-tmux/src/index'`
 
 **Files to create:**
-- `test/plugin-tmux.test.ts` — verify tmux plugin is in registry, has correct name
+- `test/plugin-tmux.test.ts` — verify tmux plugin is in registry, has correct name, has no files/rules (v1 placeholder)
 
 ### Step 8: README + final review
 
-- `rct-plugin-tmux/README.md` — installation, setup, tool reference
-- Run full test suite
+- `rct-plugin-tmux/README.md` — installation, setup, tool reference, capture-pane behavior notes
+- Run full test suite (both rct-plugin-tmux and parent rct)
 - Lint + format check
 
 ## Build Sequence
 
 ```
-Step 1 (scaffold) → Step 2 (tmux wrapper) → Step 3 (tool handlers) → Step 4 (MCP server)
-                                                                    → Step 5 (setup command)
-                                                                    → Step 6 (CLI)
-                                           → Step 7 (rct builtin registration)
-                                           → Step 8 (README + review)
+Step 0 (spike) → Step 1 (scaffold + bun install) → Step 2 (tmux wrapper) → Step 3 (tools) → Step 4 (MCP server) ─┐
+                 Step 1 ──────────────────────────→ Step 5 (setup command) ─────────────────────────────────────────┤→ Step 6 (CLI) → Step 7 (builtin) → Step 8 (README)
 ```
 
-Steps 3-6 can partially parallelize: tool handlers and setup command are independent. Step 7 depends on the package being functional. Step 8 is final.
+Step 5 starts after Step 1 and runs parallel to Steps 2-4. Step 6 waits for both Step 4 and Step 5.

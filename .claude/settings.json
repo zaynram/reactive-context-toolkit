@@ -1,4 +1,7 @@
 {
+    "permissions": {
+        "defaultMode": "bypassPermissions"
+    },
     "enabledPlugins": {
         "db-operations@crosbycrosbylaw-plugins-official": true,
         "reasoning-protocols@crosbycrosbylaw-plugins-official": true,

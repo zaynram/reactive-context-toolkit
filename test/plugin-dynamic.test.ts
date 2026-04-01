@@ -7,6 +7,8 @@ import type {
 import type { HookEvent } from '../src/config/types'
 import { applyPlugins, type ValidatedConfig } from '../src/config/schema'
 import type { PluginExtensions } from '../src/config/schema'
+import { composeOutput } from '../src/engine/compose'
+import { withTimeout } from '../src/cli/hook'
 
 describe('RCTPlugin context function', () => {
     test('plugin with context function is valid', () => {
@@ -295,5 +297,135 @@ describe('applyPlugins extensions', () => {
             expect(typeof trg.name).toBe('string')
             expect(typeof trg.fn).toBe('function')
         }
+    })
+})
+
+// Step 3: withTimeout helper
+
+describe('withTimeout', () => {
+    test('returns value from sync function', async () => {
+        const result = await withTimeout(() => 'hello', 5000, 'test')
+        expect(result).toBe('hello')
+    })
+
+    test('returns value from async function', async () => {
+        const result = await withTimeout(async () => 'async hello', 5000, 'test')
+        expect(result).toBe('async hello')
+    })
+
+    test('returns undefined and warns on throw', async () => {
+        const warns: string[] = []
+        const origWarn = console.warn
+        console.warn = (...args: unknown[]) => warns.push(String(args[0]))
+
+        const result = await withTimeout(
+            () => {
+                throw new Error('boom')
+            },
+            5000,
+            'test-fn',
+        )
+
+        console.warn = origWarn
+        expect(result).toBeUndefined()
+        expect(warns.some((w) => w.includes('test-fn') && w.includes('boom'))).toBe(true)
+    })
+
+    test('returns undefined on timeout', async () => {
+        const warns: string[] = []
+        const origWarn = console.warn
+        console.warn = (...args: unknown[]) => warns.push(String(args[0]))
+
+        const result = await withTimeout(
+            () => new Promise<string>((resolve) => setTimeout(() => resolve('late'), 10000)),
+            50,
+            'slow-fn',
+        )
+
+        console.warn = origWarn
+        expect(result).toBeUndefined()
+        expect(warns.some((w) => w.includes('slow-fn') && w.includes('timed out'))).toBe(true)
+    })
+})
+
+// Step 3: composeOutput with pluginContextResults
+
+describe('composeOutput with pluginContextResults', () => {
+    const baseGlobals = {
+        format: 'xml' as const,
+        wrapper: 'context',
+        briefByDefault: false,
+        minify: true,
+        plugins: [],
+    }
+
+    test('includes pluginContextResults in output', () => {
+        const output = composeOutput({
+            event: 'SessionStart',
+            blockResult: null,
+            warnMessages: [],
+            injectionResults: [],
+            pluginContextResults: ['<tmux>pane info</tmux>'],
+            metaResult: null,
+            langResult: null,
+            testResult: null,
+            globals: baseGlobals,
+        })
+        const parsed = JSON.parse(output)
+        expect(parsed.hookSpecificOutput.additionalContext).toContain('pane info')
+    })
+
+    test('pluginContextResults appear after injections and before meta', () => {
+        const output = composeOutput({
+            event: 'SessionStart',
+            blockResult: null,
+            warnMessages: [],
+            injectionResults: ['<injection>data</injection>'],
+            pluginContextResults: ['<plugin>ctx</plugin>'],
+            metaResult: '<meta>info</meta>',
+            langResult: null,
+            testResult: null,
+            globals: baseGlobals,
+        })
+        const parsed = JSON.parse(output)
+        const ctx = parsed.hookSpecificOutput.additionalContext
+        const injIdx = ctx.indexOf('injection')
+        const plugIdx = ctx.indexOf('plugin')
+        const metaIdx = ctx.indexOf('meta')
+        expect(injIdx).toBeLessThan(plugIdx)
+        expect(plugIdx).toBeLessThan(metaIdx)
+    })
+
+    test('empty pluginContextResults produces no extra output', () => {
+        const output = composeOutput({
+            event: 'SessionStart',
+            blockResult: null,
+            warnMessages: [],
+            injectionResults: ['<data>x</data>'],
+            pluginContextResults: [],
+            metaResult: null,
+            langResult: null,
+            testResult: null,
+            globals: baseGlobals,
+        })
+        const parsed = JSON.parse(output)
+        expect(parsed.hookSpecificOutput.additionalContext).not.toContain('plugin')
+    })
+
+    test('multiple pluginContextResults are all included', () => {
+        const output = composeOutput({
+            event: 'SessionStart',
+            blockResult: null,
+            warnMessages: [],
+            injectionResults: [],
+            pluginContextResults: ['<p1>one</p1>', '<p2>two</p2>'],
+            metaResult: null,
+            langResult: null,
+            testResult: null,
+            globals: baseGlobals,
+        })
+        const parsed = JSON.parse(output)
+        expect(parsed.hookSpecificOutput.additionalContext).toContain('one')
+        expect(parsed.hookSpecificOutput.additionalContext).toContain('two')
     })
 })

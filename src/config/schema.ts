@@ -113,8 +113,7 @@ export async function applyPlugins(
 ): Promise<ApplyPluginsResult> {
     const extensions: PluginExtensions = { contexts: [], triggers: [] }
     const pluginNames = config.globals.plugins ?? []
-    if (pluginNames.length === 0)
-        return { config, extensions }
+    if (pluginNames.length === 0) return { config, extensions }
 
     const mergedFiles: FileEntry[] = [...(config.files ?? [])]
     const mergedRules: RuleEntry[] = [...(config.rules ?? [])]
@@ -126,9 +125,15 @@ export async function applyPlugins(
             if (plugin.files) mergedFiles.push(...plugin.files)
             if (plugin.rules) mergedRules.push(...plugin.rules)
             if (plugin.context)
-                extensions.contexts.push({ name, fn: plugin.context })
+                extensions.contexts.push({
+                    name: plugin.name ?? name,
+                    fn: plugin.context,
+                })
             if (plugin.trigger)
-                extensions.triggers.push({ name, fn: plugin.trigger })
+                extensions.triggers.push({
+                    name: plugin.name ?? name,
+                    fn: plugin.trigger,
+                })
         } catch (err) {
             console.warn(
                 `[rct] Warning: Failed to resolve plugin '${name}': ${err instanceof Error ? err.message : err}`,

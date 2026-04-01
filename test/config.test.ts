@@ -98,10 +98,7 @@ describe('RCT Config Types', () => {
         const entry: FileEntry = {
             path: 'src/index.ts',
             alias: 'main',
-            staleCheck: {
-                dateTag: 'last-updated',
-                wrapTag: 'file-content',
-            },
+            staleCheck: { dateTag: 'last-updated', wrapTag: 'file-content' },
             metaFiles: [{ path: 'meta.md', alias: 'meta' }],
         }
         expect(entry.staleCheck?.dateTag).toBe('last-updated')

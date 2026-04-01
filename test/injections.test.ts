@@ -1,4 +1,4 @@
-import { describe, test, expect } from 'bun:test'
+import { describe, test, expect, spyOn } from 'bun:test'
 import { evaluateInjections } from '../src/engine/injections'
 import type { InjectionEntry, GlobalsConfig } from '../src/config/types'
 import type { FileRegistry, ReferenceFile } from '../src/types'
@@ -300,5 +300,29 @@ describe('evaluateInjections', () => {
         expect(result).toHaveLength(1)
         expect(result[0]).not.toContain('<stale-scope')
         expect(result[0]).toBe(freshContent)
+    })
+})
+
+describe('evaluateInjections — unresolved FileRef warning', () => {
+    test('warns and skips when FileRef does not resolve', () => {
+        const warnSpy = spyOn(console, 'warn').mockImplementation(() => {})
+        const registry = makeRegistry([])
+        const injection: InjectionEntry = {
+            on: 'SessionStart',
+            inject: ['nonexistent'],
+        }
+        const result = evaluateInjections(
+            [injection],
+            'SessionStart',
+            undefined,
+            {},
+            registry,
+            defaultGlobals,
+        )
+        expect(result).toHaveLength(0)
+        expect(warnSpy).toHaveBeenCalledWith(
+            expect.stringContaining("FileRef 'nonexistent' did not resolve"),
+        )
+        warnSpy.mockRestore()
     })
 })

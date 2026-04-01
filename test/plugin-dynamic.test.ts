@@ -173,15 +173,17 @@ describe('RCTPlugin trigger function', () => {
         const origWarn = console.warn
         console.warn = (...args: unknown[]) => warns.push(String(args[0]))
 
-        const result = await withTimeout(
-            () => plugin.trigger!('PreToolUse', { payload: {} }),
-            5000,
-            'test-trigger',
-        )
-
-        console.warn = origWarn
-        expect(result).toBeUndefined()
-        expect(warns.some((w) => w.includes('trigger exploded'))).toBe(true)
+        try {
+            const result = await withTimeout(
+                () => plugin.trigger!('PreToolUse', { payload: {} }),
+                5000,
+                'test-trigger',
+            )
+            expect(result).toBeUndefined()
+            expect(warns.some((w) => w.includes('trigger exploded'))).toBe(true)
+        } finally {
+            console.warn = origWarn
+        }
     })
 
     test('async trigger functions are awaited', async () => {

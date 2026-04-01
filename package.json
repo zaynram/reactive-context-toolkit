@@ -5,8 +5,7 @@
     "packageManager": "bun@1.3.10",
     "scripts": {
         "test": "bun test",
-        "lint": "bun oxlint",
-        "lint:": "bun oxlint --node-plugin --import-plugin --type-aware --type-check",
+        "lint": "bun oxlint --node-plugin --import-plugin --type-aware --type-check",
         "lint:fix": "bun lint --fix",
         "format:check": "prettier --check .",
         "format": "prettier --write .",

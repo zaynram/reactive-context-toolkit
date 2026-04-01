@@ -60,29 +60,29 @@ rct-plugin-tmux/
 ### How It Wires Up
 
 **As an rct builtin:**
+
 - Submoduled into `reactive-context-toolkit` repo
 - Registered in `src/plugin/index.ts` alongside `track-work` and `issue-scope`
 - Users enable via `globals.plugins: ["tmux"]` in `rct.config.json`
 - rct resolves it through the existing builtin plugin path
 
 **As a standalone package:**
+
 - `bun add rct-plugin-tmux`
 - Users reference it in `globals.plugins: ["rct-plugin-tmux"]`
 - rct resolves it through the package plugin path
 - MCP server configured independently
 
 **MCP server installation:**
+
 - `bunx rct-tmux setup` writes to `.mcp.json`:
-  ```json
-  {
-    "mcpServers": {
-      "rct-tmux": {
-        "command": "bunx",
-        "args": ["rct-tmux", "serve"]
-      }
+    ```json
+    {
+        "mcpServers": {
+            "rct-tmux": { "command": "bunx", "args": ["rct-tmux", "serve"] }
+        }
     }
-  }
-  ```
+    ```
 - `bunx rct-tmux serve` starts the MCP server (stdio transport)
 
 ### MCP Tools
@@ -94,17 +94,21 @@ All tools target panes by `target` string using tmux's standard addressing: `ses
 List all panes in the current or specified session with metadata.
 
 **Parameters:**
+
 - `session?` (string) — session name filter; omit for all sessions
 
 **Returns:** Array of pane info objects:
+
 ```json
-[{
-  "target": "claude-team:0.0",
-  "width": 100,
-  "height": 32,
-  "command": "bash",
-  "active": true
-}]
+[
+    {
+        "target": "claude-team:0.0",
+        "width": 100,
+        "height": 32,
+        "command": "bash",
+        "active": true
+    }
+]
 ```
 
 **Implementation:** `tmux list-panes -a -F '#{session_name}:#{window_index}.#{pane_index}\t#{pane_width}\t#{pane_height}\t#{pane_current_command}\t#{pane_active}'`
@@ -116,6 +120,7 @@ Uses tab delimiters to avoid ambiguity from commands containing spaces.
 Capture the visual buffer from a pane.
 
 **Parameters:**
+
 - `target` (string) — pane target (e.g., `claude-team:0.1`)
 - `lines?` (number) — number of lines to capture (default: 50)
 - `history?` (boolean) — include scrollback history (default: false, visible area only)
@@ -123,12 +128,14 @@ Capture the visual buffer from a pane.
 **Returns:** String content of the pane.
 
 **Behavior notes:**
+
 - `capture-pane` reads the terminal's visual buffer, including TUI output (not just shell commands/output). A pane running a TUI application (like Claude Code itself, vim, htop) will return the rendered screen, not underlying text.
 - With `history: false` (default): captures only the visible area (pane height lines).
 - With `history: true`: captures full scrollback buffer (`-S -`), which can be large.
 - Lines may be truncated to pane width. Content reflects what's visually rendered.
 
 **Implementation:**
+
 - Default: `tmux capture-pane -t <target> -p -S -<lines>`
 - With history: `tmux capture-pane -t <target> -p -S -`
 
@@ -137,6 +144,7 @@ Capture the visual buffer from a pane.
 Send keys (commands) to a pane.
 
 **Parameters:**
+
 - `target` (string) — pane target
 - `keys` (string) — text to send
 - `enter?` (boolean) — append Enter key (default: true)
@@ -152,6 +160,7 @@ Keys are passed as separate arguments to `Bun.spawn()` (array form), not interpo
 Create a new pane by splitting an existing one.
 
 **Parameters:**
+
 - `target?` (string) — pane to split (default: current)
 - `direction?` (string) — `horizontal` or `vertical` (default: `vertical`)
 - `percent?` (number) — size percentage (default: 50)
@@ -168,6 +177,7 @@ Uses `-d` to keep focus on the original pane. Uses `-P -F` to print the new pane
 Close a pane.
 
 **Parameters:**
+
 - `target` (string) — pane to close
 
 **Returns:** Confirmation string.
@@ -179,6 +189,7 @@ Close a pane.
 ### tmux Wrapper (`src/lib/tmux.ts`)
 
 Thin layer over `Bun.spawn()` that:
+
 - Runs tmux commands via array-form subprocess spawning (no shell string interpolation)
 - Parses structured output using tab-delimited format strings
 - Validates target strings against `^[a-zA-Z0-9_:./-]+$` pattern
@@ -187,16 +198,18 @@ Thin layer over `Bun.spawn()` that:
 
 ```typescript
 interface PaneInfo {
-  target: string
-  width: number
-  height: number
-  command: string
-  active: boolean
+    target: string
+    width: number
+    height: number
+    command: string
+    active: boolean
 }
 
-async function exec(args: string[]): Promise<{ stdout: string; exitCode: number }>
+async function exec(
+    args: string[],
+): Promise<{ stdout: string; exitCode: number }>
 function parseListPanes(output: string): PaneInfo[]
-function validateTarget(target: string): void  // throws on invalid
+function validateTarget(target: string): void // throws on invalid
 ```
 
 ### Error Handling
@@ -241,14 +254,20 @@ Extend `RCTPlugin` with optional `context` and `trigger` functions:
 
 ```typescript
 export interface PluginTriggerResult {
-    action: RuleAction  // 'block' | 'warn'
+    action: RuleAction // 'block' | 'warn'
     message: string
 }
 
 export interface RCTPlugin extends Pick<RCTConfig, 'rules' | 'files'> {
     name: string
-    context?: (event: HookEvent, input: RC.HookInput) => string | Promise<string> | undefined
-    trigger?: (event: HookEvent, input: RC.HookInput) => PluginTriggerResult | Promise<PluginTriggerResult> | undefined
+    context?: (
+        event: HookEvent,
+        input: RC.HookInput,
+    ) => string | Promise<string> | undefined
+    trigger?: (
+        event: HookEvent,
+        input: RC.HookInput,
+    ) => PluginTriggerResult | Promise<PluginTriggerResult> | undefined
 }
 ```
 
@@ -283,7 +302,7 @@ export default {
     trigger: async (event, input) => {
         // v2: warn if Bash command conflicts with a watched pane
         return undefined
-    }
+    },
 } satisfies RCTPlugin
 ```
 
@@ -291,11 +310,11 @@ export default {
 
 Fix alongside whichever stream touches the relevant files:
 
-1. **Plugin error swallowing** (`src/config/schema.ts:110-119`): Failed plugin loads are silently skipped with `console.warn`. Add a `[rct] Warning:` prefix and log the plugin name clearly. Consider adding a `--verbose` or `RCT_DEBUG` env flag for full stack traces. *(Stream 2)*
+1. **Plugin error swallowing** (`src/config/schema.ts:110-119`): Failed plugin loads are silently skipped with `console.warn`. Add a `[rct] Warning:` prefix and log the plugin name clearly. Consider adding a `--verbose` or `RCT_DEBUG` env flag for full stack traces. _(Stream 2)_
 
-2. **Silent file reference failures** (`src/engine/injections.ts:50-78`): Invalid `FileRef` values in injections silently produce no output. Add `console.warn` when a configured ref doesn't resolve. *(Stream 2)*
+2. **Silent file reference failures** (`src/engine/injections.ts:50-78`): Invalid `FileRef` values in injections silently produce no output. Add `console.warn` when a configured ref doesn't resolve. _(Stream 2)_
 
-3. **Unused `format` parameter in stale check** (`src/config/schema.ts:181-197`): `staleCheck.format` is accepted but never used. Remove from the type to avoid confusion. *(Stream 2)*
+3. **Unused `format` parameter in stale check** (`src/config/schema.ts:181-197`): `staleCheck.format` is accepted but never used. Remove from the type to avoid confusion. _(Stream 2)_
 
 ## Platform Support
 

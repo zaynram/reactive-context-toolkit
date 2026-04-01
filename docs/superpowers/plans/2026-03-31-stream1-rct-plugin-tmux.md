@@ -18,6 +18,7 @@
 Verify `@modelcontextprotocol/sdk` works under Bun before investing in tool handlers.
 
 **Actions:**
+
 - Create a minimal MCP server with one dummy tool under Bun
 - Verify JSON-RPC initialize handshake completes via stdio
 - If SDK doesn't work on Bun, fall back to raw JSON-RPC stdio protocol
@@ -29,6 +30,7 @@ Verify `@modelcontextprotocol/sdk` works under Bun before investing in tool hand
 Create the `rct-plugin-tmux/` directory as a local package within the repo (not a submodule — submodules require a separate repository, which is unnecessary overhead for v1).
 
 **Files to create:**
+
 - `rct-plugin-tmux/package.json` — name, version, bin, exports, dependencies (`@modelcontextprotocol/sdk`)
 - `rct-plugin-tmux/tsconfig.json` — strict, ESNext, Bun types
 - `rct-plugin-tmux/src/index.ts` — placeholder rct plugin export: `export default { name: 'tmux' }`
@@ -42,10 +44,12 @@ Create the `rct-plugin-tmux/` directory as a local package within the repo (not 
 Core abstraction over tmux subprocess calls. TDD: write tests first.
 
 **Files to create:**
+
 - `rct-plugin-tmux/src/lib/tmux.ts`
 - `rct-plugin-tmux/test/tmux.test.ts`
 
 **Functions:**
+
 - `exec(args: string[]): Promise<{ stdout: string; exitCode: number }>` — array-form `Bun.spawn()`, never shell strings
 - `isAvailable(): Promise<boolean>` — checks if `tmux` binary exists (runs `tmux -V`)
 - `hasSession(): Promise<boolean>` — checks if any session is active (`tmux list-sessions`)
@@ -54,6 +58,7 @@ Core abstraction over tmux subprocess calls. TDD: write tests first.
 - `getCurrentSession(): Promise<string | undefined>` — checks `$TMUX` is set (truthy only), then runs `tmux display-message -p '#{session_name}'` to get actual session name. Returns `undefined` if not in tmux.
 
 **Tests:**
+
 - `parseListPanes` with various inputs (single pane, multiple sessions, empty output)
 - `validateTarget` with valid targets (`session:0.1`, `$0`, `@1`, `%2`) and invalid targets (`;rm -rf`, empty string)
 - `exec` error cases (tmux not found → `TmuxNotFoundError`, non-zero exit)
@@ -64,6 +69,7 @@ Core abstraction over tmux subprocess calls. TDD: write tests first.
 Each tool as a pure function that takes validated input and calls the tmux wrapper. TDD: tests first.
 
 **Files to create:**
+
 - `rct-plugin-tmux/src/mcp/tools/list.ts`
 - `rct-plugin-tmux/src/mcp/tools/read.ts`
 - `rct-plugin-tmux/src/mcp/tools/send.ts`
@@ -72,6 +78,7 @@ Each tool as a pure function that takes validated input and calls the tmux wrapp
 - `rct-plugin-tmux/test/tools.test.ts`
 
 **Each tool handler:**
+
 - Takes typed params object
 - Validates inputs (target string, numeric bounds)
 - Calls tmux wrapper
@@ -79,11 +86,13 @@ Each tool as a pure function that takes validated input and calls the tmux wrapp
 - Checks tmux availability and session state, returns descriptive errors
 
 **`tmux_send` specifics:**
+
 - Uses `send-keys -l` for literal text (prevents "Enter", "Space", etc. from being interpreted as key names)
 - Appends `Enter` via separate `send-keys` call (without `-l`) when `enter: true`
 - Two tmux commands per send: `tmux send-keys -t <target> -l "<keys>"` then `tmux send-keys -t <target> Enter`
 
 **Tests per tool:**
+
 - Happy path with expected tmux output
 - tmux not installed → MCP error response
 - No session → MCP error response
@@ -99,10 +108,12 @@ Each tool as a pure function that takes validated input and calls the tmux wrapp
 Wire tool handlers into an MCP server using `@modelcontextprotocol/sdk` (validated in Step 0).
 
 **Files to create:**
+
 - `rct-plugin-tmux/src/mcp/server.ts`
 - `rct-plugin-tmux/test/server.test.ts`
 
 **Implementation:**
+
 - Import `@modelcontextprotocol/sdk` server + transport
 - Register 5 tools with JSON Schema parameter definitions
 - Route tool calls to handlers from Step 3
@@ -115,10 +126,12 @@ Wire tool handlers into an MCP server using `@modelcontextprotocol/sdk` (validat
 Independent of Steps 2-4. Can start after Step 1.
 
 **Files to create:**
+
 - `rct-plugin-tmux/src/setup.ts`
 - `rct-plugin-tmux/test/setup.test.ts`
 
 **Implementation:**
+
 - Read `.mcp.json` from `process.cwd()` (or `CLAUDE_PROJECT_DIR`)
 - Parse JSON, create if missing
 - Merge `rct-tmux` server entry into `mcpServers` (preserve existing entries)
@@ -126,6 +139,7 @@ Independent of Steps 2-4. Can start after Step 1.
 - Print confirmation
 
 **Tests:**
+
 - Creates `.mcp.json` when missing
 - Merges into existing `.mcp.json` without clobbering other servers
 - Updates existing `rct-tmux` entry
@@ -136,6 +150,7 @@ Independent of Steps 2-4. Can start after Step 1.
 Depends on Step 4 (`serve`) and Step 5 (`setup`).
 
 **Files to modify:**
+
 - `rct-plugin-tmux/src/cli.ts` — route `setup` and `serve` subcommands
 - `rct-plugin-tmux/package.json` — verify `bin` field
 
@@ -144,10 +159,12 @@ Depends on Step 4 (`serve`) and Step 5 (`setup`).
 ### Step 7: Register as rct builtin
 
 **Files to modify in rct repo:**
+
 - `src/plugin/index.ts` — import tmux plugin via relative path and register
 - No submodule — direct local import: `import tmux from '../../rct-plugin-tmux/src/index'`
 
 **Files to create:**
+
 - `test/plugin-tmux.test.ts` — verify tmux plugin is in registry, has correct name, has no files/rules (v1 placeholder)
 
 ### Step 8: README + final review

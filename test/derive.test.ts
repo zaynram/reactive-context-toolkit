@@ -114,4 +114,36 @@ describe('deriveFromProject', () => {
             extractPaths: true,
         })
     })
+
+    test('jsconfig.json alone triggers node detection with config entry', () => {
+        touch('jsconfig.json')
+        const result = deriveFromProject(tmp)
+        expect(result.lang.node).toBeDefined()
+        const configs = result.lang.node!.config
+        expect(configs).toBeDefined()
+        expect(configs).toHaveLength(1)
+        expect(configs![0]).toEqual({
+            name: 'jsconfig',
+            path: 'jsconfig.json',
+            extractPaths: true,
+        })
+    })
+
+    test('pixi.toml triggers python detection with pixi tool', () => {
+        touch('pixi.toml')
+        const result = deriveFromProject(tmp)
+        expect(result.lang.python).toBeDefined()
+        expect(result.lang.python!.tools).toHaveLength(1)
+        expect(result.lang.python!.tools![0].name).toBe('pixi')
+        expect(result.lang.python!.tools![0].tasks).toBe(true)
+        expect(result.lang.python!.tools![0].environment).toBe(true)
+        expect(result.test?.command).toContain('pixi run test')
+    })
+
+    test('pyproject.toml triggers python detection with empty tools', () => {
+        touch('pyproject.toml')
+        const result = deriveFromProject(tmp)
+        expect(result.lang.python).toBeDefined()
+        expect(result.lang.python!.tools).toHaveLength(0)
+    })
 })

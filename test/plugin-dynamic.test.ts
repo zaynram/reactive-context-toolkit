@@ -54,17 +54,20 @@ describe('RCTPlugin context function', () => {
         // withTimeout catches the error and returns undefined with a warning
         const warns: string[] = []
         const origWarn = console.warn
-        console.warn = (...args: unknown[]) => warns.push(String(args[0]))
+        try {
+            console.warn = (...args: unknown[]) => warns.push(String(args[0]))
 
-        const result = await withTimeout(
-            () => plugin.context!('SessionStart', { payload: {} }),
-            5000,
-            'test-context',
-        )
+            const result = await withTimeout(
+                () => plugin.context!('SessionStart', { payload: {} }),
+                5000,
+                'test-context',
+            )
 
-        console.warn = origWarn
-        expect(result).toBeUndefined()
-        expect(warns.some((w) => w.includes('context exploded'))).toBe(true)
+            expect(result).toBeUndefined()
+            expect(warns.some((w) => w.includes('context exploded'))).toBe(true)
+        } finally {
+            console.warn = origWarn
+        }
     })
 
     test('async context functions are awaited', async () => {

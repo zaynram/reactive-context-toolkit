@@ -22,8 +22,16 @@ export function createHook(handler: HookHandler): void {
     let data = ''
     process.stdin.on('data', (chunk: Buffer | string) => (data += chunk))
     process.stdin.on('end', async () => {
+        let input: RC.HookInput
         try {
-            const input = JSON.parse(data || '{}') as RC.HookInput
+            input = JSON.parse(data || '{}') as RC.HookInput
+        } catch {
+            // Parse error — don't block, just exit with no output
+            console.error('[rct] Failed to parse hook stdin as JSON')
+            process.exit(1)
+            return
+        }
+        try {
             const result = await handler(input)
             const output = minify(JSON.stringify(result))
             if (output) console.log(output)
@@ -31,6 +39,7 @@ export function createHook(handler: HookHandler): void {
         } catch (err: unknown) {
             const message =
                 err instanceof Error ? err.message : 'Unknown error'
+            console.error(`[rct] Hook handler error: ${message}`)
             console.log(
                 minify(
                     JSON.stringify({ decision: 'block', stopReason: message }),

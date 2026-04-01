@@ -17,13 +17,13 @@ describe('resolvePlugin', () => {
 
     test('throws for unknown plugin name', async () => {
         await expect(resolvePlugin('nonexistent-plugin')).rejects.toThrow(
-            /not found/i,
+            /Failed to load plugin/i,
         )
     })
 
     test('throws for missing local file', async () => {
         await expect(
             resolvePlugin('./.claude/hooks/rct/nonexistent.ts'),
-        ).rejects.toThrow(/not found/i)
+        ).rejects.toThrow(/Failed to load plugin/i)
     })
 })

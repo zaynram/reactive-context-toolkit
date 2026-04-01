@@ -28,7 +28,7 @@ function isError(e: unknown): e is Error {
 export async function dynamic<
     T extends RC.HookEvent = RC.HookEvent,
 >(): Promise<RC.HookInput> {
-    return new Promise<RC.HookInput<T>>((resolve, reject) => {
+    return new Promise<RC.HookInput<T>>((resolve) => {
         let data = ''
         process.stdin.on('data', (chunk) => (data += chunk))
         process.stdin.on('end', () => {

@@ -49,12 +49,18 @@ async function main(eventArg?: string) {
                 (chunk: Buffer | string) => (data += chunk),
             )
             process.stdin.on('end', () => resolve(data))
-            process.stdin.on('error', () => resolve('{}'))
+            process.stdin.on('error', (err) => {
+                console.error(`[rct] stdin error: ${err.message}`)
+                resolve('{}')
+            })
         })
         try {
             payload = JSON.parse(stdin) ?? {}
             toolName = (payload as any).tool_name
-        } catch {
+        } catch (err) {
+            console.error(
+                `[rct] Failed to parse stdin JSON: ${err instanceof Error ? err.message : err}`,
+            )
             payload = {}
         }
     }
@@ -124,8 +130,7 @@ async function main(eventArg?: string) {
     // Test — per-language with top-level inheritance
     const testResults: string[] = []
     const topLevelTest: TestConfig | null =
-        desugared.test && typeof desugared.test === 'object' &&
-        desugared.test !== true ?
+        desugared.test && typeof desugared.test === 'object' ?
             (desugared.test as TestConfig)
         : desugared.test ?
             { command: desugared.test as true | string }

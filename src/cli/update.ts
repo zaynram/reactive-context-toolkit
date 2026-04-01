@@ -8,7 +8,7 @@ function deepEqual(a: unknown, b: unknown): boolean {
     return JSON.stringify(a) === JSON.stringify(b)
 }
 
-export default async function updateRCT() {
+export default async function updateRCT(_args: string[] = []) {
     const root = process.env.CLAUDE_PROJECT_DIR ?? process.cwd()
     const configPath = fs.resolve('rct.config.json', { root })
 

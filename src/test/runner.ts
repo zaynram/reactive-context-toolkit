@@ -205,7 +205,9 @@ export async function setCachedResult(
         fs.mkdir(cacheDir(sessionId))
         const entry: CacheEntry = { result, timestamp: Date.now() }
         await fs.write(file, JSON.stringify(entry))
-    } catch {
-        // Silently fail on cache write errors
+    } catch (err) {
+        console.error(
+            `[rct] Cache write failed: ${err instanceof Error ? err.message : err}`,
+        )
     }
 }

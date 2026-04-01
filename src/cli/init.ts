@@ -136,7 +136,7 @@ function collectRequiredEvents(config: RCTConfig): Set<string> {
             }
         }
     }
-    if (config.test && typeof config.test === 'object' && config.test !== true) {
+    if (config.test && typeof config.test === 'object') {
         const on = (config.test as { injectOn?: string | string[] }).injectOn
         if (on) (Array.isArray(on) ? on : [on]).forEach((e) => events.add(e))
     }

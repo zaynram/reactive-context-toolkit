@@ -19,11 +19,11 @@
 - `src/plugin/types.ts` — add optional `context` and `trigger` functions to `RCTPlugin`
 
 ```typescript
-import type { RCTConfig, HookEvent, RuleAction } from '#config/types'
+import type { RCTConfig, HookEvent } from '#config/types'
 
 /** Result from a plugin's dynamic trigger function. */
 export interface PluginTriggerResult {
-    action: RuleAction
+    action: 'block' | 'warn'
     message: string
 }
 

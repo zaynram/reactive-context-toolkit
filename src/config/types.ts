@@ -201,6 +201,16 @@ export interface LangTool {
     injectOn?: HookEventOrArray
 }
 
+/** Per-language test configuration */
+export interface LangTestConfig {
+    /** Test command (true = auto-detect from tools) */
+    command?: string | true
+    /** Brief template with placeholders: {status}, {exitCode}, {output}, {tool}, {lang} */
+    brief?: string
+    /** Output format override */
+    format?: Format
+}
+
 /** Configuration for a language ecosystem */
 export interface LangEntry {
     /** Language tools to configure */
@@ -211,6 +221,8 @@ export interface LangEntry {
     injectOn?: HookEventOrArray
     /** Output format override */
     format?: Format
+    /** Per-language test configuration */
+    test?: LangTestConfig
 }
 
 /** Language-specific configurations keyed by language name */

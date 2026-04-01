@@ -1,67 +1,49 @@
 import { describe, expect, test } from 'bun:test'
 import { evaluateLang, extractTsconfigPaths } from '#lang/index'
-import type { LangConfig, GlobalsConfig } from '#config/types'
+import type { LangConfig } from '#config/types'
 import path from 'path'
 
 const fixtureDir = path.resolve(import.meta.dir, 'fixtures/project')
-const defaultGlobals: GlobalsConfig = { format: 'xml' }
 
 describe('evaluateLang', () => {
     test('returns bun scripts for configured bun tool', () => {
         const lang: LangConfig = {
-            typescript: { tools: [{ name: 'bun', scripts: true }] },
+            node: { tools: [{ name: 'bun', scripts: true }] },
         }
-        const results = evaluateLang(
-            lang,
-            'SessionStart',
-            fixtureDir,
-            defaultGlobals,
-        )
+        const results = evaluateLang(lang, 'SessionStart', fixtureDir)
         expect(results.length).toBeGreaterThan(0)
         const joined = results.join('')
         expect(joined).toContain('test')
         expect(joined).toContain('bun test')
     })
 
-    test('skips tools not matching event', () => {
+    test('skips tools not matching event but still auto-discovers config', () => {
         const lang: LangConfig = {
-            typescript: {
+            node: {
                 tools: [{ name: 'bun', scripts: true, injectOn: 'PreToolUse' }],
             },
         }
-        const results = evaluateLang(
-            lang,
-            'SessionStart',
-            fixtureDir,
-            defaultGlobals,
-        )
-        expect(results.length).toBe(0)
+        const results = evaluateLang(lang, 'SessionStart', fixtureDir)
+        // Tools are skipped (injectOn: PreToolUse), but auto-discovered config still runs
+        const joined = results.join('')
+        expect(joined).not.toContain('bun test') // tool scripts not included
+        expect(joined).toContain('path-alias') // auto-discovered tsconfig paths included
     })
 
     test('uses lang-level injectOn as default', () => {
         const lang: LangConfig = {
-            typescript: {
+            node: {
                 injectOn: 'PreToolUse',
                 tools: [{ name: 'bun', scripts: true }],
             },
         }
-        const results = evaluateLang(
-            lang,
-            'PreToolUse',
-            fixtureDir,
-            defaultGlobals,
-        )
+        const results = evaluateLang(lang, 'PreToolUse', fixtureDir)
         expect(results.length).toBeGreaterThan(0)
     })
 
     test('returns cargo info for configured cargo tool', () => {
         const lang: LangConfig = { rust: { tools: [{ name: 'cargo' }] } }
-        const results = evaluateLang(
-            lang,
-            'SessionStart',
-            fixtureDir,
-            defaultGlobals,
-        )
+        const results = evaluateLang(lang, 'SessionStart', fixtureDir)
         expect(results.length).toBeGreaterThan(0)
         expect(results.join('')).toContain('test-crate')
     })
@@ -69,14 +51,9 @@ describe('evaluateLang', () => {
     test('npm and pnpm tools produce same output shape as bun', () => {
         for (const name of ['npm', 'pnpm'] as const) {
             const lang: LangConfig = {
-                javascript: { tools: [{ name, scripts: true }] },
+                node: { tools: [{ name, scripts: true }] },
             }
-            const results = evaluateLang(
-                lang,
-                'SessionStart',
-                fixtureDir,
-                defaultGlobals,
-            )
+            const results = evaluateLang(lang, 'SessionStart', fixtureDir)
             expect(results.length).toBeGreaterThan(0)
             expect(results.join('')).toContain('test')
         }
@@ -85,12 +62,7 @@ describe('evaluateLang', () => {
     test('uv, pip, pipx tools produce no output', () => {
         for (const name of ['uv', 'pip', 'pipx'] as const) {
             const lang: LangConfig = { python: { tools: [{ name }] } }
-            const results = evaluateLang(
-                lang,
-                'SessionStart',
-                fixtureDir,
-                defaultGlobals,
-            )
+            const results = evaluateLang(lang, 'SessionStart', fixtureDir)
             expect(results).toHaveLength(0)
         }
     })
@@ -98,14 +70,42 @@ describe('evaluateLang', () => {
     test('cargo-binstall and rustup tools produce no output', () => {
         for (const name of ['cargo-binstall', 'rustup'] as const) {
             const lang: LangConfig = { rust: { tools: [{ name }] } }
-            const results = evaluateLang(
-                lang,
-                'SessionStart',
-                '/nonexistent',
-                defaultGlobals,
-            )
+            const results = evaluateLang(lang, 'SessionStart', '/nonexistent')
             expect(results).toHaveLength(0)
         }
+    })
+})
+
+describe('auto-discovery', () => {
+    test('auto-discovers tsconfig.json when entry.config is omitted', () => {
+        const lang: LangConfig = {
+            node: { tools: [{ name: 'bun', scripts: true }] },
+        }
+        const results = evaluateLang(lang, 'SessionStart', fixtureDir)
+        const joined = results.join('')
+        // Should auto-discover tsconfig.json and extract path aliases
+        expect(joined).toContain('path-alias')
+        expect(joined).toContain('#*')
+    })
+
+    test('does not mutate original entry object', () => {
+        const entry = { tools: [{ name: 'bun' as const, scripts: true }] }
+        const lang: LangConfig = { node: entry }
+        evaluateLang(lang, 'SessionStart', fixtureDir)
+        expect(entry).not.toHaveProperty('config')
+    })
+
+    test('does not auto-discover when entry.config is explicitly set', () => {
+        const lang: LangConfig = {
+            node: {
+                tools: [{ name: 'bun', scripts: true }],
+                config: [],
+            },
+        }
+        const results = evaluateLang(lang, 'SessionStart', fixtureDir)
+        const joined = results.join('')
+        // Empty config array means no path extraction
+        expect(joined).not.toContain('path-alias')
     })
 })
 

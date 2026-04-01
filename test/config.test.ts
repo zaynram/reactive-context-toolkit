@@ -259,10 +259,10 @@ describe('RCT Config Types', () => {
 
     test('LangConfig', () => {
         const lang: LangConfig = {
-            typescript: { tools: [{ name: 'bun' }] },
+            node: { tools: [{ name: 'bun' }] },
             python: { tools: [{ name: 'uv' }, { name: 'pixi' }] },
         }
-        expect(lang.typescript?.tools).toHaveLength(1)
+        expect(lang.node?.tools).toHaveLength(1)
     })
 
     test('TestConfig', () => {
@@ -308,7 +308,7 @@ describe('RCT Config Types', () => {
                 },
             ],
             lang: {
-                typescript: {
+                node: {
                     tools: [{ name: 'bun', tasks: true }],
                     config: [{ name: 'tsconfig', path: 'tsconfig.json' }],
                 },

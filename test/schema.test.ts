@@ -286,49 +286,48 @@ describe('desugarFileInjections', () => {
 })
 
 describe('applyPlugins', () => {
-    test('returns config unchanged when no plugins activated', () => {
+    test('returns config unchanged when no plugins activated', async () => {
         const config = validateConfig({
             files: [{ alias: 'mine', path: 'mine.xml' }],
         })
-        const result = applyPlugins(config)
+        const result = await applyPlugins(config)
         expect(result.files).toHaveLength(1)
         expect(result.rules).toBeUndefined()
     })
 
-    test('merges track-work plugin files into config.files', () => {
+    test('merges track-work plugin files into config.files', async () => {
         const config = validateConfig({ globals: { plugins: ['track-work'] } })
-        const result = applyPlugins(config)
+        const result = await applyPlugins(config)
         const aliases = (result.files ?? []).map((f) => f.alias)
         expect(aliases).toContain('chores')
         expect(aliases).toContain('plans')
     })
 
-    test('merges plugin files alongside existing config files', () => {
+    test('merges plugin files alongside existing config files', async () => {
         const config = validateConfig({
             globals: { plugins: ['track-work'] },
             files: [{ alias: 'my-file', path: 'my-file.xml' }],
         })
-        const result = applyPlugins(config)
+        const result = await applyPlugins(config)
         const aliases = (result.files ?? []).map((f) => f.alias)
         expect(aliases).toContain('my-file')
         expect(aliases).toContain('chores')
     })
 
-    test('desugar after applyPlugins generates injections for plugin files with injectOn', () => {
+    test('desugar after applyPlugins generates injections for plugin files with injectOn', async () => {
         const config = validateConfig({ globals: { plugins: ['track-work'] } })
-        const applied = applyPlugins(config)
+        const applied = await applyPlugins(config)
         const desugared = desugarFileInjections(applied)
         const refs = (desugared.injections ?? []).flatMap((i) => i.inject)
         expect(refs).toContain('chores')
         expect(refs).toContain('plans')
     })
 
-    test('ignores unknown plugin names', () => {
+    test('ignores unknown plugin names', async () => {
         const config = validateConfig({
             globals: { plugins: ['nonexistent-plugin'] },
         })
-        expect(() => applyPlugins(config)).not.toThrow()
-        const result = applyPlugins(config)
+        const result = await applyPlugins(config)
         expect(result.files ?? []).toHaveLength(0)
     })
 })

@@ -3,6 +3,7 @@ import type {
     RCTConfig,
     TestConfig,
     LangEntry,
+    LangTestConfig,
     Format,
     GlobalsConfig,
 } from '#config/types'
@@ -15,6 +16,7 @@ export interface TestResult {
     exitCode: number
     output: string
     tool?: string
+    lang?: string
 }
 
 export interface TestCommandInfo {
@@ -39,8 +41,7 @@ function findFirstToolInfo(config: RCTConfig): TestCommandInfo | null {
     if (!config.lang) return null
 
     const langEntries: (LangEntry | undefined)[] = [
-        config.lang.typescript,
-        config.lang.javascript,
+        config.lang.node,
         config.lang.python,
         config.lang.rust,
     ]
@@ -57,6 +58,17 @@ function findFirstToolInfo(config: RCTConfig): TestCommandInfo | null {
     return null
 }
 
+function findToolInfoForEntry(entry: LangEntry): TestCommandInfo | null {
+    if (!entry.tools) return null
+    for (const tool of entry.tools) {
+        if (!tool.tasks && !tool.scripts) continue
+        const cmd = TOOL_TEST_COMMANDS[tool.name]
+        if (cmd) return { command: cmd, tool: tool.name }
+    }
+    return null
+}
+
+/** Resolve test command from top-level config (existing v0.x behavior) */
 export function resolveTestCommand(config: RCTConfig): TestCommandInfo | null {
     if (!config.test) return null
 
@@ -74,6 +86,18 @@ export function resolveTestCommand(config: RCTConfig): TestCommandInfo | null {
     if (testConfig.command === true) return findFirstToolInfo(config)
 
     return null
+}
+
+/** Resolve test command from a per-language test config */
+export function resolveLangTestCommand(
+    langTest: LangTestConfig,
+    entry: LangEntry,
+): TestCommandInfo | null {
+    if (typeof langTest.command === 'string')
+        return { command: langTest.command, tool: 'custom' }
+    if (langTest.command === true) return findToolInfoForEntry(entry)
+    // No command specified — try auto-detect from tools
+    return findToolInfoForEntry(entry)
 }
 
 export function runTest(command: string, rootDir: string): TestResult {
@@ -94,7 +118,7 @@ export function runTest(command: string, rootDir: string): TestResult {
 
 export function formatTestResult(
     result: TestResult,
-    testConfig: TestConfig,
+    testConfig: TestConfig | LangTestConfig,
     globals: Required<GlobalsConfig>,
 ): string {
     const brief = testConfig.brief
@@ -104,11 +128,13 @@ export function formatTestResult(
             .replace(/\{exitCode\}/g, String(result.exitCode))
             .replace(/\{output\}/g, result.output)
             .replace(/\{tool\}/g, result.tool ?? 'unknown')
+            .replace(/\{lang\}/g, result.lang ?? 'unknown')
     }
 
     const format: Format = testConfig.format ?? globals.format
     const toolAttr = result.tool ?? 'unknown'
     const attrs: Record<string, string> = {
+        ...(result.lang && { lang: result.lang }),
         tool: toolAttr,
         status: result.status,
         ...(result.status === 'fail' && { exitCode: String(result.exitCode) }),
@@ -117,6 +143,7 @@ export function formatTestResult(
     if (format === 'json') {
         return JSON.stringify({
             test: {
+                ...(result.lang && { lang: result.lang }),
                 tool: toolAttr,
                 status: result.status,
                 ...(result.status === 'fail' && { exitCode: result.exitCode }),
@@ -133,8 +160,13 @@ function cacheDir(sessionId: string): string {
     return `/tmp/rct-cache-${sessionId.replace(/[^a-zA-Z0-9_-]/g, '_')}`
 }
 
-function cacheKey(sessionId: string, command: string): string {
-    const key = command.replace(/[^a-zA-Z0-9_-]/g, '_')
+function cacheKey(
+    sessionId: string,
+    command: string,
+    lang?: string,
+): string {
+    const parts = [lang, command].filter(Boolean).join('_')
+    const key = parts.replace(/[^a-zA-Z0-9_-]/g, '_')
     return fs.join(cacheDir(sessionId), `${key}.json`)
 }
 
@@ -147,8 +179,9 @@ export function getCachedResult(
     sessionId: string,
     command: string,
     ttl: number,
+    lang?: string,
 ): TestResult | null {
-    const file = cacheKey(sessionId, command)
+    const file = cacheKey(sessionId, command, lang)
     if (!fs.exists(file)) return null
 
     try {
@@ -165,8 +198,9 @@ export async function setCachedResult(
     sessionId: string,
     command: string,
     result: TestResult,
+    lang?: string,
 ): Promise<void> {
-    const file = cacheKey(sessionId, command)
+    const file = cacheKey(sessionId, command, lang)
     try {
         fs.mkdir(cacheDir(sessionId))
         const entry: CacheEntry = { result, timestamp: Date.now() }

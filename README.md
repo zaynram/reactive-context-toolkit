@@ -8,10 +8,11 @@ RCT runs as a Claude Code hook handler. It reads an `rct.config.{json,ts,js}` in
 
 - **Context injection** — inject file contents (XML or JSON) into Claude's `additionalContext` based on event and match conditions
 - **Rules** — block or warn when Claude attempts a matched tool use
-- **Language ecosystem** — auto-surface bun scripts, pixi tasks, cargo info, and tsconfig path aliases
-- **Test integration** — run your test suite and inject results into session context, with optional caching
+- **Language ecosystem** — auto-surface bun scripts, pixi tasks, cargo info, and tsconfig path aliases per language
+- **Per-language testing** — run test suites per language with configurable brief formatting and caching
 - **Stale detection** — flag dated files that have gone out of date
-- **Plugins** — built-in `track-work` and `issue-scope` plugins contribute files and rules
+- **Plugins** — declarative plugins contribute files and rules; custom extensions use `createHook()`
+- **Auto-derivation** — `rct init` detects your stack and writes a fully-populated config; `rct update` re-derives while preserving overrides
 
 ## Getting Started
 
@@ -20,7 +21,17 @@ bun add github:zaynram/reactive-context-toolkit
 bunx rct init
 ```
 
-`rct init` detects your project stack (TS/JS/Python/Rust), writes an `rct.config.json`, and patches `.claude/settings.json` with the required hook commands. RCT has zero production dependencies — the hook subprocess (`dist/rct.js`) runs entirely on Bun.
+`rct init` runs an interactive wizard that detects your project stack (Node/Python/Rust), writes an `rct.config.json` with all derived values explicit, and patches `.claude/settings.json` with the required hook commands. Use `--yes` for non-interactive mode (CI, Docker, scripts).
+
+RCT has zero production dependencies — Bun resolves the `bin` field directly to source, no build step.
+
+### Updating
+
+```sh
+bunx rct update
+```
+
+Re-derives config from your project, merges with existing config preserving your overrides, and updates settings. Uses a stored `_derived` baseline for three-way merge.
 
 ## Configuration
 
@@ -37,9 +48,6 @@ bunx rct init
             "staleCheck": { "dateTag": "date", "wrapTag": "stale-scope" }
         }
     ],
-    "injections": [
-        { "on": "PostToolUse", "matchFile": "*.ts", "inject": ["scope"] }
-    ],
     "rules": [
         {
             "on": "PreToolUse",
@@ -49,32 +57,34 @@ bunx rct init
         }
     ],
     "lang": {
-        "typescript": {
+        "node": {
             "tools": [{ "name": "bun", "scripts": true }],
-            "config": [
-                {
-                    "name": "tsconfig",
-                    "path": "tsconfig.json",
-                    "extractPaths": true
-                }
-            ]
+            "test": { "command": "bun test", "brief": "{lang}: {status}" }
+        },
+        "rust": {
+            "tools": [{ "name": "cargo" }],
+            "test": { "command": "cargo test" }
         }
     },
-    "test": { "command": "bun test", "injectOn": "SessionStart", "cache": true }
+    "test": { "injectOn": "SessionStart", "cache": true, "cacheTTL": 300 }
 }
 ```
 
 ### Config sections
 
-| Section      | Purpose                                                                    |
-| ------------ | -------------------------------------------------------------------------- |
-| `globals`    | Format (`xml`\|`json`), wrapper tag, `briefByDefault`, `minify`, `plugins` |
-| `files`      | Register files with aliases; `injectOn` auto-creates injection entries     |
-| `injections` | Explicit injection rules with event/match/file filtering                   |
-| `rules`      | Block or warn on matched tool use                                          |
-| `lang`       | Per-language tool and config declarations                                  |
-| `test`       | Test command with optional caching (`cache`, `cacheTTL`)                   |
-| `meta`       | Inject a summary of the config itself                                      |
+| Section | Purpose |
+|---|---|
+| `globals` | Format (`xml`\|`json`), wrapper tag, `briefByDefault`, `minify`, `plugins` |
+| `files` | Register files with aliases; `injectOn` auto-creates injection entries |
+| `injections` | Explicit injection rules with event/match/file filtering |
+| `rules` | Block or warn on matched tool use |
+| `lang` | Per-language declarations (`node`/`python`/`rust`) with `tools`, `config`, `test` |
+| `test` | Top-level test defaults (`injectOn`, `cache`, `cacheTTL`); per-language overrides in `lang.*.test` |
+| `meta` | Inject a summary of the config itself |
+
+### Languages
+
+RCT supports three language ecosystems: `node` (TypeScript + JavaScript), `python`, `rust`. The `node` language auto-discovers tsconfig.json / jsconfig.json if `config` is omitted.
 
 ## Hook Events
 
@@ -96,9 +106,13 @@ Inject references use the pattern `alias[:metaAlias][~brief]`:
 - `scope~brief` — brief/summary mode
 - `scope:changelog` — a meta-file attached to `scope`
 
-## Plugins
+## Plugins and Extensions
 
-Enable built-in plugins via `globals.plugins`:
+**Plugins** are declarative — they contribute `files[]` and `rules[]` to the RCT pipeline.
+
+**Extensions** are imperative — custom hook scripts using `createHook()` or the low-level `standard`/`dynamic`/`block` helpers.
+
+### Built-in plugins
 
 ```json
 { "globals": { "plugins": ["track-work", "issue-scope"] } }
@@ -107,7 +121,31 @@ Enable built-in plugins via `globals.plugins`:
 - **`track-work`** — registers `chores` (`dev/chores.xml`) and `plans` (`.claude/plans/index.xml`)
 - **`issue-scope`** — registers `scope` (`.claude/context/scope.xml`, with stale check) and `candidates` (`.claude/context/issues.xml`)
 
-Plugin files and rules are merged at evaluation time via `applyPlugins()`.
+### Custom plugins
+
+Place plugin files at `.claude/hooks/rct/*.{ts,js}` or install as npm packages:
+
+```typescript
+import { definePlugin } from 'reactive-context-toolkit'
+
+export default definePlugin({
+    name: 'my-plugin',
+    files: [{ alias: 'guidelines', path: 'docs/guidelines.md', injectOn: 'SessionStart' }],
+    rules: [{ on: 'PreToolUse', match: { target: 'file_path', pattern: '\\.sql$' }, action: 'warn', message: 'Check with DBA' }],
+})
+```
+
+Plugin resolution: built-in name → local file (`./` prefix) → package name.
+
+### Custom extensions
+
+```typescript
+import { createHook } from 'reactive-context-toolkit'
+
+createHook(async (input) => {
+    return { hookSpecificOutput: { additionalContext: 'Hello from my hook' } }
+})
+```
 
 ## Public API
 
@@ -121,6 +159,7 @@ import {
     desugarFileInjections,
     applyPlugins,
     buildFileRegistry,
+    deriveFromProject,
     // Engine
     evaluateRules,
     evaluateInjections,
@@ -132,9 +171,12 @@ import {
     evaluateLang,
     // Test
     resolveTestCommand,
+    resolveLangTestCommand,
     runTest,
     formatTestResult,
-    // Register
+    // Library (extensions)
+    definePlugin,
+    createHook,
     standard,
     dynamic,
     block,
@@ -148,14 +190,16 @@ import {
     pluginRegistry,
 } from 'reactive-context-toolkit'
 
-// Type imports
 import type {
     RCTConfig,
     RCTPlugin,
     HookEvent,
+    LangTestConfig,
     FileRef,
     RuleEntry,
     InjectionEntry,
     MatchCondition,
 } from 'reactive-context-toolkit'
 ```
+
+All engine and config functions are composable — consumers can build custom pipelines by importing and chaining them directly.

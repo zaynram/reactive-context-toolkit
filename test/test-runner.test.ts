@@ -1,12 +1,14 @@
 import { describe, expect, test } from 'bun:test'
 import {
     resolveTestCommand,
+    resolveLangTestCommand,
     runTest,
     formatTestResult,
     getCachedResult,
     setCachedResult,
 } from '#test/runner'
 import type { RCTConfig, TestResult } from '#test/runner'
+import type { LangTestConfig, LangEntry } from '#config/types'
 import type { GlobalsConfig } from '#config/types'
 
 const defaultGlobals: Required<GlobalsConfig> = {
@@ -23,10 +25,10 @@ describe('resolveTestCommand', () => {
         expect(resolveTestCommand(config)?.command).toBe('bun test --coverage')
     })
 
-    test('resolves "bun test" from lang.typescript with bun tool having scripts:true', () => {
+    test('resolves "bun test" from lang.node with bun tool having scripts:true', () => {
         const config: RCTConfig = {
             test: true,
-            lang: { typescript: { tools: [{ name: 'bun', scripts: true }] } },
+            lang: { node: { tools: [{ name: 'bun', scripts: true }] } },
         }
         expect(resolveTestCommand(config)?.command).toBe('bun test')
     })
@@ -66,7 +68,7 @@ describe('resolveTestCommand', () => {
     test('auto-detects when TestConfig.command is true', () => {
         const config: RCTConfig = {
             test: { command: true },
-            lang: { typescript: { tools: [{ name: 'bun', scripts: true }] } },
+            lang: { node: { tools: [{ name: 'bun', scripts: true }] } },
         }
         expect(resolveTestCommand(config)?.command).toBe('bun test')
     })
@@ -76,7 +78,7 @@ describe('resolveTestCommand returns tool info', () => {
     test('returns tool name for lang-detected command', () => {
         const config: RCTConfig = {
             test: true,
-            lang: { typescript: { tools: [{ name: 'bun', scripts: true }] } },
+            lang: { node: { tools: [{ name: 'bun', scripts: true }] } },
         }
         const info = resolveTestCommand(config)
         expect(info).not.toBeNull()
@@ -267,5 +269,127 @@ describe('cache', () => {
         expect(cached).not.toBeNull()
         expect(cached!.status).toBe('pass')
         expect(cached!.exitCode).toBe(0)
+    })
+
+    test('same command on different languages gets separate cache entries', async () => {
+        const result: TestResult = {
+            status: 'pass',
+            exitCode: 0,
+            output: 'ok',
+        }
+        const failResult: TestResult = {
+            status: 'fail',
+            exitCode: 1,
+            output: 'err',
+        }
+        const sessionId = `test-cache-lang-${Date.now()}`
+        await setCachedResult(sessionId, 'test', result, 'node')
+        await setCachedResult(sessionId, 'test', failResult, 'rust')
+        const nodeCache = getCachedResult(sessionId, 'test', 300, 'node')
+        const rustCache = getCachedResult(sessionId, 'test', 300, 'rust')
+        expect(nodeCache!.status).toBe('pass')
+        expect(rustCache!.status).toBe('fail')
+    })
+})
+
+describe('resolveLangTestCommand', () => {
+    test('resolves explicit command', () => {
+        const langTest: LangTestConfig = { command: 'bun test' }
+        const entry: LangEntry = { tools: [{ name: 'bun', scripts: true }] }
+        const info = resolveLangTestCommand(langTest, entry)
+        expect(info!.command).toBe('bun test')
+        expect(info!.tool).toBe('custom')
+    })
+
+    test('auto-detects from tools when command is true', () => {
+        const langTest: LangTestConfig = { command: true }
+        const entry: LangEntry = { tools: [{ name: 'bun', scripts: true }] }
+        const info = resolveLangTestCommand(langTest, entry)
+        expect(info!.command).toBe('bun test')
+        expect(info!.tool).toBe('bun')
+    })
+
+    test('auto-detects from tools when no command specified', () => {
+        const langTest: LangTestConfig = {}
+        const entry: LangEntry = { tools: [{ name: 'cargo', tasks: true }] }
+        const info = resolveLangTestCommand(langTest, entry)
+        expect(info!.command).toBe('cargo test')
+        expect(info!.tool).toBe('cargo')
+    })
+
+    test('returns null when no tools have tasks/scripts', () => {
+        const langTest: LangTestConfig = { command: true }
+        const entry: LangEntry = { tools: [{ name: 'npm' }] }
+        const info = resolveLangTestCommand(langTest, entry)
+        expect(info).toBeNull()
+    })
+})
+
+describe('formatTestResult per-language', () => {
+    test('brief template supports {lang} substitution', () => {
+        const result: TestResult = {
+            status: 'pass',
+            exitCode: 0,
+            output: '',
+            tool: 'bun',
+            lang: 'node',
+        }
+        const out = formatTestResult(
+            result,
+            { brief: '{lang}: {status} ({tool})' },
+            defaultGlobals,
+        )
+        expect(out).toBe('node: pass (bun)')
+    })
+
+    test('xml format includes lang attribute when present', () => {
+        const result: TestResult = {
+            status: 'pass',
+            exitCode: 0,
+            output: '',
+            tool: 'bun',
+            lang: 'node',
+        }
+        const out = formatTestResult(
+            result,
+            { command: 'bun test' },
+            defaultGlobals,
+        )
+        expect(out).toContain('lang="node"')
+        expect(out).toContain('tool="bun"')
+    })
+
+    test('json format includes lang field when present', () => {
+        const result: TestResult = {
+            status: 'fail',
+            exitCode: 1,
+            output: '',
+            tool: 'cargo',
+            lang: 'rust',
+        }
+        const out = formatTestResult(
+            result,
+            { command: 'cargo test', format: 'json' },
+            defaultGlobals,
+        )
+        const parsed = JSON.parse(out)
+        expect(parsed.test.lang).toBe('rust')
+        expect(parsed.test.tool).toBe('cargo')
+        expect(parsed.test.exitCode).toBe(1)
+    })
+
+    test('xml format omits lang attribute when not present', () => {
+        const result: TestResult = {
+            status: 'pass',
+            exitCode: 0,
+            output: '',
+            tool: 'bun',
+        }
+        const out = formatTestResult(
+            result,
+            { command: 'bun test' },
+            defaultGlobals,
+        )
+        expect(out).not.toContain('lang=')
     })
 })

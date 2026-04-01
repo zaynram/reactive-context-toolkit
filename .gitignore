@@ -3,5 +3,4 @@
 .task_orchestrator
 .remember
 node_modules
-dist/
 rct-cache-*

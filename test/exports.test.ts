@@ -35,6 +35,12 @@ describe('barrel exports from src/index.ts', () => {
         expect(mod.block).toBeFunction()
     })
 
+    it('exports library extension API', async () => {
+        const mod = await import('../src/index')
+        expect(mod.definePlugin).toBeFunction()
+        expect(mod.createHook).toBeFunction()
+    })
+
     it('exports utilities', async () => {
         const mod = await import('../src/index')
         expect(mod.fs).toBeDefined()

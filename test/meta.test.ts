@@ -69,7 +69,7 @@ const baseConfig: RCTConfig = {
         { alias: 'chores', path: 'dev/chores.xml', brief: 'Active chores' },
         { alias: 'scope', path: 'dev/scope.xml' },
     ],
-    lang: { typescript: { tools: [{ name: 'bun' }] } },
+    lang: { node: { tools: [{ name: 'bun' }] } },
     test: { command: 'bun test' },
     rules: [
         {
@@ -215,7 +215,7 @@ describe('generateMeta', () => {
         const parsed = JSON.parse(result)
         expect(parsed).toHaveProperty('lang')
         expect(parsed.lang).toContainEqual(
-            expect.objectContaining({ language: 'typescript', tools: ['bun'] }),
+            expect.objectContaining({ language: 'node', tools: ['bun'] }),
         )
     })
 
@@ -269,9 +269,14 @@ describe('generateMeta', () => {
     })
 
     test('includes plugin-contributed files in files section', () => {
+        // After applyPlugins(), plugin files are merged into config.files
         const config: RCTConfig = {
             globals: { plugins: ['track-work'] },
-            files: [{ alias: 'my-file', path: 'my-file.xml' }],
+            files: [
+                { alias: 'my-file', path: 'my-file.xml' },
+                { alias: 'chores', path: 'dev/chores.xml' },
+                { alias: 'plans', path: '.claude/plans/index.xml' },
+            ],
         }
         const registry = buildFileRegistry([])
         const result = generateMeta(
@@ -280,7 +285,7 @@ describe('generateMeta', () => {
             { ...defaultGlobals, plugins: ['track-work'] },
             { include: ['files'] },
         )
-        // track-work plugin contributes "chores" and "plans" files
+        // Plugin files are in config.files (merged by applyPlugins)
         expect(result).toContain('chores')
         expect(result).toContain('plans')
         // Original file should also appear

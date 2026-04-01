@@ -1,4 +1,5 @@
 import type { RCTPlugin } from './types'
+import { fs } from '#util'
 
 const plugin = {
     name: 'issue-scope',
@@ -15,7 +16,7 @@ const plugin = {
             metaFiles: [
                 {
                     alias: 'issues-schema',
-                    path: 'node_modules/reactive-context-toolkit/public/schema/issues-schema.xml',
+                    path: fs.source(['public', 'schema', 'issues-schema.xml']),
                 },
             ],
         },

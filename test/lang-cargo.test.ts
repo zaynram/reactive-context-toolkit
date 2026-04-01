@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { getCargoInfo } from '#lang/cargo'
+import { getCargoInfo } from '#tools/cargo'
 import type { LangTool } from '#config/types'
 import path from 'path'
 

@@ -4,14 +4,9 @@ import {
     type GlobalsConfig,
     type LangConfig,
     type LangEntry,
-    FileEntry,
-    RuleEntry,
 } from '#config/types'
 import type { FileRegistry } from '#types'
 import { xml } from '#util'
-import plugins from '#plugin'
-import { RCTPlugin } from '#plugin/types'
-
 type MetaSection = 'files' | 'lang' | 'test' | 'rules'
 
 interface FileMeta {
@@ -41,28 +36,12 @@ type SectionData = {
     rules?: RulesMeta
 }
 
-function getPluginSectionValues<T>(
-    config: RCTConfig,
-    prop: keyof RCTPlugin,
-): T[] {
-    const values: T[] = []
-    for (const name of config.globals?.plugins ?? [])
-        if (name in plugins) {
-            const val = plugins[name][prop]
-            if (Array.isArray(val)) values.push(...(val as T[]))
-        }
-    return values
-}
-
 function buildFilesSection(
     config: RCTConfig,
     registry: FileRegistry,
     brief: boolean,
 ): FileMeta[] {
-    return [
-        ...(config.files ?? []),
-        ...getPluginSectionValues<FileEntry>(config, 'files'),
-    ].map((f) => {
+    return [...(config.files ?? [])].map((f) => {
         const alias = f.alias ?? f.path
         const ref = registry.get(alias)
         const entry: FileMeta = { alias, path: f.path }
@@ -91,10 +70,7 @@ function buildTestSection(config: RCTConfig): TestMeta {
 }
 
 function buildRulesSection(config: RCTConfig): RulesMeta {
-    const rules = [
-        ...(config.rules ?? []),
-        ...getPluginSectionValues<RuleEntry>(config, 'rules'),
-    ]
+    const rules = [...(config.rules ?? [])]
     const actions = [...new Set(rules.map((r) => r.action))]
     return { count: rules.length, actions }
 }

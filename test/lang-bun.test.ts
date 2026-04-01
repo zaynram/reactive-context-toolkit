@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { getBunScripts, getBunWorkspace } from '#lang/bun'
+import { getBunScripts, getBunWorkspace } from '#tools/bun'
 import type { LangTool } from '#config/types'
 import path from 'path'
 

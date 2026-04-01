@@ -1,5 +1,5 @@
 import { fs } from '#util/fs'
-import plugins from '#plugin'
+import { resolvePlugin } from '#plugin/resolve'
 import type {
     RCTConfig,
     GlobalsConfig,
@@ -54,7 +54,20 @@ function validateMatch(match: Match | undefined, context: string): void {
     }
 }
 
+const LEGACY_LANG_KEYS = ['typescript', 'javascript'] as const
+
 export function validateConfig(config: RCTConfig): ValidatedConfig {
+    // Warn on legacy language keys
+    if (config.lang) {
+        for (const key of LEGACY_LANG_KEYS) {
+            if (key in config.lang) {
+                console.warn(
+                    `[rct] lang.${key} is deprecated in v1.0.0. Rename to lang.node.`,
+                )
+            }
+        }
+    }
+
     // Validate rules
     if (config.rules) {
         for (const rule of config.rules) {
@@ -84,7 +97,9 @@ export function validateConfig(config: RCTConfig): ValidatedConfig {
     return { ...config, globals }
 }
 
-export function applyPlugins(config: ValidatedConfig): ValidatedConfig {
+export async function applyPlugins(
+    config: ValidatedConfig,
+): Promise<ValidatedConfig> {
     const pluginNames = config.globals.plugins ?? []
     if (pluginNames.length === 0) return config
 
@@ -93,10 +108,15 @@ export function applyPlugins(config: ValidatedConfig): ValidatedConfig {
     const hadRules = config.rules?.length ?? 0
 
     for (const name of pluginNames) {
-        if (!(name in plugins)) continue
-        const plugin = plugins[name]
-        if (plugin.files) mergedFiles.push(...plugin.files)
-        if (plugin.rules) mergedRules.push(...plugin.rules)
+        try {
+            const { plugin } = await resolvePlugin(name)
+            if (plugin.files) mergedFiles.push(...plugin.files)
+            if (plugin.rules) mergedRules.push(...plugin.rules)
+        } catch (err) {
+            console.warn(
+                `[rct] Failed to resolve plugin '${name}': ${err instanceof Error ? err.message : err}`,
+            )
+        }
     }
 
     return {

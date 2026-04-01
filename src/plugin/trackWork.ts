@@ -1,8 +1,9 @@
 import type { RCTPlugin } from './types'
+import { fs } from '#util'
 const metaFiles = [
     {
         alias: 'entry-schema',
-        path: 'node_modules/reactive-context-toolkit/public/schema/entry-schema.xml',
+        path: fs.source(['public', 'schema', 'entry-schema.xml']),
     } as const,
 ]
 export default {

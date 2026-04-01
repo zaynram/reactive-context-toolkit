@@ -44,6 +44,16 @@ export const entries = <T extends any = unknown>(
     o: Record<string, T>,
 ): [string, T][] => Object.entries(o)
 
+export function eventMatches(
+    event: string,
+    injectOn?: string | string[],
+    fallback: string = 'SessionStart',
+): boolean {
+    const target = injectOn ?? fallback
+    if (Array.isArray(target)) return target.includes(event)
+    return target === event
+}
+
 export function matchesTool(
     matcher: string | undefined,
     toolName: string | undefined,

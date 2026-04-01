@@ -35,18 +35,16 @@ export async function dynamic<
             try {
                 resolve({ ...JSON.parse(data), inject: standard })
             } catch (e: unknown) {
-                reject(
-                    block({
-                        stopReason:
-                            isError(e) ?
-                                e.message
-                            :   'An unknown error occured.',
-                    }),
-                )
+                block({
+                    stopReason:
+                        isError(e) ?
+                            e.message
+                        :   'An unknown error occurred.',
+                })
             }
         })
         process.stdin.on('error', ({ message }) =>
-            reject(block<T>({ stopReason: message })),
+            block<T>({ stopReason: message }),
         )
     })
 }

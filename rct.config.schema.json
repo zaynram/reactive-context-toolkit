@@ -32,7 +32,11 @@
             "description": "Context injection definitions",
             "items": { "$ref": "#/$defs/InjectionEntry" }
         },
-        "meta": { "$ref": "#/$defs/MetaConfig" }
+        "meta": { "$ref": "#/$defs/MetaConfig" },
+        "_derived": {
+            "type": "object",
+            "description": "Derivation baseline stored by rct init/update for three-way merge. Not validated."
+        }
     },
     "$defs": {
         "HookEvent": {
@@ -92,10 +96,10 @@
                 },
                 "plugins": {
                     "type": "array",
-                    "description": "Names of plugins to activate by default.",
+                    "description": "Plugin references to activate. Built-in names, local file paths (.claude/hooks/rct/*.ts), or package names.",
                     "items": {
                         "type": "string",
-                        "description": "Plugin name. Built-in options: 'track-work', 'issue-scope'."
+                        "description": "Plugin reference: built-in name, relative path (./), or package name."
                     }
                 }
             }
@@ -432,6 +436,32 @@
                 "format": {
                     "$ref": "#/$defs/Format",
                     "description": "Output format override"
+                },
+                "test": {
+                    "$ref": "#/$defs/LangTestConfig",
+                    "description": "Per-language test configuration"
+                }
+            }
+        },
+        "LangTestConfig": {
+            "type": "object",
+            "description": "Per-language test configuration",
+            "additionalProperties": false,
+            "properties": {
+                "command": {
+                    "description": "Test command (true = auto-detect from tools)",
+                    "anyOf": [
+                        { "type": "boolean", "const": true },
+                        { "type": "string" }
+                    ]
+                },
+                "brief": {
+                    "type": "string",
+                    "description": "Brief template with placeholders: {status}, {exitCode}, {output}, {tool}, {lang}"
+                },
+                "format": {
+                    "$ref": "#/$defs/Format",
+                    "description": "Output format override"
                 }
             }
         },
@@ -440,8 +470,7 @@
             "description": "Language-specific configurations keyed by language name",
             "additionalProperties": false,
             "properties": {
-                "typescript": { "$ref": "#/$defs/LangEntry" },
-                "javascript": { "$ref": "#/$defs/LangEntry" },
+                "node": { "$ref": "#/$defs/LangEntry" },
                 "python": { "$ref": "#/$defs/LangEntry" },
                 "rust": { "$ref": "#/$defs/LangEntry" }
             }

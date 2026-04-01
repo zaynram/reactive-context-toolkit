@@ -32,7 +32,11 @@ export async function runSetup() {
         }
     }
 
-    if (!data.mcpServers || typeof data.mcpServers !== 'object') {
+    if (
+        !data.mcpServers
+        || typeof data.mcpServers !== 'object'
+        || Array.isArray(data.mcpServers)
+    ) {
         data.mcpServers = {}
     }
 

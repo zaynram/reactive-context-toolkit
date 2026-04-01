@@ -21,7 +21,6 @@ import {
 } from '#test/runner'
 import { composeOutput } from '#engine/compose'
 import type { HookEvent, TestConfig, LangTestConfig } from '#config/types'
-import type { PluginExtensions } from '#config/schema'
 import type { PluginHookInput } from '#plugin/types'
 
 const SYNC_EVENTS: HookEvent[] = ['SessionStart', 'Setup']

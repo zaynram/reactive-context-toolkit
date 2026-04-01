@@ -326,42 +326,48 @@ describe('withTimeout', () => {
     test('returns undefined and warns on throw', async () => {
         const warns: string[] = []
         const origWarn = console.warn
-        console.warn = (...args: unknown[]) => warns.push(String(args[0]))
+        try {
+            console.warn = (...args: unknown[]) => warns.push(String(args[0]))
 
-        const result = await withTimeout(
-            () => {
-                throw new Error('boom')
-            },
-            5000,
-            'test-fn',
-        )
+            const result = await withTimeout(
+                () => {
+                    throw new Error('boom')
+                },
+                5000,
+                'test-fn',
+            )
 
-        console.warn = origWarn
-        expect(result).toBeUndefined()
-        expect(
-            warns.some((w) => w.includes('test-fn') && w.includes('boom')),
-        ).toBe(true)
+            expect(result).toBeUndefined()
+            expect(
+                warns.some((w) => w.includes('test-fn') && w.includes('boom')),
+            ).toBe(true)
+        } finally {
+            console.warn = origWarn
+        }
     })
 
     test('returns undefined on timeout', async () => {
         const warns: string[] = []
         const origWarn = console.warn
-        console.warn = (...args: unknown[]) => warns.push(String(args[0]))
+        try {
+            console.warn = (...args: unknown[]) => warns.push(String(args[0]))
 
-        const result = await withTimeout(
-            () =>
-                // Simulate a never-resolving operation without scheduling timers,
-                // so the test exercises the timeout path without background work.
-                new Promise<string>(() => {}),
-            50,
-            'slow-fn',
-        )
+            const result = await withTimeout(
+                () =>
+                    // Simulate a never-resolving operation without scheduling timers,
+                    // so the test exercises the timeout path without background work.
+                    new Promise<string>(() => {}),
+                50,
+                'slow-fn',
+            )
 
-        console.warn = origWarn
-        expect(result).toBeUndefined()
-        expect(
-            warns.some((w) => w.includes('slow-fn') && w.includes('timed out')),
-        ).toBe(true)
+            expect(result).toBeUndefined()
+            expect(
+                warns.some((w) => w.includes('slow-fn') && w.includes('timed out')),
+            ).toBe(true)
+        } finally {
+            console.warn = origWarn
+        }
     })
 })
 

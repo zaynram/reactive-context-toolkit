@@ -1,47 +1,11 @@
 {
-    "defaultShell": "powershell",
-    "plansDirectory": ".claude/plans/",
-    "autoMemoryDirectory": ".claude/memory/",
-    "autoUpdatesChannel": "latest",
-    "alwaysThinkingEnabled": true,
-    "autoMemoryEnabled": true,
-    "autoDreamEnabled": true,
-    "showThinkingSummaries": true,
-    "permissions": {
-        "defaultMode": "bypassPermissions",
-        "additionalDirectories": [
-            "~/.claude/",
-            "~/AppData/Roaming/Claude/",
-            "~/Documents/Code/"
-        ]
-    },
-    "env": {
-        "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
-        "MCP_TASK_ORCHESTRATOR_CONFIG_DIR": ".mcp-data/task-orchestrator"
-    },
-    "extraKnownMarketplaces": {
-        "crosbycrosbylaw-plugins-official": {
-            "source": {
-                "source": "github",
-                "repo": "crosbycrosbylaw/claude-marketplace"
-            },
-            "autoUpdate": true
-        },
-        "superpowers-dev": {
-            "source": {
-                "source": "github",
-                "repo": "obra/superpowers"
-            },
-            "autoUpdate": true
-        }
-    },
+    "permissions": { "defaultMode": "bypassPermissions" },
     "enabledPlugins": {
         "db-operations@crosbycrosbylaw-plugins-official": true,
         "reasoning-protocols@crosbycrosbylaw-plugins-official": true,
         "rust-toolkit@crosbycrosbylaw-plugins-official": false,
         "python-toolkit@crosbycrosbylaw-plugins-official": false,
         "work-orchestration@crosbycrosbylaw-plugins-official": false,
-        "superpowers@superpowers-dev": true,
         "atomic-agents@claude-plugins-official": true,
         "typescript-lsp@claude-plugins-official": true,
         "feature-dev@claude-plugins-official": true,
@@ -57,13 +21,5 @@
         "plugin-dev@claude-plugins-official": false,
         "claude-code-setup@claude-plugins-official": false,
         "skill-creator@claude-plugins-official": false
-    },
-    "enableAllProjectMcpServers": true,
-    "enabledMcpjsonServers": [
-        "task-orchestrator",
-        "sequential-thinking",
-        "memory",
-        "memory-keeper",
-        "winterm-mcp"
-    ]
+    }
 }

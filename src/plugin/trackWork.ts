@@ -1,23 +1,24 @@
-import type { RCTPlugin } from "./types"
+import type { RCTPlugin } from './types'
+import { fs } from '#util'
 const metaFiles = [
     {
-        alias: "entry-schema",
-        path: "node_modules/reactive-context-toolkit/public/schema/entry-schema.xml",
+        alias: 'entry-schema',
+        path: fs.source(['public', 'schema', 'entry-schema.xml']),
     } as const,
 ]
 export default {
-    name: "track-work",
+    name: 'track-work',
     files: [
         {
-            alias: "chores",
-            path: "dev/chores.xml",
-            injectOn: "SessionStart",
+            alias: 'chores',
+            path: 'dev/chores.xml',
+            injectOn: 'SessionStart',
             metaFiles,
         },
         {
-            alias: "plans",
-            path: ".claude/plans/index.xml",
-            injectOn: "SessionStart",
+            alias: 'plans',
+            path: '.claude/plans/index.xml',
+            injectOn: 'SessionStart',
             metaFiles,
         },
     ],

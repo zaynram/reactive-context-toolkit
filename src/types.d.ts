@@ -5,26 +5,24 @@ import type {
     BaseHookInput,
     PreToolUseHookInput,
     PostToolUseHookInput,
-} from "@anthropic-ai/claude-agent-sdk"
+} from '@anthropic-ai/claude-agent-sdk'
 
 declare namespace RC {
     type HookSpecificOutput<T extends _HookEvent = _HookEvent> =
-        Required<SyncHookJSONOutput>["hookSpecificOutput"] & {
+        Required<SyncHookJSONOutput>['hookSpecificOutput'] & {
             hookEventName: T
             additionalContext: string
         }
 
     type HookJSONOutput<T extends HookEvent = HookEvent> =
-        SyncHookJSONOutput & {
-            hookSpecificOutput: HookSpecificOutput<T>
-        }
+        SyncHookJSONOutput & { hookSpecificOutput: HookSpecificOutput<T> }
 
     type ExtraHookJSONOutput<T extends HookEvent = HookEvent> = Omit<
         HookJSONOutput<T>,
-        "hookSpecificOutput"
+        'hookSpecificOutput'
     >
 
-    type HookEvent = HookSpecificOutput["hookEventName"]
+    type HookEvent = HookSpecificOutput['hookEventName']
     type InjectFunction<T extends HookEvent = HookEvent> = (
         output: HookSpecificOutput<T>,
     ) => void
@@ -37,11 +35,11 @@ declare namespace RC {
 
 declare namespace XML {
     type AttributeString = `${string}="${string}"`
-    type OpenTag = `<${string}>` | `<${string} ${string | AttributeString}>`
+    type OpenTag = `<${string}>` | `<${string} ${string}>`
     type CloseTag = `</${string}>`
-    type InlineTag = `<${string}/>` | `<${string} ${string | AttributeString}/>`
+    type InlineTag = `<${string}/>` | `<${string} ${string}/>`
     type Tree = `${OpenTag}${string}${CloseTag}`
-    type Element = "" | Tree | InlineTag
+    type Element = '' | Tree | InlineTag
 }
 
 declare interface ReferenceFile {
@@ -49,7 +47,7 @@ declare interface ReferenceFile {
     path: string
     brief?: string
     read: () => string
-    staleCheck?: FileEntry["staleCheck"]
+    staleCheck?: FileEntry['staleCheck']
 }
 
 declare interface FileRegistry {

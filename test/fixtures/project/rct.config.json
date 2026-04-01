@@ -1,13 +1,34 @@
 {
-  "globals": { "format": "xml" },
-  "files": [
-    { "alias": "chores", "path": "dev/chores.xml", "injectOn": "SessionStart", "brief": "Active chores" },
-    { "path": "dev/scope.xml", "injectOn": "SessionStart", "staleCheck": { "dateTag": "date", "wrapTag": "stale-scope" } }
-  ],
-  "rules": [
-    { "on": "PreToolUse", "matcher": "Write|Edit", "match": { "target": "file_path", "pattern": "docs/.*specs?/" }, "action": "block", "message": "Specs belong in .claude/plans/" }
-  ],
-  "injections": [
-    { "on": "PostToolUse", "matcher": "Read", "matchFile": "chores", "inject": ["chores"], "wrapper": "reminder" }
-  ]
+    "globals": { "format": "xml" },
+    "files": [
+        {
+            "alias": "chores",
+            "path": "dev/chores.xml",
+            "injectOn": "SessionStart",
+            "brief": "Active chores"
+        },
+        {
+            "path": "dev/scope.xml",
+            "injectOn": "SessionStart",
+            "staleCheck": { "dateTag": "date", "wrapTag": "stale-scope" }
+        }
+    ],
+    "rules": [
+        {
+            "on": "PreToolUse",
+            "matcher": "Write|Edit",
+            "match": { "target": "file_path", "pattern": "docs/.*specs?/" },
+            "action": "block",
+            "message": "Specs belong in .claude/plans/"
+        }
+    ],
+    "injections": [
+        {
+            "on": "PostToolUse",
+            "matcher": "Read",
+            "matchFile": "chores",
+            "inject": ["chores"],
+            "wrapper": "reminder"
+        }
+    ]
 }

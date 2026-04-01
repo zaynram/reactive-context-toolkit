@@ -1,11 +1,10 @@
-import { execSync } from "child_process"
-import path from "path"
-import type { LangTool } from "#config/types"
-import { xml, fs } from "#util"
+import { execSync } from 'child_process'
+import type { LangTool } from '#config/types'
+import { xml, fs } from '#util'
 const tool: LangTool = {
-    name: "pixi",
-    config: fs.resolve("pixi.toml"),
-    lockfile: fs.resolve("pixi.lock"),
+    name: 'pixi',
+    config: fs.resolve('pixi.toml'),
+    lockfile: fs.resolve('pixi.lock'),
     tasks: undefined,
     environment: undefined,
 }
@@ -14,12 +13,12 @@ const bunfile = Bun.file(tool.config!)
 
 if (await bunfile.exists()) {
     const obj = await bunfile.text().then(Bun.TOML.parse)
-    tool.environment = "environments" in obj
+    tool.environment = 'environments' in obj
     tool.tasks =
-        "tasks" in obj ||
-        ("feature" in obj &&
-            Array.isArray(obj.feature) &&
-            obj.feature.some(feat => "tasks" in feat))
+        'tasks' in obj
+        || ('feature' in obj
+            && Array.isArray(obj.feature)
+            && obj.feature.some((feat) => 'tasks' in feat))
 }
 
 export default tool
@@ -36,22 +35,22 @@ interface PixiTask {
 }
 
 function validateTask(o: unknown): PixiTask {
-    if (o && typeof o === "object" && "name" in o)
+    if (o && typeof o === 'object' && 'name' in o)
         return {
             ...(o as PixiTask),
-            description: "description" in o ? (o as PixiTask).description : "",
-            args: "args" in o ? ((o as PixiTask).args ?? []) : [],
+            description: 'description' in o ? (o as PixiTask).description : '',
+            args: 'args' in o ? ((o as PixiTask).args ?? []) : [],
         }
-    throw TypeError(`Received invalid task object: ${o}`)
+    throw TypeError(`Received invalid task object: ${JSON.stringify(o)}`)
 }
 
 export function getPixiTasks(tool: LangTool, cwd: string): string {
-    const resolvedCwd = tool.manifest ? path.dirname(tool.manifest) : cwd
+    const resolvedCwd = tool.manifest ? fs.dir(tool.manifest) : cwd
     try {
-        const items = execSync("pixi task list --json", {
-            encoding: "utf-8",
+        const items = execSync('pixi task list --json', {
+            encoding: 'utf-8',
             cwd: resolvedCwd,
-            stdio: ["ignore", "pipe", "ignore"],
+            stdio: ['ignore', 'pipe', 'ignore'],
         }).trim()
 
         const tasks: { name: string; synopsis: string; usage: string }[] = []
@@ -62,16 +61,15 @@ export function getPixiTasks(tool: LangTool, cwd: string): string {
                         const { name, description, args } = validateTask(task)
                         tasks.push({
                             name,
-                            synopsis: description?.split("Usage: ")[0] ?? "",
+                            synopsis: description?.split('Usage: ')[0] ?? '',
                             usage: `pixi run ${name} ${(args ?? [])
                                 .map((a: string | PixiTaskArgument) =>
-                                    typeof a === "string"
-                                        ? a
-                                        : typeof a.default === "string"
-                                          ? `[${a.name}=${a.default}]`
-                                          : `<${a.name}>`,
+                                    typeof a === 'string' ? a
+                                    : typeof a.default === 'string' ?
+                                        `[${a.name}=${a.default}]`
+                                    :   `<${a.name}>`,
                                 )
-                                .join(" ")}`.trim(),
+                                .join(' ')}`.trim(),
                         })
                     } catch {
                         continue
@@ -81,42 +79,42 @@ export function getPixiTasks(tool: LangTool, cwd: string): string {
         }
 
         if (tasks.length === 0)
-            return xml.inline("pixi-tasks", { unavailable: "no tasks found" })
+            return xml.inline('pixi-tasks', { unavailable: 'no tasks found' })
 
         const inner = tasks
             .map((t, i) =>
-                xml.inline("task", {
+                xml.inline('task', {
                     index: String(i + 1),
                     name: t.name,
                     synopsis: t.synopsis,
                     usage: t.usage,
                 }),
             )
-            .join("")
-        return xml.wrap("pixi-tasks", { inner })
+            .join('')
+        return xml.wrap('pixi-tasks', { inner })
     } catch {
-        return xml.inline("pixi-tasks", {
-            unavailable: "pixi not found or command failed",
+        return xml.inline('pixi-tasks', {
+            unavailable: 'pixi not found or command failed',
         })
     }
 }
 
 export function getPixiEnvironment(tool: LangTool, cwd: string): string {
-    const resolvedCwd = tool.manifest ? path.dirname(tool.manifest) : cwd
+    const resolvedCwd = tool.manifest ? fs.dir(tool.manifest) : cwd
     try {
-        const output = execSync("pixi info --json", {
-            encoding: "utf-8",
+        const output = execSync('pixi info --json', {
+            encoding: 'utf-8',
             cwd: resolvedCwd,
-            stdio: ["ignore", "pipe", "ignore"],
+            stdio: ['ignore', 'pipe', 'ignore'],
         }).trim()
 
         const info = JSON.parse(output)
-        const platform = info.platform ?? "unknown"
-        const version = info.pixi_version ?? info.version ?? "unknown"
-        return xml.inline("pixi-environment", { platform, version })
+        const platform = info.platform ?? 'unknown'
+        const version = info.pixi_version ?? info.version ?? 'unknown'
+        return xml.inline('pixi-environment', { platform, version })
     } catch {
-        return xml.inline("pixi-environment", {
-            unavailable: "pixi not found or command failed",
+        return xml.inline('pixi-environment', {
+            unavailable: 'pixi not found or command failed',
         })
     }
 }

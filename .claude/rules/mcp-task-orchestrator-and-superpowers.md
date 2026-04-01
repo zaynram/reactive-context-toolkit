@@ -1,6 +1,6 @@
 ---
 description: Rules for coordinating MCP Task Orchestrator tools and Superpowers skills in this project.
-paths: ["**/*"]
+paths: ['**/*']
 ---
 
 # Usage Rules: MCP Task Orchestrator + Superpowers

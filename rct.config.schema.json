@@ -6,23 +6,14 @@
     "type": "object",
     "additionalProperties": false,
     "properties": {
-        "$schema": {
-            "type": "string",
-            "description": "JSON Schema reference"
-        },
-        "globals": {
-            "$ref": "#/$defs/GlobalsConfig"
-        },
+        "$schema": { "type": "string", "description": "JSON Schema reference" },
+        "globals": { "$ref": "#/$defs/GlobalsConfig" },
         "files": {
             "type": "array",
             "description": "File entries for context injection",
-            "items": {
-                "$ref": "#/$defs/FileEntry"
-            }
+            "items": { "$ref": "#/$defs/FileEntry" }
         },
-        "lang": {
-            "$ref": "#/$defs/LangConfig"
-        },
+        "lang": { "$ref": "#/$defs/LangConfig" },
         "test": {
             "description": "Test runner config (boolean, command string, or full config)",
             "anyOf": [
@@ -34,19 +25,17 @@
         "rules": {
             "type": "array",
             "description": "Rules for blocking/warning on tool usage",
-            "items": {
-                "$ref": "#/$defs/RuleEntry"
-            }
+            "items": { "$ref": "#/$defs/RuleEntry" }
         },
         "injections": {
             "type": "array",
             "description": "Context injection definitions",
-            "items": {
-                "$ref": "#/$defs/InjectionEntry"
-            }
+            "items": { "$ref": "#/$defs/InjectionEntry" }
         },
-        "meta": {
-            "$ref": "#/$defs/MetaConfig"
+        "meta": { "$ref": "#/$defs/MetaConfig" },
+        "_derived": {
+            "type": "object",
+            "description": "Derivation baseline stored by rct init/update for three-way merge. Not validated."
         }
     },
     "$defs": {
@@ -68,10 +57,7 @@
             "description": "A single hook event or an array of hook events",
             "anyOf": [
                 { "$ref": "#/$defs/HookEvent" },
-                {
-                    "type": "array",
-                    "items": { "$ref": "#/$defs/HookEvent" }
-                }
+                { "type": "array", "items": { "$ref": "#/$defs/HookEvent" } }
             ]
         },
         "Format": {
@@ -89,10 +75,7 @@
             "description": "Global configuration defaults",
             "additionalProperties": false,
             "properties": {
-                "format": {
-                    "$ref": "#/$defs/Format",
-                    "default": "xml"
-                },
+                "format": { "$ref": "#/$defs/Format", "default": "xml" },
                 "wrapper": {
                     "type": "string",
                     "description": "Wrapper tag name",
@@ -113,10 +96,10 @@
                 },
                 "plugins": {
                     "type": "array",
-                    "description": "Names of plugins to activate by default.",
+                    "description": "Plugin references to activate. Built-in names, local file paths (.claude/hooks/rct/*.ts), or package names.",
                     "items": {
                         "type": "string",
-                        "description": "Plugin name. Built-in options: 'track-work', 'issue-scope'."
+                        "description": "Plugin reference: built-in name, relative path (./), or package name."
                     }
                 }
             }
@@ -190,9 +173,7 @@
                 "metaFiles": {
                     "type": "array",
                     "description": "Associated meta-files",
-                    "items": {
-                        "$ref": "#/$defs/MetaFileEntry"
-                    }
+                    "items": { "$ref": "#/$defs/MetaFileEntry" }
                 }
             }
         },
@@ -244,12 +225,8 @@
             "additionalProperties": false,
             "required": ["target", "pattern"],
             "properties": {
-                "target": {
-                    "$ref": "#/$defs/MatchTarget"
-                },
-                "operator": {
-                    "$ref": "#/$defs/MatchOperator"
-                },
+                "target": { "$ref": "#/$defs/MatchTarget" },
+                "operator": { "$ref": "#/$defs/MatchOperator" },
                 "pattern": {
                     "description": "Pattern(s) to match -- string or array of strings/objects",
                     "anyOf": [
@@ -297,9 +274,7 @@
                     "type": "string",
                     "description": "Pipe-delimited tool name matcher"
                 },
-                "match": {
-                    "$ref": "#/$defs/Match"
-                },
+                "match": { "$ref": "#/$defs/Match" },
                 "action": {
                     "type": "string",
                     "enum": ["block", "warn"],
@@ -337,15 +312,11 @@
                     "type": "string",
                     "description": "Glob pattern to match file paths"
                 },
-                "match": {
-                    "$ref": "#/$defs/Match"
-                },
+                "match": { "$ref": "#/$defs/Match" },
                 "inject": {
                     "type": "array",
                     "description": "File references to inject",
-                    "items": {
-                        "$ref": "#/$defs/FileRef"
-                    }
+                    "items": { "$ref": "#/$defs/FileRef" }
                 },
                 "brief": {
                     "type": "boolean",
@@ -387,9 +358,7 @@
             "additionalProperties": false,
             "required": ["name"],
             "properties": {
-                "name": {
-                    "$ref": "#/$defs/LangToolName"
-                },
+                "name": { "$ref": "#/$defs/LangToolName" },
                 "tasks": {
                     "type": "boolean",
                     "description": "Whether to inject task runner info"
@@ -430,10 +399,7 @@
             "additionalProperties": false,
             "required": ["name", "path"],
             "properties": {
-                "name": {
-                    "type": "string",
-                    "description": "Display name"
-                },
+                "name": { "type": "string", "description": "Display name" },
                 "path": {
                     "type": "string",
                     "description": "Path to the config file"
@@ -456,20 +422,42 @@
                 "tools": {
                     "type": "array",
                     "description": "Language tools to configure",
-                    "items": {
-                        "$ref": "#/$defs/LangTool"
-                    }
+                    "items": { "$ref": "#/$defs/LangTool" }
                 },
                 "config": {
                     "type": "array",
                     "description": "Config files to track",
-                    "items": {
-                        "$ref": "#/$defs/LangConfigFile"
-                    }
+                    "items": { "$ref": "#/$defs/LangConfigFile" }
                 },
                 "injectOn": {
                     "$ref": "#/$defs/HookEventOrArray",
                     "description": "Hook event(s) that trigger injection"
+                },
+                "format": {
+                    "$ref": "#/$defs/Format",
+                    "description": "Output format override"
+                },
+                "test": {
+                    "$ref": "#/$defs/LangTestConfig",
+                    "description": "Per-language test configuration"
+                }
+            }
+        },
+        "LangTestConfig": {
+            "type": "object",
+            "description": "Per-language test configuration",
+            "additionalProperties": false,
+            "properties": {
+                "command": {
+                    "description": "Test command (true = auto-detect from tools)",
+                    "anyOf": [
+                        { "type": "boolean", "const": true },
+                        { "type": "string" }
+                    ]
+                },
+                "brief": {
+                    "type": "string",
+                    "description": "Brief template with placeholders: {status}, {exitCode}, {output}, {tool}, {lang}"
                 },
                 "format": {
                     "$ref": "#/$defs/Format",
@@ -482,18 +470,9 @@
             "description": "Language-specific configurations keyed by language name",
             "additionalProperties": false,
             "properties": {
-                "typescript": {
-                    "$ref": "#/$defs/LangEntry"
-                },
-                "javascript": {
-                    "$ref": "#/$defs/LangEntry"
-                },
-                "python": {
-                    "$ref": "#/$defs/LangEntry"
-                },
-                "rust": {
-                    "$ref": "#/$defs/LangEntry"
-                }
+                "node": { "$ref": "#/$defs/LangEntry" },
+                "python": { "$ref": "#/$defs/LangEntry" },
+                "rust": { "$ref": "#/$defs/LangEntry" }
             }
         },
         "TestConfig": {

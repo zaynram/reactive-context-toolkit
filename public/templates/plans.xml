@@ -1,8 +1,0 @@
-<reference name="plans" path=".claude/context/plans.xml">
-    <metadata>
-        <timespan created-at="" modified-at=""/>
-        <overview>This file serves as a canonical reference for all plans within the DAISY project. Plans are implementation scopes and tasks designed for the purpose of advancing active DAISY development work.</overview>
-    </metadata>
-    <plans></plans>
-    <reminder id='update-modification-time-every-edit'/>
-</reference>

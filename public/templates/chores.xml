@@ -1,8 +1,0 @@
-<reference name="chores" path=".claude/context/chores.xml">
-    <metadata>
-        <timespan created-at="" modified-at=""/>
-        <overview>This file serves as a canonical reference for outstanding chores for the DAISY project. Chores are small actionable items that need to be addressed, but do not take priority over active development work.</overview>
-    </metadata>
-    <chores></chores>
-    <reminder id='update-modification-time-every-edit'/>
-</reference>

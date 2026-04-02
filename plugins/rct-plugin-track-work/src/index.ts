@@ -2,7 +2,8 @@ import { definePlugin, type FileEntry } from 'reactive-context-toolkit'
 import path from 'path'
 import fs from 'fs'
 
-const asset = (filename: string) => path.resolve(__dirname, 'public', filename)
+const asset = (filename: string) =>
+    path.resolve(__dirname, '..', 'public', filename)
 
 const schema = { alias: 'entry-schema', path: asset('entry-schema.xml') }
 

@@ -6,7 +6,8 @@ import {
 import path from 'path'
 import fs from 'fs'
 
-const asset = (filename: string) => path.resolve(__dirname, 'public', filename)
+const asset = (filename: string) =>
+    path.resolve(__dirname, '..', 'public', filename)
 
 const scopeFiles = [
     { alias: 'scope-schema', path: asset('scope-schema.xml') },

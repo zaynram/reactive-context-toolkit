@@ -1,7 +1,7 @@
 # Reactive Context Toolkit — Version Roadmap
 
 **Last updated:** 2026-04-02
-**Current version:** v1.0.0 (in progress)
+**Current version:** v1.0.0 (pending merge) / v1.1.0 features implemented on branch
 
 ## Design Philosophy
 

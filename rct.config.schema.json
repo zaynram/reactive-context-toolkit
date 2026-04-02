@@ -96,10 +96,28 @@
                 },
                 "plugins": {
                     "type": "array",
-                    "description": "Plugin references to activate. Built-in names, local file paths (.claude/hooks/rct/*.ts), or package names.",
+                    "description": "Plugin references to activate. Strings (built-in, local path, or package name) or objects with path overrides.",
                     "items": {
-                        "type": "string",
-                        "description": "Plugin reference: built-in name, relative path (./), or package name."
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "description": "Plugin reference: built-in name, relative path (./), or package name."
+                            },
+                            {
+                                "type": "object",
+                                "description": "Plugin reference with path overrides.",
+                                "required": ["name"],
+                                "properties": {
+                                    "name": { "type": "string", "description": "Plugin name (same as string form)." },
+                                    "paths": {
+                                        "type": "object",
+                                        "description": "Map of file alias to custom path. Overrides the plugin's default paths.",
+                                        "additionalProperties": { "type": "string" }
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        ]
                     }
                 }
             }

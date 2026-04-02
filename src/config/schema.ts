@@ -1,5 +1,7 @@
 import { fs } from '#util/fs'
 import { resolvePlugin } from '#plugin/resolve'
+import type { RCTPlugin } from '#plugin/types'
+import { displayName } from '#plugin/types'
 import type {
     RCTConfig,
     GlobalsConfig,
@@ -9,7 +11,23 @@ import type {
     InjectionEntry,
     FileEntry,
     RuleEntry,
+    PluginRef,
 } from './types'
+import { pluginRefName, pluginRefPaths } from './types'
+
+export interface PluginExtensions {
+    contexts: Array<{
+        name: string
+        fn: NonNullable<RCTPlugin['context']>
+        contextOn?: RCTPlugin['contextOn']
+    }>
+    triggers: Array<{ name: string; fn: NonNullable<RCTPlugin['trigger']> }>
+}
+
+export interface ApplyPluginsResult {
+    config: ValidatedConfig
+    extensions: PluginExtensions
+}
 
 export type ValidatedConfig = { globals: Required<GlobalsConfig> } & RCTConfig
 
@@ -99,31 +117,75 @@ export function validateConfig(config: RCTConfig): ValidatedConfig {
 
 export async function applyPlugins(
     config: ValidatedConfig,
-): Promise<ValidatedConfig> {
-    const pluginNames = config.globals.plugins ?? []
-    if (pluginNames.length === 0) return config
+): Promise<ApplyPluginsResult> {
+    const extensions: PluginExtensions = { contexts: [], triggers: [] }
+    const pluginRefs: PluginRef[] = config.globals.plugins ?? []
+    if (pluginRefs.length === 0) return { config, extensions }
 
     const mergedFiles: FileEntry[] = [...(config.files ?? [])]
     const mergedRules: RuleEntry[] = [...(config.rules ?? [])]
     const hadRules = config.rules?.length ?? 0
 
-    for (const name of pluginNames) {
+    for (const ref of pluginRefs) {
+        const name = pluginRefName(ref)
+        const pathOverrides = pluginRefPaths(ref)
         try {
             const { plugin } = await resolvePlugin(name)
-            if (plugin.files) mergedFiles.push(...plugin.files)
+            let files = plugin.files
+            if (files && pathOverrides) {
+                const pluginAliases = new Set(files.map((f) => f.alias))
+                for (const key of Object.keys(pathOverrides)) {
+                    if (!pluginAliases.has(key)) {
+                        console.warn(
+                            `[rct] Warning: plugin '${displayName(plugin, name)}' has no file with alias '${key}' (available: ${[...pluginAliases].join(', ')})`,
+                        )
+                    }
+                }
+                files = files.map((f) =>
+                    f.alias && pathOverrides[f.alias]
+                        ? { ...f, path: pathOverrides[f.alias] }
+                        : f,
+                )
+            }
+            if (files) mergedFiles.push(...files)
             if (plugin.rules) mergedRules.push(...plugin.rules)
+            if (plugin.context)
+                extensions.contexts.push({
+                    name: displayName(plugin, name),
+                    fn: plugin.context,
+                    contextOn: plugin.contextOn,
+                })
+            if (plugin.trigger)
+                extensions.triggers.push({
+                    name: displayName(plugin, name),
+                    fn: plugin.trigger,
+                })
+            if (plugin.setup) {
+                try {
+                    await Promise.resolve(plugin.setup())
+                } catch (err) {
+                    console.warn(
+                        `[rct] Warning: plugin '${displayName(plugin, name)}' setup failed: ${err instanceof Error ? err.message : String(err)}`,
+                    )
+                }
+            }
         } catch (err) {
             console.warn(
-                `[rct] Failed to resolve plugin '${name}': ${err instanceof Error ? err.message : err}`,
+                `[rct] Warning: Failed to resolve plugin '${name}': ${err instanceof Error ? err.message : String(err)}`,
             )
+            if (process.env.RCT_DEBUG && err instanceof Error && err.stack) {
+                console.warn(err.stack)
+            }
         }
     }
 
-    return {
+    const merged: ValidatedConfig = {
         ...config,
         files: mergedFiles,
         rules: mergedRules.length > hadRules ? mergedRules : config.rules,
     }
+
+    return { config: merged, extensions }
 }
 
 export function desugarFileInjections(
@@ -180,7 +242,7 @@ export function desugarFileInjections(
 
 export function applyStaleCheck(
     content: string,
-    staleConfig: { dateTag: string; wrapTag: string; format?: string },
+    staleConfig: { dateTag: string; wrapTag: string },
     today: string,
 ): string {
     const dateRegex = new RegExp(

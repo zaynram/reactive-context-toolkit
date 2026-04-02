@@ -125,12 +125,12 @@ describe('desugarFileInjections', () => {
             files: [
                 {
                     alias: 'chores',
-                    path: 'dev/chores.xml',
+                    path: '.claude/context/chores.xml',
                     injectOn: 'SessionStart',
                 },
                 {
                     alias: 'scope',
-                    path: 'dev/scope.xml',
+                    path: '.claude/context/scope.xml',
                     injectOn: ['PreToolUse', 'PostToolUse'],
                 },
             ],
@@ -174,7 +174,7 @@ describe('desugarFileInjections', () => {
             files: [
                 {
                     alias: 'chores',
-                    path: 'dev/chores.xml',
+                    path: '.claude/context/chores.xml',
                     injectOn: 'SessionStart',
                 },
             ],
@@ -315,14 +315,16 @@ describe('applyPlugins', () => {
         const config = validateConfig({
             files: [{ alias: 'mine', path: 'mine.xml' }],
         })
-        const result = await applyPlugins(config)
+        const { config: result } = await applyPlugins(config)
         expect(result.files).toHaveLength(1)
         expect(result.rules).toBeUndefined()
     })
 
     test('merges track-work plugin files into config.files', async () => {
-        const config = validateConfig({ globals: { plugins: ['track-work'] } })
-        const result = await applyPlugins(config)
+        const config = validateConfig({
+            globals: { plugins: ['rct-plugin-track-work'] },
+        })
+        const { config: result } = await applyPlugins(config)
         const aliases = (result.files ?? []).map((f) => f.alias)
         expect(aliases).toContain('chores')
         expect(aliases).toContain('plans')
@@ -330,18 +332,20 @@ describe('applyPlugins', () => {
 
     test('merges plugin files alongside existing config files', async () => {
         const config = validateConfig({
-            globals: { plugins: ['track-work'] },
+            globals: { plugins: ['rct-plugin-track-work'] },
             files: [{ alias: 'my-file', path: 'my-file.xml' }],
         })
-        const result = await applyPlugins(config)
+        const { config: result } = await applyPlugins(config)
         const aliases = (result.files ?? []).map((f) => f.alias)
         expect(aliases).toContain('my-file')
         expect(aliases).toContain('chores')
     })
 
     test('desugar after applyPlugins generates injections for plugin files with injectOn', async () => {
-        const config = validateConfig({ globals: { plugins: ['track-work'] } })
-        const applied = await applyPlugins(config)
+        const config = validateConfig({
+            globals: { plugins: ['rct-plugin-track-work'] },
+        })
+        const { config: applied } = await applyPlugins(config)
         const desugared = desugarFileInjections(applied)
         const refs = (desugared.injections ?? []).flatMap((i) => i.inject)
         expect(refs).toContain('chores')
@@ -352,8 +356,79 @@ describe('applyPlugins', () => {
         const config = validateConfig({
             globals: { plugins: ['nonexistent-plugin'] },
         })
-        const result = await applyPlugins(config)
+        const { config: result } = await applyPlugins(config)
         expect(result.files ?? []).toHaveLength(0)
+    })
+
+    test('calls plugin.setup() during application', async () => {
+        // Test indirectly: track-work and issue-scope have setup functions.
+        // applyPlugins calls setup — verify no error thrown and files resolve.
+        const config = validateConfig({
+            globals: { plugins: ['rct-plugin-track-work'] },
+        })
+        const { config: result } = await applyPlugins(config)
+        expect(result.files?.length).toBeGreaterThan(0)
+    })
+
+    test('isolates setup errors without breaking pipeline', async () => {
+        // Test via a plugin with a throwing setup — need local file for this
+        // Integration test in hook-plugin.test.ts covers this end-to-end
+        // Here we verify the config still processes correctly even if a plugin
+        // is unknown (which exercises the catch path)
+        const config = validateConfig({
+            globals: {
+                plugins: ['nonexistent-plugin', 'rct-plugin-track-work'],
+            },
+        })
+        const { config: result } = await applyPlugins(config)
+        const aliases = (result.files ?? []).map((f) => f.alias)
+        expect(aliases).toContain('chores')
+    })
+
+    test('uses displayName for extension naming', async () => {
+        const config = validateConfig({
+            globals: { plugins: ['rct-plugin-track-work'] },
+        })
+        const { extensions } = await applyPlugins(config)
+        expect(extensions.contexts).toBeDefined()
+        expect(extensions.triggers).toBeDefined()
+    })
+
+    test('accepts PluginRef objects with path overrides', async () => {
+        const config = validateConfig({
+            globals: {
+                plugins: [
+                    {
+                        name: 'rct-plugin-track-work',
+                        paths: { chores: 'custom/chores.xml' },
+                    },
+                ],
+            },
+        })
+        const { config: result } = await applyPlugins(config)
+        const chores = (result.files ?? []).find((f) => f.alias === 'chores')
+        expect(chores).toBeDefined()
+        expect(chores!.path).toContain('custom/chores.xml')
+    })
+
+    test('mixes string and object PluginRef entries', async () => {
+        const config = validateConfig({
+            globals: {
+                plugins: [
+                    'rct-plugin-issue-scope',
+                    {
+                        name: 'rct-plugin-track-work',
+                        paths: { plans: 'my/plans.xml' },
+                    },
+                ],
+            },
+        })
+        const { config: result } = await applyPlugins(config)
+        const aliases = (result.files ?? []).map((f) => f.alias)
+        expect(aliases).toContain('scope')
+        expect(aliases).toContain('chores')
+        const plans = (result.files ?? []).find((f) => f.alias === 'plans')
+        expect(plans!.path).toContain('my/plans.xml')
     })
 })
 

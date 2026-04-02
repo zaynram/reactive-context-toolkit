@@ -12,6 +12,7 @@ export {
     desugarFileInjections,
     applyPlugins,
 } from '#config/schema'
+export type { PluginExtensions, ApplyPluginsResult } from '#config/schema'
 
 /** Build the alias-to-content Map used by injections and meta. Composable for custom pipelines. */
 export { buildFileRegistry } from '#config/files'
@@ -42,6 +43,7 @@ export type {
     Match,
     MatchTarget,
     MatchOperator,
+    PluginRef,
 } from '#config/types'
 
 // Engine
@@ -117,7 +119,12 @@ export { normalize, minify, condense } from '#util/general'
 
 // Plugin
 
-export type { RCTPlugin } from '#plugin/types'
+export type {
+    RCTPlugin,
+    PluginHookInput,
+    PluginTriggerResult,
+} from '#plugin/types'
+export { displayName } from '#plugin/types'
 
 /** Registry mapping plugin names to their RCTPlugin instances. */
 export { default as pluginRegistry } from '#plugin/index'

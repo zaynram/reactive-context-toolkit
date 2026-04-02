@@ -203,7 +203,7 @@ export async function setCachedResult(
         await fs.write(file, JSON.stringify(entry))
     } catch (err) {
         console.error(
-            `[rct] Cache write failed: ${err instanceof Error ? err.message : err}`,
+            `[rct] Cache write failed: ${err instanceof Error ? err.message : String(err)}`,
         )
     }
 }

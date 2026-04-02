@@ -7,15 +7,15 @@
             A kebab-case string. Valid identifiers are descriptive, but concise.
         </attribute>
         <attribute index="3" name="expendable" type="bool" default="false">
-            Whether the entry can be safely removed upon completion, or if it is necessary context for the codebase. Dynamic in nature; any item with expendable="false" MUST be reviewed for necessity on each read of this <reference/>.
+            Whether the entry can be safely removed upon completion, or if it is necessary context for the codebase. Dynamic in nature; any item with expendable="false" MUST be reviewed for necessity on each read of this <reference/>
+.
         </attribute>
         <attribute index="4" name="status" type="enum" choices="open|closed" default="open">
             The current status of the chore. Entries may only persist with a "closed" status if the expendable attribute is set to "false".
         </attribute>
     </attributes>
     <examples>
-        These examples demonstrate the attribute and format conventions entries added to references. All entries in any <reference/> MUST have values for each <attributes/>. 
-        Additional attributes are forbidden without an explicit <schema_extension/> in the <reference/> file.
+        These examples demonstrate the attribute and format conventions entries added to references. All entries in any <reference/> MUST have values for each <attributes/>. Additional attributes are forbidden without an explicit <schema_extension/> in the <reference/> file. 
         <example index="1">
             <chore index="1" id="some-issue" status="closed" expendable="true">
                 Fill this space with additional context and instructions using XML hierarchies.

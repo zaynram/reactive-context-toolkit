@@ -1,0 +1,9 @@
+{
+    "name": "rct-plugin-tasktools",
+    "version": "0.1.0",
+    "type": "module",
+    "scripts": {},
+    "peerDependencies": {
+        "reactive-context-toolkit": "*"
+    }
+}

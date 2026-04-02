@@ -1,0 +1,1 @@
+{ "globals": { "format": "xml", "plugins": ["./plugins/throwing-context.ts"] } }

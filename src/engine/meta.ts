@@ -7,7 +7,8 @@ import {
 } from '#config/types'
 import type { FileRegistry } from '#types'
 import { xml } from '#util'
-type MetaSection = 'files' | 'lang' | 'test' | 'rules'
+import { displayName } from '#plugin/types'
+type MetaSection = 'files' | 'lang' | 'test' | 'rules' | 'plugins'
 
 interface FileMeta {
     alias: string
@@ -29,11 +30,17 @@ interface RulesMeta {
     actions: string[]
 }
 
+interface PluginMeta {
+    name: string
+    ref: string
+}
+
 type SectionData = {
     files?: FileMeta[]
     lang?: LangMeta[]
     test?: TestMeta
     rules?: RulesMeta
+    plugins?: PluginMeta[]
 }
 
 function buildFilesSection(
@@ -123,6 +130,14 @@ function formatXml(sections: SectionData): string {
         )
     }
 
+    if (sections.plugins) {
+        parts.push(xml.open('plugins'))
+        for (const p of sections.plugins) {
+            parts.push(xml.inline('plugin', { name: p.name, ref: p.ref }))
+        }
+        parts.push(xml.close('plugins'))
+    }
+
     parts.push(xml.close('rct-meta'))
     return parts.join('')
 }
@@ -159,6 +174,13 @@ function formatPath(sections: SectionData): string {
         )
     }
 
+    if (sections.plugins) {
+        parts.push('plugins:')
+        for (const p of sections.plugins) {
+            parts.push(`  ${p.name} (${p.ref})`)
+        }
+    }
+
     return parts.join('\n')
 }
 
@@ -186,6 +208,12 @@ function formatRaw(sections: SectionData): string {
         parts.push(
             `rules: count=${sections.rules.count}, actions=${sections.rules.actions.join(', ')}`,
         )
+    }
+
+    if (sections.plugins) {
+        for (const p of sections.plugins) {
+            parts.push(`plugin: ${p.name} (${p.ref})`)
+        }
     }
 
     return parts.join('\n')
@@ -217,6 +245,13 @@ export function generateMeta(
 
     if (include.includes('rules')) {
         sections.rules = buildRulesSection(config)
+    }
+
+    if (include.includes('plugins') && globals.plugins?.length) {
+        sections.plugins = globals.plugins.map((p) => {
+            const ref = typeof p === 'string' ? p : p.name ?? p
+            return { name: displayName({}, String(ref)), ref: String(ref) }
+        })
     }
 
     switch (enumeration) {

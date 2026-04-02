@@ -2,5 +2,7 @@
 *.*wal
 .task_orchestrator
 .remember
+.tmp-*
 node_modules
 rct-cache-*
+.claude/worktrees/

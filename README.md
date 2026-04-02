@@ -148,7 +148,46 @@ export default definePlugin({
 })
 ```
 
+Plugins can also provide dynamic behavior and lifecycle hooks:
+
+```typescript
+export default definePlugin({
+    files,
+    // Scaffold files on first use
+    setup() {
+        for (const f of files) {
+            if (!fs.existsSync(f.path)) fs.copyFileSync(template, f.path)
+        }
+    },
+    // Inject dynamic context on SessionStart
+    context(event) {
+        if (event === 'SessionStart') return '<status>all systems go</status>'
+    },
+    // Block or warn on specific tool usage
+    trigger(event, input) {
+        if (input.toolName === 'DangerousTool')
+            return { action: 'block', message: 'Not allowed' }
+    },
+})
+```
+
+`name` is optional — derived from the package name with `rct-plugin-` prefix stripped.
+
 Plugin resolution: built-in name → local file (`./` prefix) → package name.
+
+### Self-briefing
+
+Use `meta` to brief Claude on what RCT provides at session start:
+
+```json
+{
+    "meta": {
+        "injectOn": "SessionStart",
+        "include": ["files", "rules", "plugins"],
+        "brief": true
+    }
+}
+```
 
 ### Custom extensions
 
@@ -201,6 +240,7 @@ import {
     condense,
     // Plugin
     pluginRegistry,
+    displayName,
 } from 'reactive-context-toolkit'
 
 import type {

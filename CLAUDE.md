@@ -16,7 +16,7 @@ Based on the event and match conditions in the config, RCT injects context (XML 
 
 ```sh
 bun install                   # install dependencies
-bun test                      # run all tests (27 test files in test/)
+bun test                      # run all tests (34 test files)
 bun test <pattern>            # run a single test file or matching tests
 bun lint                      # lint with oxlint
 bun lint:fix                  # lint and auto-fix
@@ -81,11 +81,10 @@ src/
 │   ├── hook.ts          # createHook() — managed hook lifecycle wrapper
 │   └── register.ts      # standard(), dynamic(), block() — low-level hook I/O helpers
 ├── plugin/
-│   ├── types.ts         # RCTPlugin interface: { name, files?, rules? }
-│   ├── index.ts         # Plugin registry (built-in plugins)
-│   ├── resolve.ts       # Plugin resolution: built-in → local → package
-│   ├── issueScope.ts    # Built-in "issue-scope" plugin
-│   └── trackWork.ts     # Built-in "track-work" plugin
+│   ├── types.ts         # RCTPlugin interface: { name?, files?, rules?, context?, trigger?, setup? }; displayName()
+│   ├── validate.ts      # validatePlugin() — checks all optional property types
+│   ├── index.ts         # Plugin registry (keyed by BUILTIN_PLUGINS package name)
+│   └── resolve.ts       # Plugin resolution: built-in → local → package
 ├── test/
 │   └── runner.ts        # Per-language test execution, formatting, caching
 ├── constants.ts         # CLAUDE_PROJECT_DIR, LANGUAGES
@@ -97,7 +96,8 @@ src/
 └── types.d.ts           # RC namespace; XML namespace; ReferenceFile; FileRegistry
 
 rct.config.schema.json   # JSON Schema draft 2020-12 for rct.config.json
-test/                    # 27 test files
+plugins/                 # Workspace plugin packages (rct-plugin-issue-scope, track-work, tmux)
+test/                    # 34 test files
 ```
 
 ### Path aliases
@@ -108,13 +108,15 @@ test/                    # 27 test files
 
 1. Claude Code fires a hook → `rct hook <HookEvent>` runs
 2. Async events (PreToolUse, PostToolUse, …) receive a JSON payload on stdin
-3. `cli/hook.ts` loads and validates `rct.config.{ts,js,json}` from `CLAUDE_PROJECT_DIR`
-4. **Rules** evaluated first — `action: "block"` outputs `{ decision: "block", reason }` and exits 2
-5. **Injections** evaluated — matching entries resolve `FileRef[]` from the registry
-6. **Lang** evaluated — per-language modules (node/python/rust) extract tool info and config paths
-7. **Test** runner invoked per language with top-level inheritance, results cached per session
-8. **Meta** summary generated if configured (reads from resolved config, not hardcoded registry)
-9. All parts assembled into `{ hookSpecificOutput: { hookEventName, additionalContext } }`, minified, written to stdout
+3. `cli/hook.ts` loads and validates `rct.config.{ts,js,json}` from `CLAUDE_PROJECT_DIR`; `applyPlugins()` resolves plugins, merges files/rules, runs `setup()` with error isolation
+4. **Plugin triggers** evaluated — each plugin's `trigger()` function called with 5s timeout; block exits immediately, warn messages collected
+5. **Rules** evaluated — static `action: "block"` outputs `{ decision: "block", reason }` and exits 2
+6. **Injections** evaluated — matching entries resolve `FileRef[]` from the registry
+7. **Plugin contexts** evaluated — each plugin's `context()` function called with 5s timeout; non-undefined results collected
+8. **Lang** evaluated — per-language modules (node/python/rust) extract tool info and config paths
+9. **Test** runner invoked per language with top-level inheritance, results cached per session
+10. **Meta** summary generated if configured (reads from resolved config, not hardcoded registry)
+11. All parts assembled into `{ hookSpecificOutput: { hookEventName, additionalContext } }`, minified, written to stdout
 
 ## Config File (Consumer-Facing)
 
@@ -133,12 +135,24 @@ End users create `rct.config.json` (or `.ts`/`.js`) via `rct init`:
 
 ### Plugins
 
-Plugins are declarative (contribute `files[]` and `rules[]`). Extensions are imperative (custom hook scripts using `createHook()` or `standard`/`dynamic`/`block`).
+Plugins can be declarative (contribute `files[]` and `rules[]`) and/or dynamic (provide `context()` and `trigger()` functions). Extensions are imperative (custom hook scripts using `createHook()` or `standard`/`dynamic`/`block`).
 
-**Built-in plugins** (`globals.plugins`):
+**Plugin interface (`RCTPlugin`):**
 
-- **`track-work`** — registers `chores` (`dev/chores.xml`) and `plans` (`.claude/plans/index.xml`)
-- **`issue-scope`** — registers `scope` (`.claude/context/scope.xml`, with stale check) and `candidates` (`.claude/context/issues.xml`)
+- `name?` — optional display name; derived from package ref with `rct-plugin-` prefix stripped via `displayName()`
+- `files?` — file entries to merge into config
+- `rules?` — rule entries to merge into config
+- `context?(event, input)` — returns dynamic context string (or undefined); called with 5s timeout
+- `trigger?(event, input)` — returns `{ action: 'block'|'warn', message }` (or undefined); called with 5s timeout
+- `setup?()` — lifecycle hook called in `applyPlugins()` with error isolation; use for file scaffolding
+
+`PluginHookInput`: `{ toolName?: string, payload: Record<string, unknown> }`
+
+**Built-in plugins** (`globals.plugins`): workspace packages resolved via `optionalDependencies`
+
+- **`rct-plugin-track-work`** — registers `chores` and `plans` files with setup scaffolding
+- **`rct-plugin-issue-scope`** — registers `scope` (with stale check) and `candidates` files with setup scaffolding
+- **`rct-plugin-tmux`** — MCP server for tmux pane control (separate `bunx rct-tmux serve`)
 
 **Custom plugins**: local files at `.claude/hooks/rct/*.{ts,js}` or npm packages. Use `definePlugin()` to author.
 

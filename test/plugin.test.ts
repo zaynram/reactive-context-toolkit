@@ -1,25 +1,25 @@
 import { describe, expect, test } from 'bun:test'
-import pluginRegistry from '../src/plugin/index'
-import type { RCTPlugin } from '../src/plugin/types'
+import pluginRegistry from '#plugin/index'
 
 describe('plugin registry', () => {
-    test('contains track-work and issue-scope', () => {
-        expect('track-work' in pluginRegistry).toBe(true)
-        expect('issue-scope' in pluginRegistry).toBe(true)
+    test('contains all 4 builtin plugins', () => {
+        expect('rct-plugin-track-work' in pluginRegistry).toBe(true)
+        expect('rct-plugin-issue-scope' in pluginRegistry).toBe(true)
+        expect('rct-plugin-tmux' in pluginRegistry).toBe(true)
+        expect('rct-plugin-tasktools' in pluginRegistry).toBe(true)
     })
 
     test('each plugin has a name matching its registry key', () => {
-        for (const [key, plugin] of Object.entries(pluginRegistry)) {
-            expect(plugin.name).toBe(key)
-        }
+        for (const [key, plugin] of Object.entries(pluginRegistry))
+            expect(plugin.ref as string).toBe(key)
     })
 })
 
-describe('track-work plugin', () => {
-    const plugin: RCTPlugin = pluginRegistry['track-work']
+describe('rct-plugin-track-work', () => {
+    const { plugin } = pluginRegistry['rct-plugin-track-work']!
 
-    test("has name 'track-work'", () => {
-        expect(plugin.name).toBe('track-work')
+    test("has name 'rct-plugin-track-work'", () => {
+        expect(plugin.name).toBe('rct-plugin-track-work')
     })
 
     test('contributes chores and plans files', () => {
@@ -42,11 +42,11 @@ describe('track-work plugin', () => {
     })
 })
 
-describe('issue-scope plugin', () => {
-    const plugin: RCTPlugin = pluginRegistry['issue-scope']
+describe('rct-plugin-issue-scope', () => {
+    const { plugin } = pluginRegistry['rct-plugin-issue-scope']!
 
     test("has name 'issue-scope'", () => {
-        expect(plugin.name).toBe('issue-scope')
+        expect(plugin.name).toBe('rct-plugin-issue-scope')
     })
 
     test('contributes scope and candidates files', () => {

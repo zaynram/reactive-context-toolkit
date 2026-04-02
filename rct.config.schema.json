@@ -108,11 +108,16 @@
                                 "description": "Plugin reference with path overrides.",
                                 "required": ["name"],
                                 "properties": {
-                                    "name": { "type": "string", "description": "Plugin name (same as string form)." },
+                                    "name": {
+                                        "type": "string",
+                                        "description": "Plugin name (same as string form)."
+                                    },
                                     "paths": {
                                         "type": "object",
                                         "description": "Map of file alias to custom path. Overrides the plugin's default paths.",
-                                        "additionalProperties": { "type": "string" }
+                                        "additionalProperties": {
+                                            "type": "string"
+                                        }
                                     }
                                 },
                                 "additionalProperties": false
@@ -202,7 +207,7 @@
                 "tool_name",
                 "error"
             ],
-            "description": "Targets for match conditions"
+            "description": "Match target field. file_path: any file tool. content: Write (falls back to new_string for Edit). new_string: Edit/MultiEdit (falls back to content for Write). command: Bash. user_prompt: UserPromptSubmit. tool_name: any tool. error: PostToolUseFailure."
         },
         "MatchOperator": {
             "type": "string",

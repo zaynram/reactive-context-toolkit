@@ -72,6 +72,36 @@ function validateMatch(match: Match | undefined, context: string): void {
     }
 }
 
+/** Target → tool compatibility. Values are the tools where the target is meaningful. */
+const TARGET_TOOLS: Record<string, string | null> = {
+    file_path: null, // works for any file-based tool
+    content: 'Write|Edit|MultiEdit', // Write natively; Edit/MultiEdit via fallback
+    new_string: 'Edit|MultiEdit|Write', // Edit natively; Write via fallback
+    command: 'Bash',
+    user_prompt: null, // UserPromptSubmit event, not tool-specific
+    tool_name: null, // works for any tool
+    error: null, // PostToolUseFailure event
+}
+
+function warnTargetMatcher(
+    target: string | undefined,
+    matcher: string,
+    context: string,
+): void {
+    if (!target) return
+    const validTools = TARGET_TOOLS[target]
+    if (!validTools) return // universal target
+    const matchers = matcher.split('|')
+    const valid = validTools.split('|')
+    const invalid = matchers.filter((m) => !valid.includes(m))
+    if (invalid.length > 0) {
+        console.warn(
+            `[rct] Hint: ${context} uses target '${target}' with matcher '${invalid.join('|')}'. ` +
+                `'${target}' is typically available for ${validTools}.`,
+        )
+    }
+}
+
 const LEGACY_LANG_KEYS = ['typescript', 'javascript'] as const
 
 export function validateConfig(config: RCTConfig): ValidatedConfig {
@@ -93,6 +123,19 @@ export function validateConfig(config: RCTConfig): ValidatedConfig {
                 rule.match,
                 `rule "${rule.description ?? rule.message}"`,
             )
+            // Hint on suspect target+matcher combinations
+            if (rule.match && rule.matcher) {
+                const conditions = Array.isArray(rule.match)
+                    ? rule.match
+                    : [rule.match]
+                for (const cond of conditions) {
+                    warnTargetMatcher(
+                        cond.target,
+                        rule.matcher,
+                        `rule "${rule.description ?? rule.message}"`,
+                    )
+                }
+            }
         }
     }
 
@@ -142,9 +185,9 @@ export async function applyPlugins(
                     }
                 }
                 files = files.map((f) =>
-                    f.alias && pathOverrides[f.alias]
-                        ? { ...f, path: pathOverrides[f.alias] }
-                        : f,
+                    f.alias && pathOverrides[f.alias] ?
+                        { ...f, path: pathOverrides[f.alias] }
+                    :   f,
                 )
             }
             if (files) mergedFiles.push(...files)

@@ -98,7 +98,18 @@ export function extractTargetValue(
 
     // Everything else comes from tool_input
     const toolInput = (payload.tool_input ?? {}) as Record<string, unknown>
-    return (toolInput[target] as string) ?? ''
+    const direct = toolInput[target] as string | undefined
+
+    // Unified write content: "content" falls back to "new_string" and vice versa,
+    // so a single rule works for both Write (content) and Edit (new_string) tools
+    if (!direct && target === 'content') {
+        return (toolInput.new_string as string) ?? ''
+    }
+    if (!direct && target === 'new_string') {
+        return (toolInput.content as string) ?? ''
+    }
+
+    return direct ?? ''
 }
 
 export function evaluateMatch(

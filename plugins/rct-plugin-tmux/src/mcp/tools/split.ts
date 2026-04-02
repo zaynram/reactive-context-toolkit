@@ -45,7 +45,8 @@ export const callback = async function ({
     if (command) args.push(command)
 
     const { stdout, stderr, exitCode } = await exec(args)
-    if (exitCode !== 0) return err(`tmux split-window failed: ${stderr || stdout}`)
+    if (exitCode !== 0)
+        return err(`tmux split-window failed: ${stderr || stdout}`)
     return ok(stdout.trim())
 }
 

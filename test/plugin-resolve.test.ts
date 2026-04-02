@@ -30,11 +30,15 @@ describe('resolvePlugin', () => {
 
 describe('displayName', () => {
     test('strips rct-plugin- prefix', () => {
-        expect(displayName({ name: 'rct-plugin-tmux' }, 'rct-plugin-tmux')).toBe('tmux')
+        expect(
+            displayName({ name: 'rct-plugin-tmux' }, 'rct-plugin-tmux'),
+        ).toBe('tmux')
     })
 
     test('uses plugin.name when present', () => {
-        expect(displayName({ name: 'custom-name' }, 'rct-plugin-foo')).toBe('custom-name')
+        expect(displayName({ name: 'custom-name' }, 'rct-plugin-foo')).toBe(
+            'custom-name',
+        )
     })
 
     test('falls back to ref when name absent', () => {
@@ -42,7 +46,9 @@ describe('displayName', () => {
     })
 
     test('preserves names without rct-plugin- prefix', () => {
-        expect(displayName({ name: 'my-plugin' }, 'my-plugin')).toBe('my-plugin')
+        expect(displayName({ name: 'my-plugin' }, 'my-plugin')).toBe(
+            'my-plugin',
+        )
     })
 })
 
@@ -52,16 +58,32 @@ describe('validatePlugin', () => {
     })
 
     test('rejects non-object', () => {
-        expect(() => validatePlugin(null, 'test')).toThrow(/must export an object/)
-        expect(() => validatePlugin('string', 'test')).toThrow(/must export an object/)
+        expect(() => validatePlugin(null, 'test')).toThrow(
+            /must export an object/,
+        )
+        expect(() => validatePlugin('string', 'test')).toThrow(
+            /must export an object/,
+        )
     })
 
     test('rejects invalid property types', () => {
-        expect(() => validatePlugin({ name: 123 }, 'test')).toThrow(/must be string/)
-        expect(() => validatePlugin({ context: 'not-fn' }, 'test')).toThrow(/must be function/)
-        expect(() => validatePlugin({ trigger: 42 }, 'test')).toThrow(/must be function/)
-        expect(() => validatePlugin({ setup: true }, 'test')).toThrow(/must be function/)
-        expect(() => validatePlugin({ files: 'not-array' }, 'test')).toThrow(/must be an array/)
-        expect(() => validatePlugin({ rules: {} }, 'test')).toThrow(/must be an array/)
+        expect(() => validatePlugin({ name: 123 }, 'test')).toThrow(
+            /must be string/,
+        )
+        expect(() => validatePlugin({ context: 'not-fn' }, 'test')).toThrow(
+            /must be function/,
+        )
+        expect(() => validatePlugin({ trigger: 42 }, 'test')).toThrow(
+            /must be function/,
+        )
+        expect(() => validatePlugin({ setup: true }, 'test')).toThrow(
+            /must be function/,
+        )
+        expect(() => validatePlugin({ files: 'not-array' }, 'test')).toThrow(
+            /must be an array/,
+        )
+        expect(() => validatePlugin({ rules: {} }, 'test')).toThrow(
+            /must be an array/,
+        )
     })
 })

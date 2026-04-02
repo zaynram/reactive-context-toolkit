@@ -16,6 +16,7 @@
 ### Step 1: Extend `RCTPlugin` interface
 
 **Files to modify:**
+
 - `src/plugin/types.ts` — add optional `context` and `trigger` functions to `RCTPlugin`
 
 ```typescript
@@ -35,19 +36,30 @@ export interface PluginHookInput {
 
 export interface RCTPlugin extends Pick<RCTConfig, 'rules' | 'files'> {
     name: string
-    context?: (event: HookEvent, input: PluginHookInput) => string | undefined | Promise<string | undefined>
-    trigger?: (event: HookEvent, input: PluginHookInput) => PluginTriggerResult | undefined | Promise<PluginTriggerResult | undefined>
+    context?: (
+        event: HookEvent,
+        input: PluginHookInput,
+    ) => string | undefined | Promise<string | undefined>
+    trigger?: (
+        event: HookEvent,
+        input: PluginHookInput,
+    ) =>
+        | PluginTriggerResult
+        | undefined
+        | Promise<PluginTriggerResult | undefined>
 }
 ```
 
 **Note:** We use `PluginHookInput` (not `RC.HookInput`) because the hook pipeline in `cli/hook.ts` never constructs an `RC.HookInput` object. It reads stdin into `Record<string, unknown>` and extracts `toolName`. `RC.HookInput` is only used by the imperative extension API (`createHook`, `standard`, `dynamic`, `block`), which is a separate code path.
 
 **Files to create:**
+
 - `test/plugin-dynamic.test.ts` — tests for both new capabilities
 
 **Tests (write first — TDD):**
 
-*context:*
+_context:_
+
 - Plugin with `context` function is valid (type-checks)
 - Plugin without `context` function still works (backwards compatible)
 - `context` returning `undefined` produces no output
@@ -56,7 +68,8 @@ export interface RCTPlugin extends Pick<RCTConfig, 'rules' | 'files'> {
 - Async `context` functions are awaited
 - `context` that exceeds timeout (5s) is treated as undefined with warning
 
-*trigger:*
+_trigger:_
+
 - Plugin with `trigger` function is valid
 - Plugin without `trigger` function still works
 - `trigger` returning `undefined` takes no action
@@ -70,6 +83,7 @@ export interface RCTPlugin extends Pick<RCTConfig, 'rules' | 'files'> {
 ### Step 2: Thread `context` and `trigger` through plugin resolution
 
 **Files to modify:**
+
 - `src/config/schema.ts` (`applyPlugins`) — preserve `context` and `trigger` functions from resolved plugins alongside files/rules
 
 Currently `applyPlugins` merges `files[]` and `rules[]` into the config and returns the merged config. It needs to also collect `context` and `trigger` functions.
@@ -86,6 +100,7 @@ export interface PluginExtensions {
 ```
 
 **Tests:**
+
 - `applyPlugins` preserves `context` and `trigger` functions
 - Multiple plugins with both functions all collected
 - Plugin with only `context` or only `trigger` (no files/rules) works
@@ -95,31 +110,45 @@ export interface PluginExtensions {
 ### Step 3: Integrate into hook pipeline
 
 **Files to modify:**
+
 - `src/cli/hook.ts` — call plugin `context()` and `trigger()` functions during pipeline evaluation
 - `src/engine/compose.ts` — add `pluginContextResults: string[]` field to `ComposeInput`, include in parts assembly after injections and before meta
 
 **Integration points:**
 
-*trigger:* During or immediately after `evaluateRules()` phase. For each plugin with a `trigger` function, call it with `{ toolName, payload }` wrapped in `Promise.race` with 5s timeout. If it returns a block, exit with block decision. If it returns a warn, add to warnings. Severity ordering: block > warn > undefined.
+_trigger:_ During or immediately after `evaluateRules()` phase. For each plugin with a `trigger` function, call it with `{ toolName, payload }` wrapped in `Promise.race` with 5s timeout. If it returns a block, exit with block decision. If it returns a warn, add to warnings. Severity ordering: block > warn > undefined.
 
-*context:* After `evaluateInjections()` and before `composeOutput()`. For each plugin with a `context` function, call it with `{ toolName, payload }` wrapped in `Promise.race` with 5s timeout. Collect non-undefined results into `pluginContextResults`.
+_context:_ After `evaluateInjections()` and before `composeOutput()`. For each plugin with a `context` function, call it with `{ toolName, payload }` wrapped in `Promise.race` with 5s timeout. Collect non-undefined results into `pluginContextResults`.
 
 **Timeout helper:**
+
 ```typescript
-async function withTimeout<T>(fn: () => Promise<T>, ms: number, label: string): Promise<T | undefined> {
+async function withTimeout<T>(
+    fn: () => Promise<T>,
+    ms: number,
+    label: string,
+): Promise<T | undefined> {
     try {
         return await Promise.race([
             fn(),
-            new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms))
+            new Promise<never>((_, reject) =>
+                setTimeout(
+                    () => reject(new Error(`${label} timed out after ${ms}ms`)),
+                    ms,
+                ),
+            ),
         ])
     } catch (err) {
-        console.warn(`[rct] Warning: ${label}: ${err instanceof Error ? err.message : err}`)
+        console.warn(
+            `[rct] Warning: ${label}: ${err instanceof Error ? err.message : err}`,
+        )
         return undefined
     }
 }
 ```
 
 **Tests:**
+
 - End-to-end hook test with plugin providing dynamic context
 - End-to-end hook test with plugin providing dynamic trigger (block)
 - End-to-end hook test with plugin providing dynamic trigger (warn)
@@ -169,6 +198,7 @@ Step 1 (interface + types) → Step 2 (resolution) → Step 3 (pipeline + compos
 ```
 
 Steps 3 and 4 can run in parallel — they touch different files:
+
 - Step 3: `hook.ts`, `compose.ts`
 - Step 4: `schema.ts`, `injections.ts`, `config/types.ts`
 
@@ -193,6 +223,6 @@ export default {
     trigger: async (event, input) => {
         // v2: warn if Bash command conflicts with a watched pane
         return undefined
-    }
+    },
 } satisfies RCTPlugin
 ```

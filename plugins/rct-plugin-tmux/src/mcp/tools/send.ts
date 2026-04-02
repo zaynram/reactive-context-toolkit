@@ -23,7 +23,13 @@ export const callback = async function ({
     const check = await preflight(target)
     if (check) return check
     // Send literal text with -l (prevents key name interpretation)
-    const { stderr, exitCode } = await exec(['send-keys', '-t', target, '-l', keys])
+    const { stderr, exitCode } = await exec([
+        'send-keys',
+        '-t',
+        target,
+        '-l',
+        keys,
+    ])
     if (exitCode !== 0) return err(`tmux send-keys failed: ${stderr}`)
     // Append Enter key via separate call (without -l)
     if (enter) {
@@ -33,7 +39,8 @@ export const callback = async function ({
             target,
             'Enter',
         ])
-        if (enterCode !== 0) return err(`tmux send-keys Enter failed: ${enterStderr}`)
+        if (enterCode !== 0)
+            return err(`tmux send-keys Enter failed: ${enterStderr}`)
     }
     return ok(`Sent keys to ${target}`)
 }

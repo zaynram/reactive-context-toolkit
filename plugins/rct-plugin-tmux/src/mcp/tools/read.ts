@@ -39,7 +39,8 @@ export const callback = async function ({
     }
 
     const { stdout, stderr, exitCode } = await exec(args)
-    if (exitCode !== 0) return err(`tmux capture-pane failed: ${stderr || stdout}`)
+    if (exitCode !== 0)
+        return err(`tmux capture-pane failed: ${stderr || stdout}`)
 
     return ok(stdout)
 }

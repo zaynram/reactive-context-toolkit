@@ -5,6 +5,7 @@
 **Isolation:** Phase 2C work in `worktree`. Phase 3 work on main branch after merge.
 
 This plan has two phases of work:
+
 - **Phase 2C:** Pipeline fixes + integration tests (in worktree, parallel with Plans 2/3)
 - **Phase 3:** Documentation, release finalization (sequential, after all Phase 2 merges)
 
@@ -14,20 +15,20 @@ This plan has two phases of work:
 
 ### File Ownership (exclusive for Phase 2C)
 
-| File | Action |
-|------|--------|
-| `src/cli/hook.ts` | Review/modify |
-| `src/engine/compose.ts` | Review only |
-| `src/engine/injections.ts` | Review only |
-| `test/hook-plugin.test.ts` | Create (restore from PR #9) |
-| `test/fixtures/plugin-project/rct.config.json` | Create |
-| `test/fixtures/plugin-project/plugins/block-trigger.ts` | Create |
-| `test/fixtures/plugin-project/plugins/warn-trigger.ts` | Create |
-| `test/fixtures/plugin-project/plugins/context-plugin.ts` | Create |
-| `test/fixtures/plugin-project-throwing/rct.config.json` | Create |
-| `test/fixtures/plugin-project-throwing/plugins/throwing-context.ts` | Create |
-| `test/plugin-dynamic.test.ts` | Modify |
-| `test/injections.test.ts` | Review only |
+| File                                                                | Action                      |
+| ------------------------------------------------------------------- | --------------------------- |
+| `src/cli/hook.ts`                                                   | Review/modify               |
+| `src/engine/compose.ts`                                             | Review only                 |
+| `src/engine/injections.ts`                                          | Review only                 |
+| `test/hook-plugin.test.ts`                                          | Create (restore from PR #9) |
+| `test/fixtures/plugin-project/rct.config.json`                      | Create                      |
+| `test/fixtures/plugin-project/plugins/block-trigger.ts`             | Create                      |
+| `test/fixtures/plugin-project/plugins/warn-trigger.ts`              | Create                      |
+| `test/fixtures/plugin-project/plugins/context-plugin.ts`            | Create                      |
+| `test/fixtures/plugin-project-throwing/rct.config.json`             | Create                      |
+| `test/fixtures/plugin-project-throwing/plugins/throwing-context.ts` | Create                      |
+| `test/plugin-dynamic.test.ts`                                       | Modify                      |
+| `test/injections.test.ts`                                           | Review only                 |
 
 ### Prerequisites
 
@@ -41,6 +42,7 @@ This plan has two phases of work:
 Create the following files from PR #9, adapted for the current architecture:
 
 **`test/fixtures/plugin-project/rct.config.json`:**
+
 ```json
 {
     "globals": {
@@ -55,6 +57,7 @@ Create the following files from PR #9, adapted for the current architecture:
 ```
 
 **`test/fixtures/plugin-project/plugins/block-trigger.ts`:**
+
 ```typescript
 export default {
     name: 'block-trigger',
@@ -71,6 +74,7 @@ export default {
 ```
 
 **`test/fixtures/plugin-project/plugins/warn-trigger.ts`:**
+
 ```typescript
 export default {
     name: 'warn-trigger',
@@ -87,6 +91,7 @@ export default {
 ```
 
 **`test/fixtures/plugin-project/plugins/context-plugin.ts`:**
+
 ```typescript
 export default {
     name: 'context-plugin',
@@ -100,16 +105,13 @@ export default {
 ```
 
 **`test/fixtures/plugin-project-throwing/rct.config.json`:**
+
 ```json
-{
-    "globals": {
-        "format": "xml",
-        "plugins": ["./plugins/throwing-context.ts"]
-    }
-}
+{ "globals": { "format": "xml", "plugins": ["./plugins/throwing-context.ts"] } }
 ```
 
 **`test/fixtures/plugin-project-throwing/plugins/throwing-context.ts`:**
+
 ```typescript
 export default {
     name: 'throwing-context',
@@ -130,7 +132,10 @@ import path from 'path'
 
 const INDEX_PATH = path.resolve(__dirname, '../src/cli/index.ts')
 const FIXTURE_DIR = path.resolve(__dirname, 'fixtures/plugin-project')
-const THROWING_FIXTURE_DIR = path.resolve(__dirname, 'fixtures/plugin-project-throwing')
+const THROWING_FIXTURE_DIR = path.resolve(
+    __dirname,
+    'fixtures/plugin-project-throwing',
+)
 
 function runHook(event: string, fixtureDir: string, stdin?: string) {
     const result = spawnSync('bun', ['run', INDEX_PATH, 'hook', event], {
@@ -149,7 +154,10 @@ function runHook(event: string, fixtureDir: string, stdin?: string) {
 
 describe('hook pipeline — plugin trigger integration', () => {
     it('blocks with exit code 2 when trigger matches', () => {
-        const payload = JSON.stringify({ tool_name: 'BlockedTool', tool_input: {} })
+        const payload = JSON.stringify({
+            tool_name: 'BlockedTool',
+            tool_input: {},
+        })
         const result = runHook('PreToolUse', FIXTURE_DIR, payload)
         expect(result.exitCode).toBe(2)
         const parsed = JSON.parse(result.stdout)
@@ -164,7 +172,10 @@ describe('hook pipeline — plugin trigger integration', () => {
     })
 
     it('warns without blocking when trigger returns warn', () => {
-        const payload = JSON.stringify({ tool_name: 'WarnTool', tool_input: {} })
+        const payload = JSON.stringify({
+            tool_name: 'WarnTool',
+            tool_input: {},
+        })
         const result = runHook('PreToolUse', FIXTURE_DIR, payload)
         expect(result.exitCode).toBe(0)
         const parsed = JSON.parse(result.stdout)
@@ -206,20 +217,23 @@ describe('hook pipeline — plugin error isolation', () => {
 ### Step 3: Fix test names in `test/plugin-dynamic.test.ts`
 
 Find tests with misleading names (Copilot finding). Specifically:
+
 - Tests that say "is caught and warned (not fatal)" but only assert that the function throws
 - Either rename to match what's actually tested, OR extend the test to verify the pipeline catch/warn behavior
 
 **Preferred approach:** Rename for accuracy. The integration test (`hook-plugin.test.ts`) tests the full pipeline error handling. Unit tests should test the behavior they actually verify.
 
 Example rename:
+
 - "throwing context is caught and warned" → "throwing context function throws an error" (if only testing that it throws)
 - OR extend to test `withTimeout` wrapping: call `withTimeout(() => plugin.context(event, input), 5000, 'test')` and verify it returns `undefined` and logs a warning
 
 ### Step 4: Review `src/cli/hook.ts`
 
-**Current state:** Pipeline order is correct (triggers before rules). `withTimeout` has proper timer cleanup. 
+**Current state:** Pipeline order is correct (triggers before rules). `withTimeout` has proper timer cleanup.
 
 **Verify:**
+
 1. `withTimeout` sentinel pattern is correct (line 34-55)
 2. Plugin trigger loop (line 108-131) correctly handles block and warn
 3. Plugin context loop (line 168-178) correctly handles undefined results
@@ -234,6 +248,7 @@ bun test test/hook-plugin.test.ts
 ```
 
 All 6 integration tests must pass. If they fail, debug:
+
 1. Check that fixture plugin files are syntactically correct
 2. Check that `CLAUDE_PROJECT_DIR` env var is being set
 3. Check that `loadConfig` finds the fixture `rct.config.json`
@@ -253,16 +268,16 @@ All tests must pass (target: 360+ with new integration tests).
 
 ### File Ownership (Phase 3 — after all Phase 2 merges)
 
-| File | Action |
-|------|--------|
-| `CLAUDE.md` | Update |
-| `README.md` | Update |
-| `package.json` | Review version |
-| `rct.config.schema.json` | Update if types changed |
-| `docs/superpowers/specs/2026-03-28-*` | Move to archive |
-| `docs/archive/` | Create directory |
-| All `docs/superpowers/plans/*.md` | Add status headers |
-| All `docs/superpowers/specs/*.md` | Add status headers |
+| File                                  | Action                  |
+| ------------------------------------- | ----------------------- |
+| `CLAUDE.md`                           | Update                  |
+| `README.md`                           | Update                  |
+| `package.json`                        | Review version          |
+| `rct.config.schema.json`              | Update if types changed |
+| `docs/superpowers/specs/2026-03-28-*` | Move to archive         |
+| `docs/archive/`                       | Create directory        |
+| All `docs/superpowers/plans/*.md`     | Add status headers      |
+| All `docs/superpowers/specs/*.md`     | Add status headers      |
 
 ### Prerequisites
 
@@ -281,11 +296,12 @@ All tests must pass (target: 360+ with new integration tests).
 ### Step 8: Update CLAUDE.md
 
 Update these sections to reflect v1.0.0 changes:
+
 1. **Architecture tree:** Update `src/plugin/` descriptions:
-   - `types.ts` — add `setup?` and note `name` is optional
-   - `validate.ts` — note validates all optional property types
-   - `index.ts` — note keyed by BUILTIN_PLUGINS package name
-   - Add `validate.ts` if not already in tree
+    - `types.ts` — add `setup?` and note `name` is optional
+    - `validate.ts` — note validates all optional property types
+    - `index.ts` — note keyed by BUILTIN_PLUGINS package name
+    - Add `validate.ts` if not already in tree
 2. **Key Data Flow:** Update step 4 to mention setup lifecycle
 3. **Plugin interface:** Update to show `setup?` and optional `name`
 4. **Meta section:** Add note about using meta as self-briefing mechanism
@@ -295,6 +311,7 @@ Do NOT add new sections that aren't needed. Keep CLAUDE.md focused on what a dev
 ### Step 8b: Check `rct.config.schema.json`
 
 Verify whether the JSON Schema needs updates for plugin-related type changes:
+
 - `RCTPlugin.name` is now optional — check if the schema references plugin name requirements
 - `globals.plugins` array — check if it documents plugin name format
 - If changes are needed, update. If not, skip.
@@ -302,13 +319,13 @@ Verify whether the JSON Schema needs updates for plugin-related type changes:
 ### Step 9: Update README.md
 
 1. Add a "Plugin Authoring" section (brief — 10-15 lines) showing:
-   - Minimal plugin: `definePlugin({ files: [...] })`
-   - Plugin with setup: `definePlugin({ files: [...], setup() { ... } })`
-   - Plugin with context: `definePlugin({ context(event, input) { ... } })`
+    - Minimal plugin: `definePlugin({ files: [...] })`
+    - Plugin with setup: `definePlugin({ files: [...], setup() { ... } })`
+    - Plugin with context: `definePlugin({ context(event, input) { ... } })`
 2. Document `meta` as self-briefing mechanism:
-   ```json
-   "meta": { "injectOn": "SessionStart", "include": ["files", "rules", "plugins"] }
-   ```
+    ```json
+    "meta": { "injectOn": "SessionStart", "include": ["files", "rules", "plugins"] }
+    ```
 3. Update the public API exports list if it changed
 
 ### Step 10: Stale documentation cleanup
@@ -327,8 +344,10 @@ gh pr close 9 --comment "Superseded by PR #7. Dynamic context/trigger support, w
 ### Step 12: Update PR #7 description
 
 Update the PR body to reflect the full scope of changes:
+
 ```markdown
 ## Summary
+
 - Migrate builtin plugins to workspace packages (`plugins/rct-plugin-issue-scope`, `rct-plugin-track-work`, `rct-plugin-tmux`)
 - Add dynamic `context()` and `trigger()` support to RCTPlugin interface (absorbs PR #9)
 - Add `setup()` lifecycle to RCTPlugin, called in `applyPlugins` with error isolation
@@ -339,6 +358,7 @@ Update the PR body to reflect the full scope of changes:
 - Documentation cleanup and archive
 
 ## Test plan
+
 - [INSERT ACTUAL COUNT from `bun test` output] tests passing
 - End-to-end CLI integration tests for plugin trigger block/warn/context
 - Plugin setup error isolation verified
@@ -348,6 +368,7 @@ Update the PR body to reflect the full scope of changes:
 ### Step 13: Create changelog
 
 Create a summary of changes per commit range. Use:
+
 ```sh
 git log --oneline main..HEAD
 ```
@@ -371,6 +392,7 @@ gh pr merge 7 --merge
 If branch protection blocks this, try with admin bypass or request review. Document the reason if bypassing.
 
 After merge, pull main locally:
+
 ```sh
 git checkout main
 git pull origin main
@@ -379,12 +401,14 @@ git pull origin main
 ### Step 16: Tag and release
 
 Tag must be on main (not the feature branch):
+
 ```sh
 git tag v1.0.0
 git push origin v1.0.0
 ```
 
 Create GitHub release:
+
 ```sh
 gh release create v1.0.0 --title "v1.0.0" --notes "$(cat <<'EOF'
 ## Reactive Context Toolkit v1.0.0

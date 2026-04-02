@@ -60,9 +60,7 @@ describe('definePlugin()', () => {
                 {
                     alias: 'scope',
                     path: '.claude/context/scope.xml',
-                    metaFiles: [
-                        { alias: 'schema', path: 'schemas/scope.xml' },
-                    ],
+                    metaFiles: [{ alias: 'schema', path: 'schemas/scope.xml' }],
                 },
             ],
         })

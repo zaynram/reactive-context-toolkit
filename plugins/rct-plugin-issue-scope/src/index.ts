@@ -1,4 +1,8 @@
-import { definePlugin, type FileEntry, type MetaFileEntry } from 'reactive-context-toolkit'
+import {
+    definePlugin,
+    type FileEntry,
+    type MetaFileEntry,
+} from 'reactive-context-toolkit'
 import path from 'path'
 import fs from 'fs'
 

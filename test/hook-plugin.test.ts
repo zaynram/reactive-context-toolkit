@@ -17,11 +17,7 @@ function runHook(
 ) {
     const result = spawnSync('bun', ['run', INDEX_PATH, 'hook', event], {
         cwd: fixtureDir,
-        env: {
-            ...process.env,
-            CLAUDE_PROJECT_DIR: fixtureDir,
-            ...env,
-        },
+        env: { ...process.env, CLAUDE_PROJECT_DIR: fixtureDir, ...env },
         input: stdin,
         encoding: 'utf-8',
         timeout: 15_000,
@@ -47,10 +43,7 @@ describe('hook pipeline — plugin trigger integration', () => {
     })
 
     it('plugin trigger does not block when tool does not match', () => {
-        const payload = JSON.stringify({
-            tool_name: 'Read',
-            tool_input: {},
-        })
+        const payload = JSON.stringify({ tool_name: 'Read', tool_input: {} })
         const result = runHook('PreToolUse', FIXTURE_DIR, payload)
         expect(result.exitCode).toBe(0)
     })

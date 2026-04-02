@@ -6,16 +6,16 @@
 
 ## File Ownership (exclusive)
 
-| File | Action |
-|------|--------|
-| `plugins/rct-plugin-issue-scope/src/index.ts` | Rewrite |
-| `plugins/rct-plugin-issue-scope/package.json` | Review/modify |
-| `plugins/rct-plugin-issue-scope/public/*` | Review only |
-| `plugins/rct-plugin-issue-scope/tsconfig.json` | Review only |
-| `plugins/rct-plugin-track-work/src/index.ts` | Rewrite |
-| `plugins/rct-plugin-track-work/package.json` | Review/modify |
-| `plugins/rct-plugin-track-work/public/*` | Review only |
-| `plugins/rct-plugin-track-work/tsconfig.json` | Review only |
+| File                                           | Action        |
+| ---------------------------------------------- | ------------- |
+| `plugins/rct-plugin-issue-scope/src/index.ts`  | Rewrite       |
+| `plugins/rct-plugin-issue-scope/package.json`  | Review/modify |
+| `plugins/rct-plugin-issue-scope/public/*`      | Review only   |
+| `plugins/rct-plugin-issue-scope/tsconfig.json` | Review only   |
+| `plugins/rct-plugin-track-work/src/index.ts`   | Rewrite       |
+| `plugins/rct-plugin-track-work/package.json`   | Review/modify |
+| `plugins/rct-plugin-track-work/public/*`       | Review only   |
+| `plugins/rct-plugin-track-work/tsconfig.json`  | Review only   |
 
 **No test files in `test/` directory.** These plugins are tested via the plugin registry in `test/plugin.test.ts` (owned by Plan 1). Plan 2 may add test files ONLY inside the plugin packages themselves (e.g., `plugins/rct-plugin-issue-scope/test/`).
 
@@ -37,6 +37,7 @@
 **Target state:** Uses `definePlugin({ ...config, setup() { ... } })` single-arg pattern. Setup closes over `files` array. Guards all optional access. Creates directories if needed.
 
 Read the current file, then rewrite following the spec section 4.1 example exactly. Key points:
+
 - Define `files` array as a `const` before `definePlugin` call
 - Reference `files` directly in `setup()` (closure, not `this`)
 - Guard `f.metaFiles?.find(...)` with optional chaining
@@ -45,6 +46,7 @@ Read the current file, then rewrite following the spec section 4.1 example exact
 - Keep all file definitions (aliases, paths, metaFiles, staleCheck) unchanged
 
 **Path resolution note:** `definePlugin` mutates `files[].path` in-place (via `plugin.files = plugin.files.map(...)` which reassigns the array). Since setup closes over the `files` const defined before `definePlugin`, setup sees the **original relative paths** (e.g., `.claude/context/scope.xml`), not resolved absolute paths. This is correct because:
+
 - `setup` runs inside `applyPlugins`, which runs during hook execution
 - At hook execution time, `process.cwd()` is the consumer's project directory
 - `fs.existsSync('.claude/context/scope.xml')` resolves against cwd, which IS the project dir
@@ -59,6 +61,7 @@ Read the current file, then rewrite following the spec section 4.1 example exact
 **Target state:** Same closure pattern. Guards the templates lookup.
 
 Read the current file, then rewrite following the spec section 4.2 example exactly. Key points:
+
 - Define `files` array as a `const` before `definePlugin` call
 - Reference `files` directly in `setup()` (closure)
 - Guard `if (!(key in templates)) continue`
@@ -68,6 +71,7 @@ Read the current file, then rewrite following the spec section 4.2 example exact
 ### Step 3: Review package.json files
 
 For both plugins, verify:
+
 - `name` matches what's in `BUILTIN_PLUGINS` constant (`rct-plugin-issue-scope`, `rct-plugin-track-work`)
 - `version` is `0.1.0` (workspace package, not independently versioned)
 - `type` is `module`
@@ -79,6 +83,7 @@ For both plugins, verify:
 If time permits, create minimal test files:
 
 **`plugins/rct-plugin-issue-scope/test/setup.test.ts`:**
+
 ```typescript
 import { describe, test, expect } from 'bun:test'
 import { mkdtempSync, existsSync, rmSync } from 'fs'
@@ -105,6 +110,7 @@ describe('issue-scope setup', () => {
 ### Step 5: Verify integration
 
 Run only the relevant tests to verify:
+
 ```sh
 bun test test/plugin.test.ts
 bun test test/schema.test.ts
@@ -134,6 +140,7 @@ All tests must pass.
 ## Barrier: Phase 2 → Phase 3
 
 After this plan completes:
+
 1. Commit all changes in worktree
 2. Report: files changed, tests passing
 3. Wait for Plans 3 and 4 to complete

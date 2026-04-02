@@ -44,7 +44,9 @@ export interface MinifyConfig {
 }
 
 /** Plugin reference — string name or object with path overrides */
-export type PluginRef = string | { name: string; paths?: Record<string, string> }
+export type PluginRef =
+    | string
+    | { name: string; paths?: Record<string, string> }
 
 /** Extract the plugin name from a PluginRef */
 export function pluginRefName(ref: PluginRef): string {
@@ -52,7 +54,9 @@ export function pluginRefName(ref: PluginRef): string {
 }
 
 /** Extract path overrides from a PluginRef */
-export function pluginRefPaths(ref: PluginRef): Record<string, string> | undefined {
+export function pluginRefPaths(
+    ref: PluginRef,
+): Record<string, string> | undefined {
     return typeof ref === 'string' ? undefined : ref.paths
 }
 

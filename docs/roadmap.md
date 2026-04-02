@@ -119,20 +119,22 @@ If the experiment fails, the conclusion is that compliance gaps are a model capa
 
 These were considered but do not have a version target:
 
-**Process enforcement plugins (e.g., "require reasoning protocols before design decisions")**
+**Process enforcement plugins:**
+
+e.g., "require reasoning protocols before design decisions"
 
 - This is achievable TODAY with v1.0.0's `trigger()` function
 - A plugin can inspect tool names and payloads to enforce process requirements
 - Example: block `Write` to ADR files unless a reasoning protocol output is referenced
 - No new RCT features needed — just plugin authoring
 
-**Research depth enforcement**
+**Research depth enforcement:**
 
 - The developer reports difficulty maintaining academic rigor when bouncing between claude.ai and claude-code
 - This is a workflow/tooling gap outside RCT's scope — RCT manages hook-time context injection, not session-level conversation quality
 - Better addressed by CLAUDE.md rules, reasoning protocol skills, or dedicated research tools
 
-**Plugin dependency resolution**
+**Plugin dependency resolution:**
 
 - One plugin depending on another (e.g., track-work depends on issue-scope)
 - No demonstrated need; current plugins are independent

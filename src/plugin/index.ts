@@ -1,7 +1,6 @@
 import { BUILTIN_PLUGINS } from '#constants'
 import type { RCTPlugin, BuiltinPlugins, InstalledBuiltinPlugin } from './types'
 import { validatePlugin } from './validate'
-import path from 'path'
 
 async function importBuiltin(name: string): Promise<RCTPlugin> {
     // Try package resolution first (workspace installs)
@@ -10,8 +9,11 @@ async function importBuiltin(name: string): Promise<RCTPlugin> {
         return plugin
     } catch {
         // Fall back to relative path (GitHub installs where plugins/ ships alongside src/)
-        const relPath = path.resolve(__dirname, '..', '..', 'plugins', name, 'src', 'index.ts')
-        const { default: plugin } = await import(relPath)
+        // import.meta.resolve returns a file:// URL which import() accepts
+        const resolved = import.meta.resolve(
+            `../../plugins/${name}/src/index.ts`,
+        )
+        const { default: plugin } = await import(resolved)
         return plugin
     }
 }

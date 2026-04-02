@@ -43,6 +43,19 @@ export interface MinifyConfig {
     preserveNewlines?: boolean
 }
 
+/** Plugin reference — string name or object with path overrides */
+export type PluginRef = string | { name: string; paths?: Record<string, string> }
+
+/** Extract the plugin name from a PluginRef */
+export function pluginRefName(ref: PluginRef): string {
+    return typeof ref === 'string' ? ref : ref.name
+}
+
+/** Extract path overrides from a PluginRef */
+export function pluginRefPaths(ref: PluginRef): Record<string, string> | undefined {
+    return typeof ref === 'string' ? undefined : ref.paths
+}
+
 /** Global configuration defaults */
 export interface GlobalsConfig {
     /** Output format (default: "xml") */
@@ -53,8 +66,8 @@ export interface GlobalsConfig {
     briefByDefault?: boolean
     /** Minification of injected content (default: true). All whitespace runs condensed to separator. */
     minify?: boolean | MinifyConfig
-    /** List of plugin names to activate. */
-    plugins?: string[]
+    /** List of plugin names to activate. Strings or objects with path overrides. */
+    plugins?: PluginRef[]
 }
 
 /** A meta-file entry attached to a parent FileEntry */

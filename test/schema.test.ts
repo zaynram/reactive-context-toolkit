@@ -390,10 +390,45 @@ describe('applyPlugins', () => {
             globals: { plugins: ['rct-plugin-track-work'] },
         })
         const { extensions } = await applyPlugins(config)
-        // track-work has no context/trigger, so extensions should be empty for it
-        // but the mechanism is tested — displayName strips rct-plugin- prefix
         expect(extensions.contexts).toBeDefined()
         expect(extensions.triggers).toBeDefined()
+    })
+
+    test('accepts PluginRef objects with path overrides', async () => {
+        const config = validateConfig({
+            globals: {
+                plugins: [
+                    {
+                        name: 'rct-plugin-track-work',
+                        paths: { chores: 'custom/chores.xml' },
+                    },
+                ],
+            },
+        })
+        const { config: result } = await applyPlugins(config)
+        const chores = (result.files ?? []).find((f) => f.alias === 'chores')
+        expect(chores).toBeDefined()
+        expect(chores!.path).toContain('custom/chores.xml')
+    })
+
+    test('mixes string and object PluginRef entries', async () => {
+        const config = validateConfig({
+            globals: {
+                plugins: [
+                    'rct-plugin-issue-scope',
+                    {
+                        name: 'rct-plugin-track-work',
+                        paths: { plans: 'my/plans.xml' },
+                    },
+                ],
+            },
+        })
+        const { config: result } = await applyPlugins(config)
+        const aliases = (result.files ?? []).map((f) => f.alias)
+        expect(aliases).toContain('scope')
+        expect(aliases).toContain('chores')
+        const plans = (result.files ?? []).find((f) => f.alias === 'plans')
+        expect(plans!.path).toContain('my/plans.xml')
     })
 })
 

@@ -166,7 +166,11 @@ async function main(eventArg?: string) {
 
     // Evaluate plugin contexts
     const pluginContextResults: string[] = []
-    for (const { name, fn } of extensions.contexts) {
+    for (const { name, fn, contextOn } of extensions.contexts) {
+        if (contextOn) {
+            const events = Array.isArray(contextOn) ? contextOn : [contextOn]
+            if (!events.includes(event)) continue
+        }
         const result = await withTimeout(
             () => fn(event, pluginInput),
             PLUGIN_TIMEOUT_MS,

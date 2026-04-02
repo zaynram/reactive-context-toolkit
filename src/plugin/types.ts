@@ -27,6 +27,7 @@ export interface RCTPlugin extends Pick<RCTConfig, 'rules' | 'files'> {
         | undefined
         | Promise<PluginTriggerResult | undefined>
     setup?: () => void | Promise<void>
+    contextOn?: HookEvent | HookEvent[]
 }
 
 export function displayName(plugin: RCTPlugin, ref: string): string {

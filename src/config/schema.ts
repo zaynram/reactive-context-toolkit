@@ -11,10 +11,16 @@ import type {
     InjectionEntry,
     FileEntry,
     RuleEntry,
+    PluginRef,
 } from './types'
+import { pluginRefName, pluginRefPaths } from './types'
 
 export interface PluginExtensions {
-    contexts: Array<{ name: string; fn: NonNullable<RCTPlugin['context']> }>
+    contexts: Array<{
+        name: string
+        fn: NonNullable<RCTPlugin['context']>
+        contextOn?: RCTPlugin['contextOn']
+    }>
     triggers: Array<{ name: string; fn: NonNullable<RCTPlugin['trigger']> }>
 }
 
@@ -113,22 +119,41 @@ export async function applyPlugins(
     config: ValidatedConfig,
 ): Promise<ApplyPluginsResult> {
     const extensions: PluginExtensions = { contexts: [], triggers: [] }
-    const pluginNames = config.globals.plugins ?? []
-    if (pluginNames.length === 0) return { config, extensions }
+    const pluginRefs: PluginRef[] = config.globals.plugins ?? []
+    if (pluginRefs.length === 0) return { config, extensions }
 
     const mergedFiles: FileEntry[] = [...(config.files ?? [])]
     const mergedRules: RuleEntry[] = [...(config.rules ?? [])]
     const hadRules = config.rules?.length ?? 0
 
-    for (const name of pluginNames) {
+    for (const ref of pluginRefs) {
+        const name = pluginRefName(ref)
+        const pathOverrides = pluginRefPaths(ref)
         try {
             const { plugin } = await resolvePlugin(name)
-            if (plugin.files) mergedFiles.push(...plugin.files)
+            let files = plugin.files
+            if (files && pathOverrides) {
+                const pluginAliases = new Set(files.map((f) => f.alias))
+                for (const key of Object.keys(pathOverrides)) {
+                    if (!pluginAliases.has(key)) {
+                        console.warn(
+                            `[rct] Warning: plugin '${displayName(plugin, name)}' has no file with alias '${key}' (available: ${[...pluginAliases].join(', ')})`,
+                        )
+                    }
+                }
+                files = files.map((f) =>
+                    f.alias && pathOverrides[f.alias]
+                        ? { ...f, path: pathOverrides[f.alias] }
+                        : f,
+                )
+            }
+            if (files) mergedFiles.push(...files)
             if (plugin.rules) mergedRules.push(...plugin.rules)
             if (plugin.context)
                 extensions.contexts.push({
                     name: displayName(plugin, name),
                     fn: plugin.context,
+                    contextOn: plugin.contextOn,
                 })
             if (plugin.trigger)
                 extensions.triggers.push({

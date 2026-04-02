@@ -43,6 +43,7 @@ export type {
     Match,
     MatchTarget,
     MatchOperator,
+    PluginRef,
 } from '#config/types'
 
 // Engine

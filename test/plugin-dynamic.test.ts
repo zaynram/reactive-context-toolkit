@@ -44,7 +44,7 @@ describe('RCTPlugin context function', () => {
         expect(result).toBe('<tmux>pane layout here</tmux>')
     })
 
-    test('context that throws is caught by withTimeout (not fatal)', async () => {
+    test('context that throws is handled by withTimeout', async () => {
         const plugin: RCTPlugin = {
             name: 'throwing-context',
             context: () => {
@@ -158,7 +158,7 @@ describe('RCTPlugin trigger function', () => {
         expect(result.message).toBe('Be careful with this tool')
     })
 
-    test('trigger that throws is caught by withTimeout (not fatal)', async () => {
+    test('trigger that throws is handled by withTimeout', async () => {
         const plugin: RCTPlugin = {
             name: 'throwing-trigger',
             trigger: () => {

@@ -1,6 +1,6 @@
 import { exec } from '#lib/tmux'
 import { createTool } from './factory'
-import { ok, err } from './helpers'
+import { ok, err, preflight } from './helpers'
 import { z } from 'zod'
 
 export const options = {
@@ -26,6 +26,8 @@ export const callback = async function ({
     lines = 50,
     history,
 }: z.infer<typeof options.inputSchema>) {
+    const check = await preflight(target)
+    if (check) return check
     const args = ['capture-pane', '-t', target, '-p']
     if (history) {
         args.push('-S', '-')
@@ -36,8 +38,8 @@ export const callback = async function ({
         args.push('-S', `-${lines}`)
     }
 
-    const { stdout, exitCode } = await exec(args)
-    if (exitCode !== 0) return err(`tmux capture-pane failed: ${stdout}`)
+    const { stdout, stderr, exitCode } = await exec(args)
+    if (exitCode !== 0) return err(`tmux capture-pane failed: ${stderr || stdout}`)
 
     return ok(stdout)
 }

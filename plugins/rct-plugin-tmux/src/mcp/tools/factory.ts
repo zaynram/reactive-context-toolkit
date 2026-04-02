@@ -1,36 +1,30 @@
 import type { ToolOptions, ToolCallback, McpServer } from '#types'
 import { z } from 'zod'
-import { McpResult, preflight, type McpResultSchema } from './helpers'
+import type { McpResultSchema } from './helpers'
 
 export interface McpTool<T extends z.ZodObject<z.ZodRawShape>> {
     name: string
     options: ToolOptions<T>
-    handler: (params: z.infer<T>) => Promise<McpResult>
+    handler: (params: z.infer<T>) => Promise<z.infer<McpResultSchema>>
 }
 
 export function createTool<T extends z.ZodObject<z.ZodRawShape>>(
     options: ToolOptions<T>,
-    handler: (params: z.infer<T>) => Promise<McpResult>,
+    handler: (params: z.infer<T>) => Promise<z.infer<McpResultSchema>>,
 ) {
-    const tool: McpTool<T> = {
-        name: options.title
-            .split(' ')
-            .map((s) => s.toLowerCase())
-            .join('_'),
-        options,
-        handler: async (params, _ = undefined) => {
-            const check = await preflight(params.target)
-            if (check) return check
-            return await handler(params as z.infer<T>)
-        },
-    }
+    const name = options.title
+        .split(' ')
+        .map((s) => s.toLowerCase())
+        .join('_')
     return {
-        ...tool,
+        name,
+        options,
+        handler,
         register: (server: McpServer) =>
             server.registerTool<McpResultSchema, T>(
-                tool.name,
+                name,
                 options,
-                tool.handler as ToolCallback<T>,
+                handler as ToolCallback<T>,
             ),
     }
 }

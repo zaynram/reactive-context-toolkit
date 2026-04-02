@@ -1,6 +1,6 @@
 import { exec, parseListPanes } from '#lib/tmux'
 import { createTool } from './factory'
-import { ok, err } from './helpers'
+import { ok, err, preflight } from './helpers'
 import { z } from 'zod'
 
 export const options = {
@@ -12,6 +12,8 @@ export const options = {
 export const callback = async function ({
     target,
 }: z.infer<typeof options.inputSchema>) {
+    const check = await preflight(target)
+    if (check) return check
     // List panes in the window containing the target pane
     const { stdout, stderr, exitCode } = await exec([
         'list-panes',

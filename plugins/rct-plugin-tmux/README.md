@@ -102,8 +102,10 @@ Close a pane. Refuses to close the last pane in its window.
 
 ## Development
 
+This is a workspace-internal package within the reactive-context-toolkit monorepo.
+
 ```sh
-cd rct-plugin-tmux
+cd plugins/rct-plugin-tmux
 bun install
 bun test
 ```

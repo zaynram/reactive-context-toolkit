@@ -46,7 +46,7 @@ describe('rct-plugin-track-work', () => {
 describe('rct-plugin-issue-scope', () => {
     const { plugin } = pluginRegistry['rct-plugin-issue-scope']!
 
-    test("has name 'issue-scope'", () => {
+    test("has name 'rct-plugin-issue-scope'", () => {
         expect(plugin.name).toBe('rct-plugin-issue-scope')
     })
 

@@ -264,7 +264,7 @@ export interface MetaConfig {
     /** Hook event(s) that trigger meta injection */
     injectOn?: HookEventOrArray
     /** Which config sections to include in meta output */
-    include?: ('files' | 'lang' | 'test' | 'rules')[]
+    include?: ('files' | 'lang' | 'test' | 'rules' | 'plugins')[]
     /** Whether to use brief mode */
     brief?: boolean
     /** Content enumeration settings */

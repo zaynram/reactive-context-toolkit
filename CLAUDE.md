@@ -96,7 +96,7 @@ src/
 └── types.d.ts           # RC namespace; XML namespace; ReferenceFile; FileRegistry
 
 rct.config.schema.json   # JSON Schema draft 2020-12 for rct.config.json
-plugins/                 # Workspace plugin packages (rct-plugin-issue-scope, track-work, tmux)
+plugins/                 # Workspace plugin packages (issue-scope, track-work, tmux, tasktools, autonomous-ops)
 test/                    # 34 test files
 ```
 
@@ -153,6 +153,8 @@ Plugins can be declarative (contribute `files[]` and `rules[]`) and/or dynamic (
 - **`rct-plugin-track-work`** — registers `chores` and `plans` files with setup scaffolding
 - **`rct-plugin-issue-scope`** — registers `scope` (with stale check) and `candidates` files with setup scaffolding
 - **`rct-plugin-tmux`** — MCP server for tmux pane control (separate `bunx rct-tmux serve`)
+- **`rct-plugin-tasktools`** — warns on raw git/cargo commands, injects context on direct tasktools invocation
+- **`rct-plugin-autonomous-ops`** — project-agnostic cognitive harness for self-steering execution
 
 **Custom plugins**: local files at `.claude/hooks/rct/*.{ts,js}` or npm packages. Use `definePlugin()` to author.
 

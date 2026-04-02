@@ -34,7 +34,13 @@ export function evaluateInjections(
             const filePath = extractTargetValue('file_path', payload)
             if (!filePath) continue
             const matchedFile = registry.get(injection.matchFile)
-            if (!matchedFile || matchedFile.path !== normalize(filePath))
+            if (!matchedFile) continue
+            const normalizedPayload = normalize(filePath)
+            const normalizedRegistry = normalize(matchedFile.path)
+            if (
+                normalizedRegistry !== normalizedPayload
+                && !normalizedRegistry.endsWith('/' + normalizedPayload)
+            )
                 continue
         }
 

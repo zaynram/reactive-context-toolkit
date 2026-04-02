@@ -1,4 +1,4 @@
-import { definePlugin, RCTPlugin, FileEntry } from 'reactive-context-toolkit'
+import { definePlugin, type FileEntry } from 'reactive-context-toolkit'
 import path from 'path'
 import fs from 'fs'
 
@@ -11,29 +11,32 @@ const templates = {
     plans: { alias: 'plans-template', path: asset('plans.xml') },
 }
 
-export default definePlugin(
+const files: FileEntry[] = [
     {
-        name: 'rct-plugin-track-work',
-        files: [
-            {
-                alias: 'chores',
-                path: '.claude/context/chores.xml',
-                injectOn: 'SessionStart',
-                metaFiles: [schema, templates.chores],
-            },
-            {
-                alias: 'plans',
-                path: '.claude/context/plans.xml',
-                injectOn: 'SessionStart',
-                metaFiles: [schema, templates.plans],
-            },
-        ],
+        alias: 'chores',
+        path: '.claude/context/chores.xml',
+        injectOn: 'SessionStart',
+        metaFiles: [schema, templates.chores],
     },
-    function setup(plugin: RCTPlugin) {
-        plugin.files.forEach((f: FileEntry) => {
-            if (fs.existsSync(f.path)) return
-            const { path: src } = templates[f.alias as keyof typeof templates]
-            fs.copyFileSync(src, f.path)
-        })
+    {
+        alias: 'plans',
+        path: '.claude/context/plans.xml',
+        injectOn: 'SessionStart',
+        metaFiles: [schema, templates.plans],
     },
-)
+]
+
+export default definePlugin({
+    name: 'rct-plugin-track-work',
+    files,
+    setup() {
+        for (const f of files) {
+            if (fs.existsSync(f.path)) continue
+            const key = f.alias as keyof typeof templates
+            if (!(key in templates)) continue
+            const dir = path.dirname(f.path)
+            if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+            fs.copyFileSync(templates[key].path, f.path)
+        }
+    },
+})

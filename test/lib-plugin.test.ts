@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'bun:test'
-import { definePlugin } from '../src/lib/plugin'
+import { definePlugin } from '#lib/plugin'
 import path from 'path'
 
 describe('definePlugin()', () => {
@@ -38,7 +38,7 @@ describe('definePlugin()', () => {
             name: 'rules-only',
             rules: [
                 {
-                    on: ['PreToolUse'],
+                    on: 'PreToolUse',
                     match: [{ target: 'tool_name', pattern: 'Write' }],
                     action: 'warn',
                     message: 'Be careful',

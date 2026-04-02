@@ -47,7 +47,7 @@ async function withTimeout<T>(
         return result as T
     } catch (err) {
         console.warn(
-            `[rct] Warning: ${label}: ${err instanceof Error ? err.message : err}`,
+            `[rct] Warning: ${label}: ${err instanceof Error ? err.message : String(err)}`,
         )
         return undefined
     } finally {
@@ -95,7 +95,7 @@ async function main(eventArg?: string) {
             toolName = (payload as any).tool_name
         } catch (err) {
             console.error(
-                `[rct] Failed to parse stdin JSON: ${err instanceof Error ? err.message : err}`,
+                `[rct] Failed to parse stdin JSON: ${err instanceof Error ? err.message : String(err)}`,
             )
             payload = {}
         }

@@ -125,12 +125,12 @@ describe('desugarFileInjections', () => {
             files: [
                 {
                     alias: 'chores',
-                    path: 'dev/chores.xml',
+                    path: '.claude/context/chores.xml',
                     injectOn: 'SessionStart',
                 },
                 {
                     alias: 'scope',
-                    path: 'dev/scope.xml',
+                    path: '.claude/context/scope.xml',
                     injectOn: ['PreToolUse', 'PostToolUse'],
                 },
             ],
@@ -174,7 +174,7 @@ describe('desugarFileInjections', () => {
             files: [
                 {
                     alias: 'chores',
-                    path: 'dev/chores.xml',
+                    path: '.claude/context/chores.xml',
                     injectOn: 'SessionStart',
                 },
             ],
@@ -321,7 +321,9 @@ describe('applyPlugins', () => {
     })
 
     test('merges track-work plugin files into config.files', async () => {
-        const config = validateConfig({ globals: { plugins: ['track-work'] } })
+        const config = validateConfig({
+            globals: { plugins: ['rct-plugin-track-work'] },
+        })
         const { config: result } = await applyPlugins(config)
         const aliases = (result.files ?? []).map((f) => f.alias)
         expect(aliases).toContain('chores')
@@ -330,7 +332,7 @@ describe('applyPlugins', () => {
 
     test('merges plugin files alongside existing config files', async () => {
         const config = validateConfig({
-            globals: { plugins: ['track-work'] },
+            globals: { plugins: ['rct-plugin-track-work'] },
             files: [{ alias: 'my-file', path: 'my-file.xml' }],
         })
         const { config: result } = await applyPlugins(config)
@@ -340,7 +342,9 @@ describe('applyPlugins', () => {
     })
 
     test('desugar after applyPlugins generates injections for plugin files with injectOn', async () => {
-        const config = validateConfig({ globals: { plugins: ['track-work'] } })
+        const config = validateConfig({
+            globals: { plugins: ['rct-plugin-track-work'] },
+        })
         const { config: applied } = await applyPlugins(config)
         const desugared = desugarFileInjections(applied)
         const refs = (desugared.injections ?? []).flatMap((i) => i.inject)

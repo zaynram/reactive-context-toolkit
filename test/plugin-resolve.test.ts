@@ -3,27 +3,25 @@ import { resolvePlugin } from '#plugin/resolve'
 
 describe('resolvePlugin', () => {
     test('resolves built-in track-work', async () => {
-        const result = await resolvePlugin('track-work')
+        const result = await resolvePlugin('rct-plugin-track-work')
         expect(result.source).toBe('builtin')
-        expect(result.plugin.name).toBe('track-work')
-        expect(result.ref).toBe('track-work')
+        expect(result.plugin.name).toBe('rct-plugin-track-work')
+        expect(result.ref).toBe('rct-plugin-track-work')
     })
 
     test('resolves built-in issue-scope', async () => {
-        const result = await resolvePlugin('issue-scope')
+        const result = await resolvePlugin('rct-plugin-issue-scope')
         expect(result.source).toBe('builtin')
-        expect(result.plugin.name).toBe('issue-scope')
+        expect(result.plugin.name).toBe('rct-plugin-issue-scope')
     })
 
     test('throws for unknown plugin name', async () => {
-        await expect(resolvePlugin('nonexistent-plugin')).rejects.toThrow(
-            /Failed to load plugin/i,
-        )
+        const promise = resolvePlugin('nonexistent-plugin')
+        expect(promise).rejects.toThrow(/Failed to load plugin/i)
     })
 
     test('throws for missing local file', async () => {
-        await expect(
-            resolvePlugin('./.claude/hooks/rct/nonexistent.ts'),
-        ).rejects.toThrow(/Failed to load plugin/i)
+        const promise = resolvePlugin('./.claude/hooks/rct/nonexistent.ts')
+        expect(promise).rejects.toThrow(/Failed to load plugin/i)
     })
 })

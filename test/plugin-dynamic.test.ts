@@ -78,7 +78,7 @@ describe('RCTPlugin context function', () => {
         expect(result).toBe('async result')
     })
 
-    test('context receives event and input', () => {
+    test('context receives event and input', async () => {
         let receivedEvent: HookEvent | undefined
         let receivedInput: PluginHookInput | undefined
 
@@ -91,7 +91,7 @@ describe('RCTPlugin context function', () => {
             },
         }
 
-        plugin.context!('PreToolUse', {
+        await plugin.context!('PreToolUse', {
             toolName: 'Bash',
             payload: { tool_name: 'Bash', tool_input: { command: 'ls' } },
         })
@@ -192,7 +192,7 @@ describe('RCTPlugin trigger function', () => {
         expect(result).toEqual({ action: 'warn', message: 'async warning' })
     })
 
-    test('trigger receives event and input', () => {
+    test('trigger receives event and input', async () => {
         let receivedEvent: HookEvent | undefined
         let receivedInput: PluginHookInput | undefined
 
@@ -205,7 +205,7 @@ describe('RCTPlugin trigger function', () => {
             },
         }
 
-        plugin.trigger!('PostToolUse', {
+        await plugin.trigger!('PostToolUse', {
             toolName: 'Write',
             payload: { tool_name: 'Write' },
         })
@@ -276,7 +276,10 @@ describe('applyPlugins extensions', () => {
     })
 
     test('applyPlugins with built-in plugins (no context/trigger) returns empty extensions', async () => {
-        const config = makeValidatedConfig(['track-work', 'issue-scope'])
+        const config = makeValidatedConfig([
+            'rct-plugin-track-work',
+            'rct-plugin-issue-scope',
+        ])
         const result = await applyPlugins(config)
         // Built-in plugins don't have context/trigger
         expect(result.extensions.contexts).toEqual([])

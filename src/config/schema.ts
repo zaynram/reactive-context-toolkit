@@ -136,7 +136,7 @@ export async function applyPlugins(
                 })
         } catch (err) {
             console.warn(
-                `[rct] Warning: Failed to resolve plugin '${name}': ${err instanceof Error ? err.message : err}`,
+                `[rct] Warning: Failed to resolve plugin '${name}': ${err instanceof Error ? err.message : String(err)}`,
             )
             if (process.env.RCT_DEBUG && err instanceof Error && err.stack) {
                 console.warn(err.stack)

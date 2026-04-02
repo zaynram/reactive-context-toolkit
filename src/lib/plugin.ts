@@ -5,7 +5,10 @@ import path from 'path'
  * Define a plugin for RCT. Typed identity function that validates
  * the plugin shape at compile time and resolves relative file paths.
  */
-export function definePlugin(plugin: RCTPlugin): RCTPlugin {
+export function definePlugin(
+    plugin: RCTPlugin,
+    setup?: (plugin: RCTPlugin) => void,
+): RCTPlugin {
     if (plugin.files) {
         plugin.files = plugin.files.map((f) => ({
             ...f,
@@ -15,5 +18,6 @@ export function definePlugin(plugin: RCTPlugin): RCTPlugin {
                 :   path.resolve(process.cwd(), f.path),
         }))
     }
+    if (setup) setup(plugin)
     return plugin
 }

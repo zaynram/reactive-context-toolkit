@@ -1,38 +1,14 @@
-import type { RCTPlugin } from './types'
-import plugins from './index'
+import type { BuiltinPluginRef, ResolvedPlugin } from './types'
+import builtins from './index'
 import { CLAUDE_PROJECT_DIR } from '#constants'
 import path from 'path'
-
-export type PluginSource = 'builtin' | 'local' | 'package'
-
-export interface ResolvedPlugin {
-    plugin: RCTPlugin
-    source: PluginSource
-    ref: string
-}
-
-class PluginValidationError extends Error {
-    constructor(message: string) {
-        super(message)
-        this.name = 'PluginValidationError'
-    }
-}
-
-function validatePlugin(
-    plugin: unknown,
-    ref: string,
-): asserts plugin is RCTPlugin {
-    if (!plugin || typeof plugin !== 'object' || !('name' in plugin)) {
-        throw new PluginValidationError(
-            `Plugin '${ref}' must export an object with a 'name' property.`,
-        )
-    }
-}
+import { PluginValidationError, validatePlugin } from './validate'
 
 export async function resolvePlugin(ref: string): Promise<ResolvedPlugin> {
     // 1. Built-in name
-    if (ref in plugins) {
-        return { plugin: plugins[ref], source: 'builtin', ref }
+    if (ref in builtins) {
+        const value = builtins[ref as BuiltinPluginRef]
+        if (value !== undefined) return value
     }
 
     // 2. Local file (starts with . or /)

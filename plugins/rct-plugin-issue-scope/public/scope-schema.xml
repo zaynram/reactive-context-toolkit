@@ -1,0 +1,5 @@
+<scope-schema>
+    <issues-in-scope>
+        <issue priority="low|high" ref="GitHub Issue/PR #" summary="Summary carried forward from candidate stage or brief synopsis based on issue/PR description." />
+    </issues-in-scope>
+</scope-schema>

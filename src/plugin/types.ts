@@ -1,4 +1,5 @@
 import type { RCTConfig, HookEvent } from '#config/types'
+import { BUILTIN_PLUGINS } from '#constants'
 
 /** Result from a plugin's dynamic trigger function. */
 export interface PluginTriggerResult {
@@ -26,3 +27,20 @@ export interface RCTPlugin extends Pick<RCTConfig, 'rules' | 'files'> {
         | undefined
         | Promise<PluginTriggerResult | undefined>
 }
+
+export type PluginSource = 'builtin' | 'local' | 'package'
+export interface ResolvedPlugin {
+    plugin: RCTPlugin
+    source: PluginSource
+    ref: string
+}
+
+export type BuiltinPluginRef = (typeof BUILTIN_PLUGINS)[number]
+export interface InstalledBuiltinPlugin extends ResolvedPlugin {
+    source: 'builtin'
+    ref: BuiltinPluginRef
+}
+
+export type BuiltinPlugins = Partial<
+    Record<BuiltinPluginRef, InstalledBuiltinPlugin>
+>

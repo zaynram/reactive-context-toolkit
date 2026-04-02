@@ -53,9 +53,9 @@ function getNodeScripts(): Record<string, string> | null {
         const pkgPath = resolve(cwd(), 'package.json')
         if (!existsSync(pkgPath)) return null
         const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'))
-        return pkg.scripts && Object.keys(pkg.scripts).length > 0
-            ? pkg.scripts
-            : null
+        return pkg.scripts && Object.keys(pkg.scripts).length > 0 ?
+                pkg.scripts
+            :   null
     } catch {
         return null
     }
@@ -77,7 +77,8 @@ export default definePlugin({
 
     // Warn on raw git/cargo — should use pixi tasks
     trigger(event: HookEvent, input: PluginHookInput) {
-        if (event !== 'PreToolUse' || input.toolName !== 'Bash') return undefined
+        if (event !== 'PreToolUse' || input.toolName !== 'Bash')
+            return undefined
         if (!hasTasktools()) return undefined
 
         const cmd = String(input.payload?.command ?? '')
@@ -125,7 +126,11 @@ export default definePlugin({
             }
 
             if (!hasPixiTaskInjection()) {
-                parts.push('<commands>', '  ' + TASKTOOLS_COMMANDS, '</commands>')
+                parts.push(
+                    '<commands>',
+                    '  ' + TASKTOOLS_COMMANDS,
+                    '</commands>',
+                )
             } else {
                 parts.push(
                     '<guidance>Pixi tasks active. Use pixi run &lt;task&gt; for all repo operations.</guidance>',

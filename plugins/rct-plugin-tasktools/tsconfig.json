@@ -8,9 +8,7 @@
         "skipLibCheck": true,
         "noEmit": true,
         "types": ["bun-types"],
-        "paths": {
-            "reactive-context-toolkit": ["../../src/index.ts"]
-        }
+        "paths": { "reactive-context-toolkit": ["../../src/index.ts"] }
     },
     "include": ["src/**/*.ts"]
 }

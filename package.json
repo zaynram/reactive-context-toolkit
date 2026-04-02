@@ -36,7 +36,8 @@
     "optionalDependencies": {
         "rct-plugin-tmux": "workspace:*",
         "rct-plugin-issue-scope": "workspace:*",
-        "rct-plugin-track-work": "workspace:*"
+        "rct-plugin-track-work": "workspace:*",
+        "rct-plugin-tasktools": "workspace:*"
     },
     "prettier": {
         "arrowParens": "always",

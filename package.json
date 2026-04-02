@@ -15,7 +15,7 @@
         "format": "prettier --write .",
         "check": "bun format && bun lint:fix && bun test",
         "prepublish": "bun check",
-        "publish": "git commit -a -m 'latest stable release' && git push"
+        "publish": "git commit -a -m 'latest source code' && git push"
     },
     "bin": {
         "rct": "./src/cli/index.ts"

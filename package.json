@@ -37,7 +37,8 @@
         "rct-plugin-tmux": "workspace:*",
         "rct-plugin-issue-scope": "workspace:*",
         "rct-plugin-track-work": "workspace:*",
-        "rct-plugin-tasktools": "workspace:*"
+        "rct-plugin-tasktools": "workspace:*",
+        "rct-plugin-autonomous-ops": "workspace:*"
     },
     "prettier": {
         "arrowParens": "always",

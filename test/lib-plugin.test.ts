@@ -89,9 +89,7 @@ describe('definePlugin()', () => {
     })
 
     it('does not mutate the original files array', () => {
-        const originalFiles = [
-            { alias: 'test', path: 'relative/path.xml' },
-        ]
+        const originalFiles = [{ alias: 'test', path: 'relative/path.xml' }]
         const originalPath = originalFiles[0].path
         definePlugin({ files: originalFiles })
         // Original array should be unchanged
@@ -99,10 +97,7 @@ describe('definePlugin()', () => {
     })
 
     it('returns a new object (no mutation)', () => {
-        const input = {
-            name: 'test',
-            files: [{ alias: 'a', path: 'a.xml' }],
-        }
+        const input = { name: 'test', files: [{ alias: 'a', path: 'a.xml' }] }
         const result = definePlugin(input)
         expect(result).not.toBe(input) // different object
         expect(result.files).not.toBe(input.files) // different array

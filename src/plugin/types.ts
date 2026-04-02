@@ -27,7 +27,10 @@ export interface RCTPlugin extends Pick<RCTConfig, 'rules' | 'files'> {
         | undefined
         | Promise<PluginTriggerResult | undefined>
     setup?: () => void | Promise<void>
+    /** Which events trigger context(). Omit = all events. */
     contextOn?: HookEvent | HookEvent[]
+    /** How often context() fires. 'always' (default), 'once' per session, or a max count. */
+    contextFrequency?: 'once' | 'always' | number
 }
 
 export function displayName(plugin: RCTPlugin, ref: string): string {

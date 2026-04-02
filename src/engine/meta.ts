@@ -249,7 +249,7 @@ export function generateMeta(
 
     if (include.includes('plugins') && globals.plugins?.length) {
         sections.plugins = globals.plugins.map((p) => {
-            const ref = typeof p === 'string' ? p : p.name ?? p
+            const ref = typeof p === 'string' ? p : (p.name ?? p)
             return { name: displayName({}, String(ref)), ref: String(ref) }
         })
     }

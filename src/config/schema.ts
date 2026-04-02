@@ -20,6 +20,7 @@ export interface PluginExtensions {
         name: string
         fn: NonNullable<RCTPlugin['context']>
         contextOn?: RCTPlugin['contextOn']
+        contextFrequency?: RCTPlugin['contextFrequency']
     }>
     triggers: Array<{ name: string; fn: NonNullable<RCTPlugin['trigger']> }>
 }
@@ -96,8 +97,8 @@ function warnTargetMatcher(
     const invalid = matchers.filter((m) => !valid.includes(m))
     if (invalid.length > 0) {
         console.warn(
-            `[rct] Hint: ${context} uses target '${target}' with matcher '${invalid.join('|')}'. ` +
-                `'${target}' is typically available for ${validTools}.`,
+            `[rct] Hint: ${context} uses target '${target}' with matcher '${invalid.join('|')}'. `
+                + `'${target}' is typically available for ${validTools}.`,
         )
     }
 }
@@ -125,9 +126,8 @@ export function validateConfig(config: RCTConfig): ValidatedConfig {
             )
             // Hint on suspect target+matcher combinations
             if (rule.match && rule.matcher) {
-                const conditions = Array.isArray(rule.match)
-                    ? rule.match
-                    : [rule.match]
+                const conditions =
+                    Array.isArray(rule.match) ? rule.match : [rule.match]
                 for (const cond of conditions) {
                     warnTargetMatcher(
                         cond.target,
@@ -197,6 +197,7 @@ export async function applyPlugins(
                     name: displayName(plugin, name),
                     fn: plugin.context,
                     contextOn: plugin.contextOn,
+                    contextFrequency: plugin.contextFrequency,
                 })
             if (plugin.trigger)
                 extensions.triggers.push({

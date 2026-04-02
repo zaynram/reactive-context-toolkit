@@ -2,11 +2,12 @@ import { describe, expect, test } from 'bun:test'
 import pluginRegistry from '#plugin/index'
 
 describe('plugin registry', () => {
-    test('contains all 4 builtin plugins', () => {
+    test('contains all 5 builtin plugins', () => {
         expect('rct-plugin-track-work' in pluginRegistry).toBe(true)
         expect('rct-plugin-issue-scope' in pluginRegistry).toBe(true)
         expect('rct-plugin-tmux' in pluginRegistry).toBe(true)
         expect('rct-plugin-tasktools' in pluginRegistry).toBe(true)
+        expect('rct-plugin-autonomous-ops' in pluginRegistry).toBe(true)
     })
 
     test('each plugin has a name matching its registry key', () => {

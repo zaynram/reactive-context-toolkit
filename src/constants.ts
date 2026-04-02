@@ -6,6 +6,7 @@ export const BUILTIN_PLUGINS = [
     'rct-plugin-track-work',
     'rct-plugin-issue-scope',
     'rct-plugin-tasktools',
+    'rct-plugin-autonomous-ops',
 ] as const
 declare global {
     type SupportedLanguage = (typeof LANGUAGES)[number]

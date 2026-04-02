@@ -166,10 +166,38 @@ async function main(eventArg?: string) {
 
     // Evaluate plugin contexts
     const pluginContextResults: string[] = []
-    for (const { name, fn, contextOn } of extensions.contexts) {
+    const sessionId =
+        (payload as Record<string, string>).session_id ?? 'default'
+    for (const {
+        name,
+        fn,
+        contextOn,
+        contextFrequency,
+    } of extensions.contexts) {
         if (contextOn) {
             const events = Array.isArray(contextOn) ? contextOn : [contextOn]
             if (!events.includes(event)) continue
+        }
+        // Check frequency limit (persisted across hook invocations via temp file)
+        if (contextFrequency && contextFrequency !== 'always') {
+            const max = contextFrequency === 'once' ? 1 : contextFrequency
+            const key = name.replace(/[^a-zA-Z0-9_-]/g, '_')
+            const countFile = `/tmp/rct-ctx-${sessionId}-${key}`
+            let count = 0
+            try {
+                count = parseInt(
+                    require('fs').readFileSync(countFile, 'utf-8'),
+                    10,
+                )
+            } catch {
+                /* first invocation */
+            }
+            if (count >= max) continue
+            try {
+                require('fs').writeFileSync(countFile, String(count + 1))
+            } catch {
+                /* best effort */
+            }
         }
         const result = await withTimeout(
             () => fn(event, pluginInput),

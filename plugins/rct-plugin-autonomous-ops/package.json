@@ -1,0 +1,8 @@
+{
+    "name": "rct-plugin-autonomous-ops",
+    "version": "0.1.0",
+    "type": "module",
+    "peerDependencies": {
+        "reactive-context-toolkit": "*"
+    }
+}

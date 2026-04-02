@@ -123,6 +123,7 @@ export type {
     PluginHookInput,
     PluginTriggerResult,
 } from '#plugin/types'
+export { displayName } from '#plugin/types'
 
 /** Registry mapping plugin names to their RCTPlugin instances. */
 export { default as pluginRegistry } from '#plugin/index'

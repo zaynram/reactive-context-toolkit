@@ -1,6 +1,7 @@
 import { fs } from '#util/fs'
 import { resolvePlugin } from '#plugin/resolve'
 import type { RCTPlugin } from '#plugin/types'
+import { displayName } from '#plugin/types'
 import type {
     RCTConfig,
     GlobalsConfig,
@@ -126,14 +127,23 @@ export async function applyPlugins(
             if (plugin.rules) mergedRules.push(...plugin.rules)
             if (plugin.context)
                 extensions.contexts.push({
-                    name: plugin.name ?? name,
+                    name: displayName(plugin, name),
                     fn: plugin.context,
                 })
             if (plugin.trigger)
                 extensions.triggers.push({
-                    name: plugin.name ?? name,
+                    name: displayName(plugin, name),
                     fn: plugin.trigger,
                 })
+            if (plugin.setup) {
+                try {
+                    await Promise.resolve(plugin.setup())
+                } catch (err) {
+                    console.warn(
+                        `[rct] Warning: plugin '${displayName(plugin, name)}' setup failed: ${err instanceof Error ? err.message : String(err)}`,
+                    )
+                }
+            }
         } catch (err) {
             console.warn(
                 `[rct] Warning: Failed to resolve plugin '${name}': ${err instanceof Error ? err.message : String(err)}`,

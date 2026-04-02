@@ -1,29 +1,24 @@
 import { BUILTIN_PLUGINS } from '#constants'
-import { BuiltinPlugins, InstalledBuiltinPlugin } from './types'
+import type { RCTPlugin, BuiltinPlugins, InstalledBuiltinPlugin } from './types'
 import { validatePlugin } from './validate'
 
 const results = await Promise.allSettled(
     BUILTIN_PLUGINS.map(async (name) => {
         const { default: plugin } = await import(name)
-        try {
-            validatePlugin(plugin, name)
-            return Promise.resolve(plugin)
-        } catch {
-            return Promise.reject()
-        }
+        validatePlugin(plugin, name)
+        return plugin
     }),
 )
 
-// todo: wire in
-
 export default Object.fromEntries(
     results
-        .filter((r) => r.status === 'fulfilled')
-        .map((x) => [
-            x.value.name,
+        .map((r, i) => [BUILTIN_PLUGINS[i], r] as const)
+        .filter(([, r]) => r.status === 'fulfilled')
+        .map(([name, r]) => [
+            name,
             {
-                plugin: x.value,
-                ref: x.value.name,
+                plugin: (r as PromiseFulfilledResult<RCTPlugin>).value,
+                ref: name,
                 source: 'builtin',
             } as InstalledBuiltinPlugin,
         ]),

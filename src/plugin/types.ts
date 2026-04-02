@@ -14,7 +14,7 @@ export interface PluginHookInput {
 }
 
 export interface RCTPlugin extends Pick<RCTConfig, 'rules' | 'files'> {
-    name: string
+    name?: string
     context?: (
         event: HookEvent,
         input: PluginHookInput,
@@ -26,6 +26,12 @@ export interface RCTPlugin extends Pick<RCTConfig, 'rules' | 'files'> {
         | PluginTriggerResult
         | undefined
         | Promise<PluginTriggerResult | undefined>
+    setup?: () => void | Promise<void>
+}
+
+export function displayName(plugin: RCTPlugin, ref: string): string {
+    const raw = plugin.name ?? ref
+    return raw.replace(/^rct-plugin-/, '')
 }
 
 export type PluginSource = 'builtin' | 'local' | 'package'

@@ -48,4 +48,45 @@ describe('definePlugin()', () => {
         expect(plugin.name).toBe('rules-only')
         expect(plugin.files).toBeUndefined()
     })
+
+    it('accepts single argument (no setup parameter)', () => {
+        expect(definePlugin.length).toBe(1)
+    })
+
+    it('resolves metaFile paths to absolute', () => {
+        const plugin = definePlugin({
+            name: 'meta-path-plugin',
+            files: [
+                {
+                    alias: 'scope',
+                    path: '.claude/context/scope.xml',
+                    metaFiles: [
+                        { alias: 'schema', path: 'schemas/scope.xml' },
+                    ],
+                },
+            ],
+        })
+        const mf = plugin.files![0].metaFiles![0]
+        expect(path.isAbsolute(mf.path)).toBe(true)
+        expect(mf.path).toContain('schemas')
+    })
+
+    it('preserves absolute metaFile paths', () => {
+        const absPath = path.resolve('/tmp/schema.xml')
+        const plugin = definePlugin({
+            files: [
+                {
+                    alias: 'scope',
+                    path: '.claude/scope.xml',
+                    metaFiles: [{ alias: 'schema', path: absPath }],
+                },
+            ],
+        })
+        expect(plugin.files![0].metaFiles![0].path).toBe(absPath)
+    })
+
+    it('handles plugins with no name', () => {
+        const plugin = definePlugin({ files: [] })
+        expect(plugin.name).toBeUndefined()
+    })
 })

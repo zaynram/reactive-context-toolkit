@@ -90,7 +90,12 @@ export default definePlugin({
                     'Destructive git operation. Confirm intent and that no work will be lost.',
                 )
             }
-            if (/rm\s+-r/.test(cmd) && !/node_modules|target|__pycache__|\.tmp|\.pixi|dist|build|out/.test(cmd)) {
+            if (
+                /rm\s+-r/.test(cmd)
+                && !/node_modules|target|__pycache__|\.tmp|\.pixi|dist|build|out/.test(
+                    cmd,
+                )
+            ) {
                 return warnOnce(
                     'destructive-rm',
                     'Recursive delete outside known build directories. Verify path.',

@@ -17,9 +17,6 @@
     "exports": {
         ".": "./src/index.ts"
     },
-    "peerDependencies": {
-        "reactive-context-toolkit": "github:zaynram/reactive-context-toolkit"
-    },
     "dependencies": {
         "@modelcontextprotocol/sdk": "^1.23.0",
         "zod": "^4.3.6"

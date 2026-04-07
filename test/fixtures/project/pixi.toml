@@ -1,2 +1,3 @@
 [project]
 name = "test-project"
+channels = ["conda-forge"]

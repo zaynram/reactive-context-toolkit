@@ -1,22 +1,22 @@
 {
-  "permissions": {
-    "allow": [
-      "mcp__plugin_reasoning-protocols_sequential-thinking__sequentialthinking",
-      "Bash(bun test:*)",
-      "Bash(bun lint:*)",
-      "Bash(bun update:*)",
-      "Bash(bun rct:*)",
-      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); ctx=d.get\\('hookSpecificOutput',{}\\).get\\('additionalContext',''\\); print\\(ctx[:300]\\)\")",
-      "Bash(bun install:*)",
-      "Bash(gh pr:*)",
-      "Bash(gh release create v1.0.0 --title v1.0.0 --notes ':*)",
-      "Bash(python3 -c ':*)",
-      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); ctx=d.get\\('hookSpecificOutput',{}\\).get\\('additionalContext',''\\); print\\(f'unwrap: {\\\\\"unwrap\\\\\" in ctx.lower\\(\\)}'\\)\")",
-      "Bash(git add:*)",
-      "Bash(git reset:*)",
-      "Bash(git commit -m ':*)",
-      "Bash(git push:*)",
-      "Bash(git tag:*)"
-    ]
-  }
+    "permissions": {
+        "allow": [
+            "mcp__plugin_reasoning-protocols_sequential-thinking__sequentialthinking",
+            "Bash(bun test:*)",
+            "Bash(bun lint:*)",
+            "Bash(bun update:*)",
+            "Bash(bun rct:*)",
+            "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); ctx=d.get\\('hookSpecificOutput',{}\\).get\\('additionalContext',''\\); print\\(ctx[:300]\\)\")",
+            "Bash(bun install:*)",
+            "Bash(gh pr:*)",
+            "Bash(gh release create v1.0.0 --title v1.0.0 --notes ':*)",
+            "Bash(python3 -c ':*)",
+            "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); ctx=d.get\\('hookSpecificOutput',{}\\).get\\('additionalContext',''\\); print\\(f'unwrap: {\\\\\"unwrap\\\\\" in ctx.lower\\(\\)}'\\)\")",
+            "Bash(git add:*)",
+            "Bash(git reset:*)",
+            "Bash(git commit -m ':*)",
+            "Bash(git push:*)",
+            "Bash(git tag:*)"
+        ]
+    }
 }

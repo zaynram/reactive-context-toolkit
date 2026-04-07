@@ -1,3 +1,4 @@
+#!/usr/bin/env bun
 import hook from './hook'
 import init from './init'
 if (process.argv[1] === __filename) {

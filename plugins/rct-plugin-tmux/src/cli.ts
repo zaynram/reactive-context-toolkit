@@ -1,3 +1,4 @@
+#!/usr/bin/env bun
 const command = process.argv[2]
 
 if (command === 'setup') {

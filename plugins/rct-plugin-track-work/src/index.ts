@@ -48,6 +48,16 @@ export default definePlugin({
                 const dir = path.dirname(f.path)
                 if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
                 fs.copyFileSync(templates[key].path, f.path)
+                fs.copyFileSync(
+                    schema[key].path,
+                    f.path.replace('.xml', '.xsd'),
+                )
+                const shared = f.path.replace(
+                    path.basename(f.path),
+                    path.basename(schema.common.path),
+                )
+                if (!fs.existsSync(shared))
+                    fs.copyFileSync(schema.common.path, shared)
             }
         }
     },

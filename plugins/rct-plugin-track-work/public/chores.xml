@@ -1,4 +1,4 @@
-<?xml-model href="chores.xsd"?>
+<?xml-model href="schema/chores.xsd"?>
 <reference
     name="chores"
     path=".claude/context/chores.xml"

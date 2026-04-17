@@ -1,9 +1,16 @@
-<reference name="issues" path=".claude/context/issues.xml">
-    <metadata>
-        <timespan created-at="" modified-at=""/>
-        <overview>Canonical reference for issue candidates and promoted issues originating from the candidate workflow. Issues created directly on GitHub (outside this workflow) are not tracked here.</overview>
-    </metadata>
+<reference
+    name="issues"
+    path=".claude/context/issues.xml"
+    created-at=""
+    modified-at=""
+>
+    <overview>
+        Canonical reference for issue candidates and promoted issues originating from the candidate
+        workflow. Issues created directly on GitHub (outside this workflow) are not tracked here.
+    </overview>
     <candidates></candidates>
     <promoted></promoted>
-    <reminder id='update-modification-time-every-edit'/>
+    <reminder>
+        Always update the modified-at timestamp after editing this file.
+    </reminder>
 </reference>

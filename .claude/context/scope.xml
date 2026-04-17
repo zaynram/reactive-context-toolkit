@@ -1,8 +1,12 @@
-<reference name="scope" path=".claude/context/scope.xml">
-    <metadata>
-        <date>YYYY-mm-dd</date>
-        <timespan created-at="" modified-at=""/>
-        <overview>Daily scope assignment populated during prep time. Entries are  whitelisted issues for today's work session. Issues not listed are implicitly out of scope. The date field must match today for scope to be considered current.</overview>
-    </metadata>
-    <issues-in-scope></issues-in-scope>
+<reference
+    name="scope"
+    path=".claude/context/scope.xml"
+    created-at=""
+    modified-at=""
+>
+    <date></date>
+    <overview>Daily scope assignment as a list of whitelisted issues. Issues not listed here are
+        implicitly out of scope for today. The date field must match today for scope to be
+        considered current.</overview>
+    <issues></issues>
 </reference>

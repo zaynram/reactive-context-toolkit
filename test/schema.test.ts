@@ -426,7 +426,7 @@ describe('applyPlugins', () => {
         const { config: result } = await applyPlugins(config)
         const aliases = (result.files ?? []).map((f) => f.alias)
         expect(aliases).toContain('scope')
-        expect(aliases).toContain('chores')
+        expect(aliases).toContain('candidates')
         const plans = (result.files ?? []).find((f) => f.alias === 'plans')
         expect(plans!.path).toContain('my/plans.xml')
     })

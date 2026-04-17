@@ -1,7 +1,7 @@
 // Config
 
 /** The resolved CLAUDE_PROJECT_DIR and list of supported languages. */
-export * from '#constants'
+export { CLAUDE_PROJECT_DIR, BUILTIN_PLUGINS, LANGUAGES } from '#constants'
 
 /** Load and parse rct.config.{json,ts,js} from CLAUDE_PROJECT_DIR. */
 export { loadConfig } from '#config/loader'

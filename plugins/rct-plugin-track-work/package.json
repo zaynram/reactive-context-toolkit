@@ -14,7 +14,7 @@
         ".": "./src/index.ts"
     },
     "peerDependencies": {
-        "reactive-context-toolkit": "github:zaynram/reactive-context-toolkit#d4a4f01"
+        "reactive-context-toolkit": "github:zaynram/reactive-context-toolkit"
     },
     "devDependencies": {
         "bun-types": "^1.3.11",

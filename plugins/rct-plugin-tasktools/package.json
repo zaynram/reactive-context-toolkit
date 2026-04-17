@@ -2,5 +2,8 @@
     "name": "rct-plugin-tasktools",
     "version": "0.1.0",
     "type": "module",
+    "peerDependencies": {
+        "reactive-context-toolkit": "github:zaynram/reactive-context-toolkit"
+    },
     "scripts": {}
 }

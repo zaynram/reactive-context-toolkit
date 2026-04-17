@@ -1,64 +1,65 @@
-import { definePlugin, type FileEntry } from 'reactive-context-toolkit'
-import path from 'path'
+import {
+    definePlugin,
+    FileEntry,
+    CLAUDE_PROJECT_DIR,
+} from 'reactive-context-toolkit'
+import path, { basename } from 'path'
 import fs from 'fs'
 
 const asset = (filename: string) =>
     path.resolve(__dirname, '..', 'public', filename)
 
-const schema = {
-    chores: { alias: 'chores-schema', path: asset('chores.xsd') },
-    plans: { alias: 'plans-schema', path: asset('plans.xsd') },
-    common: { alias: 'entry-schema', path: asset('common.xsd') },
-}
+const context_path = (filename?: string): string =>
+    path.join(
+        ...[CLAUDE_PROJECT_DIR, '.claude', 'context', filename].filter(Boolean),
+    )
 
-const templates = {
-    chores: { alias: 'chores-template', path: asset('chores.xml') },
-    plans: { alias: 'plans-template', path: asset('plans.xml') },
-}
+const schema_names = [
+    'chores.xsd',
+    'plans.xsd',
+    'common.xsd',
+    'simple-types.xsd',
+] as const
 
-const metaFiles = (key: keyof typeof templates) => [
-    schema[key],
-    templates[key],
-    schema.common,
-]
+const schema = schema_names.map(asset)
+const mapped_schema = schema.map((src, idx) => ({
+    src,
+    dst: context_path(schema_names[idx]),
+}))
 
-const files: FileEntry[] = [
+const [chores_schema, plans_schema, entry_schema] = schema
+const files = [
     {
         alias: 'chores',
-        path: '.claude/context/chores.xml',
+        path: context_path('chores.xml'),
         injectOn: 'SessionStart',
-        metaFiles: metaFiles('chores'),
+        metaFiles: [
+            { alias: 'chores-schema', path: chores_schema },
+            { alias: 'entry-schema', path: entry_schema },
+        ],
     },
     {
         alias: 'plans',
-        path: '.claude/context/plans.xml',
+        path: context_path('plans.xml'),
         injectOn: 'SessionStart',
-        metaFiles: metaFiles('plans'),
+        metaFiles: [
+            { alias: 'plans-schema', path: plans_schema },
+            { alias: 'entry-schema', path: entry_schema },
+        ],
     },
-]
+] as const
+const mapped_files = files
+    .map((f) => ({ src: asset(path.basename(f.path)), dst: f.path }))
+    .concat(mapped_schema)
 
 export default definePlugin({
     name: 'rct-plugin-track-work',
     files,
     setup() {
-        for (const f of files) {
-            if (fs.existsSync(f.path)) continue
-            const key: keyof typeof templates = f.alias
-            if (key in templates) {
-                const dir = path.dirname(f.path)
-                if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
-                fs.copyFileSync(templates[key].path, f.path)
-                fs.copyFileSync(
-                    schema[key].path,
-                    f.path.replace('.xml', '.xsd'),
-                )
-                const shared = f.path.replace(
-                    path.basename(f.path),
-                    path.basename(schema.common.path),
-                )
-                if (!fs.existsSync(shared))
-                    fs.copyFileSync(schema.common.path, shared)
-            }
-        }
+        const dir = context_path()
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+        mapped_files
+            .filter(({ dst }) => !fs.existsSync(dst))
+            .forEach(({ src, dst }) => fs.copyFileSync(src, dst))
     },
 })

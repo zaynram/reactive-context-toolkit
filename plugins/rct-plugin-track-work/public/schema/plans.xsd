@@ -1,18 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
-    <xs:include schemaLocation="common.xsd" />
-    <xs:element name="reference">
-        <xs:complexType>
-            <xs:sequence>
-                <xs:element name="plans">
-                    <xs:complexType>
-                        <xs:sequence minOccurs="0">
-                            <xs:element name="plan" type="_entry" />
-                        </xs:sequence>
-                    </xs:complexType>
-                </xs:element>
+  <xs:include schemaLocation="common.xsd" />
+  <xs:complexType name="_plan_entry">
+    <xs:complexContent>
+      <xs:extension base="_entry">
+        <xs:attribute name="spec-md"
+                      type="_path"
+                      use="required" />
+        <xs:attribute name="plan-md"
+                      type="_path"
+                      use="required" />
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:element name="reference">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="plans">
+          <xs:complexType>
+            <xs:sequence minOccurs="0">
+              <xs:element name="plan"
+                          type="_plan_entry" />
             </xs:sequence>
-            <xs:attributeGroup ref="REFERENCE" />
-        </xs:complexType>
-    </xs:element>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+      <xs:attributeGroup ref="REFERENCE" />
+    </xs:complexType>
+  </xs:element>
 </xs:schema>

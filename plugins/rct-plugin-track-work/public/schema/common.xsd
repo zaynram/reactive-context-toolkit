@@ -15,14 +15,14 @@
     </xs:attribute>
     <xs:attribute name="status"
                   type="_status"
-                  default="open">
+                  use="required">
       <xs:annotation>
         <xs:documentation>The status of the plan; one of 'open', 'in-progress', or 'closed'.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="expendable"
                   type="_bool"
-                  default="false">
+                  use="required">
       <xs:annotation>
         <xs:documentation>Whether the entry may be deleted upon completion.</xs:documentation>
       </xs:annotation>

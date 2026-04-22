@@ -6,10 +6,18 @@
       <xs:extension base="_entry">
         <xs:attribute name="spec-md"
                       type="_path"
-                      use="required" />
+                      use="required">
+          <xs:annotation>
+            <xs:documentation>The path to the specification file, relative to project root.</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
         <xs:attribute name="plan-md"
                       type="_path"
-                      use="required" />
+                      use="required">
+          <xs:annotation>
+            <xs:documentation>The path to the implementation plan file, relative to project root.</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>

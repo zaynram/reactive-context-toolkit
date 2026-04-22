@@ -53,7 +53,7 @@ const inline = (tag: string, attrs?: AttributesArgument): XML.InlineTag => {
 
 const wrap = <T extends WrapXMLOptions>(
     tag: string,
-    { attrs, inner = [], index }: T = {} as T,
+    { attrs, inner, index }: T = {} as T,
 ): XML.Element => {
     const collection = index || (typeof inner === 'object' && 'items' in inner)
     if (!inner) return collection ? '' : inline(tag, attrs)

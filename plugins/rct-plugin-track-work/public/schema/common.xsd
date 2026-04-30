@@ -28,7 +28,7 @@
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="synopsis"
-                  type="_short_desc"
+                  type="_long_desc"
                   use="required">
       <xs:annotation>
         <xs:documentation>Concise description of the scope and purpose of the entry.</xs:documentation>

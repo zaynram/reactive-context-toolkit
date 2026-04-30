@@ -26,7 +26,8 @@
       <xs:sequence>
         <xs:element name="plans">
           <xs:complexType>
-            <xs:sequence minOccurs="0">
+            <xs:sequence minOccurs="0"
+                         maxOccurs="unbounded">
               <xs:element name="plan"
                           type="_plan_entry" />
             </xs:sequence>

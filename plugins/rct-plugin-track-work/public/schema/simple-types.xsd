@@ -19,7 +19,7 @@
   </xs:simpleType>
   <xs:simpleType name="_long_desc">
     <xs:restriction base="xs:string">
-      <xs:maxLength value="180" />
+      <xs:maxLength value="250" />
     </xs:restriction>
   </xs:simpleType>
   <xs:simpleType name="_short_desc">

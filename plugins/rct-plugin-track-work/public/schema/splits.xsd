@@ -20,7 +20,7 @@
       <xs:annotation><xs:documentation>When worktree=required, a one-sentence justification (e.g., "overlaps with cache plan on src/foo/cache.py imports"). Logically required when worktree=required and absent when worktree=not-required, but XSD 1.0 cannot express this conditional constraint — ingest-spec is the enforcement boundary.</xs:documentation></xs:annotation>
     </xs:attribute>
     <xs:attribute name="blast-radius" type="_path_list" use="required">
-      <xs:annotation><xs:documentation>Semicolon-separated list of file paths (or path globs) this child will edit. Used by ingest-spec for overlap analysis and by sequence-multi-plan to validate the DAG. Paths are relative to project root.</xs:documentation></xs:annotation>
+      <xs:annotation><xs:documentation>Semicolon-separated list of file paths this child will edit, relative to project root. Used by ingest-spec for overlap analysis and by sequence-multi-plan to validate the DAG. Glob expansion is not performed by the schema or the workflows — list explicit paths.</xs:documentation></xs:annotation>
     </xs:attribute>
     <xs:attribute name="synopsis" type="_long_desc" use="required">
       <xs:annotation><xs:documentation>One-line description (up to 250 characters) of this child's scope. Mirrored to plans.xml as the child plan's synopsis attribute.</xs:documentation></xs:annotation>

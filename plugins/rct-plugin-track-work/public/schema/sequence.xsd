@@ -39,8 +39,12 @@
     <xs:sequence>
       <xs:element name="plan" type="_wave_plan_ref" minOccurs="1" maxOccurs="unbounded"/>
     </xs:sequence>
-    <xs:attribute name="index" type="_int" use="required"/>
-    <xs:attribute name="mode" type="_wave_mode" use="required"/>
+    <xs:attribute name="index" type="_int" use="required">
+      <xs:annotation><xs:documentation>Wave order, 1-indexed. Waves execute in ascending index order; sequence-multi-plan validates indices are contiguous starting at 1.</xs:documentation></xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="mode" type="_wave_mode" use="required">
+      <xs:annotation><xs:documentation>parallel = children may execute concurrently (each in its declared worktree, if required); sequential = children execute one at a time in declaration order. exec-multi-plan honors this when dispatching teammates.</xs:documentation></xs:annotation>
+    </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="_edge">
@@ -50,7 +54,9 @@
     <xs:attribute name="to" type="_plan_suffix" use="required">
       <xs:annotation><xs:documentation>Target child-plan suffix; must resolve to a sibling declared in the corresponding splits.xml. sequence-multi-plan validates resolution.</xs:documentation></xs:annotation>
     </xs:attribute>
-    <xs:attribute name="reason" type="_long_desc" use="required"/>
+    <xs:attribute name="reason" type="_long_desc" use="required">
+      <xs:annotation><xs:documentation>One-line justification for the dependency edge (e.g., "child B imports symbol X authored by child A"). Surfaces in lead-session reports and helps human reviewers audit the DAG. ≤250 chars.</xs:documentation></xs:annotation>
+    </xs:attribute>
     <xs:attribute name="symbol" type="_label" use="optional">
       <xs:annotation><xs:documentation>Optional: the specific symbol/contract that crosses the boundary (e.g., a function, class, fixture name). Helps human reviewers and helps the lead detect symbol-overlap violations. Bounded to 30 chars (_label).</xs:documentation></xs:annotation>
     </xs:attribute>

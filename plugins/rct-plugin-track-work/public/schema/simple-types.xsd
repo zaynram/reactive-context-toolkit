@@ -59,4 +59,23 @@
       </xs:simpleType>
     </xs:union>
   </xs:simpleType>
+  <!-- Cycle range: matches "[§N.M..§N.K]" or "[§N.M]" or "[§N.M,§N.K]" or mixed "[§N.M..§N.K,§N.L]". -->
+  <xs:simpleType name="_cycle_range">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="\[§\d+(\.\d+)?(\.\.§\d+(\.\d+)?)?(,§\d+(\.\d+)?(\.\.§\d+(\.\d+)?)?)*\]"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <!-- Comma-separated suffix list (for depends-on). Empty allowed. -->
+  <xs:simpleType name="_suffix_list">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="(([a-zA-Z0-9][a-zA-Z0-9-]*)(,[a-zA-Z0-9][a-zA-Z0-9-]*)*)?"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <!-- Worktree requirement values. -->
+  <xs:simpleType name="_worktree_req">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="not-required"/>
+      <xs:enumeration value="required"/>
+    </xs:restriction>
+  </xs:simpleType>
 </xs:schema>

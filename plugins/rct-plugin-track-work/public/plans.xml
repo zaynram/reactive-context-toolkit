@@ -6,5 +6,39 @@
            modified-at=""
            context="Canonical reference for all plans within the project. Plans are scopes and tasks designed for the purpose of advancing active development work.">
   <plans>
+    <!--
+    Example: a <plan-group> with two child plans derived from a splits.xml.
+    Copy, un-comment, and adapt when sequence-multi-plan generates a group entry.
+
+    <plan-group index="1"
+                id="2026-04-29-shared-firm-config"
+                status="open"
+                expendable="false"
+                synopsis="Shared firm-config loader: deep_merge utilities, atomic cache layer, and two-source load_firm_config integration."
+                spec-md="docs/superpowers/specs/2026-04-29-shared-firm-config-design.md"
+                splits-md="docs/superpowers/specs/2026-04-29-shared-firm-config-splits.xml"
+                sequence-md="docs/superpowers/multi/2026-04-29-shared-firm-config-sequence.xml">
+      <plan index="1"
+            id="2026-04-29-shared-firm-config-foundation"
+            status="open"
+            expendable="false"
+            synopsis="Foundation: deep_merge utility, two-source discovery chains, _cache_path platform branching."
+            spec-md="docs/superpowers/specs/2026-04-29-shared-firm-config-design.md"
+            plan-md="docs/superpowers/plans/2026-04-29-shared-firm-config-foundation.md"
+            cycles="[§6.1..§6.3]"
+            depends-on=""
+            worktree="not-required"/>
+      <plan index="2"
+            id="2026-04-29-shared-firm-config-cache"
+            status="open"
+            expendable="false"
+            synopsis="Cache layer: atomic _write_cache, four-case _read_shared_with_fallback, warning classes."
+            spec-md="docs/superpowers/specs/2026-04-29-shared-firm-config-design.md"
+            plan-md="docs/superpowers/plans/2026-04-29-shared-firm-config-cache.md"
+            cycles="[§6.4..§6.5]"
+            depends-on="foundation"
+            worktree="not-required"/>
+    </plan-group>
+    -->
   </plans>
 </reference>

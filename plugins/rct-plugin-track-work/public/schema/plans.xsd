@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
-  <xs:include schemaLocation="common.xsd" />
+  <xs:include schemaLocation="simple-types.xsd"/>
+  <xs:include schemaLocation="common.xsd"/>
+
+  <!-- Existing _plan_entry, unchanged. -->
   <xs:complexType name="_plan_entry">
     <xs:complexContent>
       <xs:extension base="_entry">
@@ -21,20 +24,55 @@
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
+
+  <!-- New: child of <plan-group>, has additional cycles/depends-on/worktree attrs. -->
+  <xs:complexType name="_grouped_plan_entry">
+    <xs:complexContent>
+      <xs:extension base="_plan_entry">
+        <xs:attribute name="cycles" type="_cycle_range" use="required">
+          <xs:annotation><xs:documentation>Mirrors the splits.xml `cycles` attribute for this child. Required for grouped plans; absent on flat plans.</xs:documentation></xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="depends-on" type="_suffix_list" use="required">
+          <xs:annotation><xs:documentation>Mirrors the splits.xml `depends-on` attribute.</xs:documentation></xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="worktree" type="_worktree_req" use="required">
+          <xs:annotation><xs:documentation>Mirrors the splits.xml `worktree` attribute.</xs:documentation></xs:annotation>
+        </xs:attribute>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <!-- New: the plan-group container. -->
+  <xs:complexType name="_plan_group">
+    <xs:sequence>
+      <xs:element name="plan" type="_grouped_plan_entry" minOccurs="2" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="index" type="_int" use="required"/>
+    <xs:attribute name="id" type="_slug" use="required"/>
+    <xs:attribute name="status" type="_status" use="required"/>
+    <xs:attribute name="expendable" type="_bool" use="required"/>
+    <xs:attribute name="synopsis" type="_long_desc" use="required"/>
+    <xs:attribute name="spec-md" type="_path" use="required"/>
+    <xs:attribute name="splits-md" type="_path" use="required"/>
+    <xs:attribute name="sequence-md" type="_path" use="required">
+      <xs:annotation><xs:documentation>May be the empty string before sequence-multi-plan runs; non-empty after.</xs:documentation></xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <!-- Modified: <plans> sequence accepts both <plan> and <plan-group>. -->
   <xs:element name="reference">
     <xs:complexType>
       <xs:sequence>
         <xs:element name="plans">
           <xs:complexType>
-            <xs:sequence minOccurs="0"
-                         maxOccurs="unbounded">
-              <xs:element name="plan"
-                          type="_plan_entry" />
-            </xs:sequence>
+            <xs:choice minOccurs="0" maxOccurs="unbounded">
+              <xs:element name="plan" type="_plan_entry"/>
+              <xs:element name="plan-group" type="_plan_group"/>
+            </xs:choice>
           </xs:complexType>
         </xs:element>
       </xs:sequence>
-      <xs:attributeGroup ref="REFERENCE" />
+      <xs:attributeGroup ref="REFERENCE"/>
     </xs:complexType>
   </xs:element>
 </xs:schema>

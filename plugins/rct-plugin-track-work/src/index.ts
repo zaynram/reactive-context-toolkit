@@ -11,12 +11,20 @@ const context_path = (...segments: string[]): string =>
 const schema_path = (...segments: string[]): string =>
     context_path('schema', ...segments)
 
-const schema = [
-    'chores.xsd',
-    'plans.xsd',
-    'common.xsd',
-    'simple-types.xsd',
-].map((name) => ({ src: asset('schema', name), dst: schema_path(name) }))
+export const schema = fs
+    .readdirSync(asset('schema'))
+    .filter((name) => name.endsWith('.xsd'))
+    .sort()
+    .map((name) => ({ src: asset('schema', name), dst: schema_path(name) }))
+
+const schemaByName = new Map(
+    schema.map((s) => [path.basename(s.dst), s] as const),
+)
+const dstOf = (name: string): string => {
+    const entry = schemaByName.get(name)
+    if (!entry) throw new Error(`schema asset not found: ${name}`)
+    return entry.dst
+}
 
 const entries = [
     {
@@ -24,8 +32,8 @@ const entries = [
         path: context_path('chores.xml'),
         injectOn: 'SessionStart',
         metaFiles: [
-            { alias: 'chores-schema', path: schema[0].dst },
-            { alias: 'entry-schema', path: schema[2].dst },
+            { alias: 'chores-schema', path: dstOf('chores.xsd') },
+            { alias: 'entry-schema', path: dstOf('common.xsd') },
         ],
     },
     {
@@ -33,8 +41,8 @@ const entries = [
         path: context_path('plans.xml'),
         injectOn: 'SessionStart',
         metaFiles: [
-            { alias: 'plans-schema', path: schema[1].dst },
-            { alias: 'entry-schema', path: schema[2].dst },
+            { alias: 'plans-schema', path: dstOf('plans.xsd') },
+            { alias: 'entry-schema', path: dstOf('common.xsd') },
         ],
     },
 ] as const

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
   <xs:include schemaLocation="simple-types.xsd"/>
-  <xs:include schemaLocation="common.xsd"/>
 
   <xs:simpleType name="_wave_mode">
     <xs:restriction base="xs:string">
@@ -30,8 +29,10 @@
   </xs:simpleType>
 
   <xs:complexType name="_wave_plan_ref">
-    <xs:attribute name="suffix" type="_str" use="required"/>
-    <xs:attribute name="worktree-required" type="_bool" use="required"/>
+    <xs:annotation><xs:documentation>Reference to a child plan within a wave. Worktree requirement is NOT carried here — sequence-multi-plan re-derives it from the corresponding splits.xml entry's worktree attribute at execution time (single-writer principle: splits.xml is the canonical source for blast-radius-derived worktree decisions; carrying it on _wave_plan_ref would invite drift between the two documents).</xs:documentation></xs:annotation>
+    <xs:attribute name="suffix" type="_plan_suffix" use="required">
+      <xs:annotation><xs:documentation>Reference to a child plan's suffix from the corresponding splits.xml. Same _plan_suffix shape (alphanumeric+dash, no spaces, ≤40 chars).</xs:documentation></xs:annotation>
+    </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="_wave">
@@ -43,19 +44,23 @@
   </xs:complexType>
 
   <xs:complexType name="_edge">
-    <xs:attribute name="from" type="_str" use="required"/>
-    <xs:attribute name="to" type="_str" use="required"/>
+    <xs:attribute name="from" type="_plan_suffix" use="required">
+      <xs:annotation><xs:documentation>Source child-plan suffix; must resolve to a sibling declared in the corresponding splits.xml. sequence-multi-plan validates resolution.</xs:documentation></xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="to" type="_plan_suffix" use="required">
+      <xs:annotation><xs:documentation>Target child-plan suffix; must resolve to a sibling declared in the corresponding splits.xml. sequence-multi-plan validates resolution.</xs:documentation></xs:annotation>
+    </xs:attribute>
     <xs:attribute name="reason" type="_long_desc" use="required"/>
-    <xs:attribute name="symbol" type="_str" use="optional">
-      <xs:annotation><xs:documentation>Optional: the specific symbol/contract that crosses the boundary (e.g., a function, class, fixture name). Helps human reviewers and helps the lead detect symbol-overlap violations.</xs:documentation></xs:annotation>
+    <xs:attribute name="symbol" type="_label" use="optional">
+      <xs:annotation><xs:documentation>Optional: the specific symbol/contract that crosses the boundary (e.g., a function, class, fixture name). Helps human reviewers and helps the lead detect symbol-overlap violations. Bounded to 30 chars (_label).</xs:documentation></xs:annotation>
     </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="_gate">
     <xs:simpleContent>
       <xs:extension base="xs:string">
-        <xs:attribute name="kind" type="_str" use="required">
-          <xs:annotation><xs:documentation>Gate kind: project-test (e.g., "pixi run test"), project-check ("pixi run check"), invariant-check (custom command), peer-symbol-check (cross-plan symbol existence).</xs:documentation></xs:annotation>
+        <xs:attribute name="kind" type="_gate_kind" use="required">
+          <xs:annotation><xs:documentation>Gate kind. project-test runs the project's test suite (e.g., "pixi run test"); project-check runs the project's lint/typecheck (e.g., "pixi run check"); invariant-check runs a custom invariant command from sequence.xml; peer-symbol-check verifies cross-plan symbol existence. Constrained to the closed _gate_kind enum — new categories require a schema bump.</xs:documentation></xs:annotation>
         </xs:attribute>
       </xs:extension>
     </xs:simpleContent>
@@ -72,7 +77,9 @@
         </xs:complexType>
       </xs:element>
     </xs:sequence>
-    <xs:attribute name="id" type="_str" use="required"/>
+    <xs:attribute name="id" type="_label" use="required">
+      <xs:annotation><xs:documentation>Stable identifier for this invariant (≤30 chars). Used in error messages and lead-session reports; may be referenced by other invariants in future schema iterations.</xs:documentation></xs:annotation>
+    </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="_execution_policy">
@@ -117,8 +124,8 @@
         <xs:element name="execution-policy" type="_execution_policy" minOccurs="1" maxOccurs="1"/>
       </xs:sequence>
       <xs:attribute name="group-id" type="_slug" use="required"/>
-      <xs:attribute name="splits" type="_path" use="required">
-        <xs:annotation><xs:documentation>Path to the splits.xml that this sequence is built atop.</xs:documentation></xs:annotation>
+      <xs:attribute name="splits" type="_path_required_nonempty" use="required">
+        <xs:annotation><xs:documentation>Path to the splits.xml that this sequence is built atop. Must be non-empty.</xs:documentation></xs:annotation>
       </xs:attribute>
       <xs:attribute name="generated-at" type="_timestamp" use="required"/>
     </xs:complexType>

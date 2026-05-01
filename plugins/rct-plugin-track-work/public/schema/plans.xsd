@@ -25,37 +25,81 @@
     </xs:complexContent>
   </xs:complexType>
 
-  <!-- New: child of <plan-group>, has additional cycles/depends-on/worktree attrs. -->
   <xs:complexType name="_grouped_plan_entry">
+    <xs:annotation>
+      <xs:documentation>A child plan within a &lt;plan-group&gt;. Extends _plan_entry (inheriting spec-md + plan-md + the base _entry attributes) with three coordination attributes mirrored from the corresponding entry in splits.xml: cycles (which spec cycles this child claims), depends-on (sibling-suffix prerequisites), and worktree (isolation requirement). Children's plan-mds are written by spec-to-multi-plan; spec-md is shared with the parent group.</xs:documentation>
+    </xs:annotation>
     <xs:complexContent>
       <xs:extension base="_plan_entry">
         <xs:attribute name="cycles" type="_cycle_range" use="required">
-          <xs:annotation><xs:documentation>Mirrors the splits.xml `cycles` attribute for this child. Required for grouped plans; absent on flat plans.</xs:documentation></xs:annotation>
+          <xs:annotation>
+            <xs:documentation>The spec-cycle ranges this child claims, in [§N.M..§N.K] Python-list-shaped form (e.g., [§6.1..§6.3], [§6.5], mixed [§6.1..§6.3,§6.10]). Mirrors the splits.xml cycles attribute; sequence-multi-plan validates the union of children's cycles covers the spec's §6 decomposition without overlap.</xs:documentation>
+          </xs:annotation>
         </xs:attribute>
         <xs:attribute name="depends-on" type="_suffix_list" use="required">
-          <xs:annotation><xs:documentation>Mirrors the splits.xml `depends-on` attribute.</xs:documentation></xs:annotation>
+          <xs:annotation>
+            <xs:documentation>Comma-separated list of sibling suffixes that must reach Green commits before this child can begin execution. Empty = no prerequisites (eligible for the first wave). References must resolve to other suffixes in the same plan-group; sequence-multi-plan validates the DAG. Mirrors the splits.xml depends-on attribute.</xs:documentation>
+          </xs:annotation>
         </xs:attribute>
         <xs:attribute name="worktree" type="_worktree_req" use="required">
-          <xs:annotation><xs:documentation>Mirrors the splits.xml `worktree` attribute.</xs:documentation></xs:annotation>
+          <xs:annotation>
+            <xs:documentation>required = MUST run in an isolated worktree (set when blast-radius overlaps concurrent siblings on top-level non-submodule paths); not-required = blast-radius disjoint from concurrent siblings, or overlap is inside a shared submodule (which forces sequential ordering instead). Determined deterministically by ingest-spec as a pure function of (blast-radius, depends-on graph) — do not hand-edit; change blast-radius or depends-on edges and re-run ingest-spec instead. Mirrors the splits.xml worktree attribute.</xs:documentation>
+          </xs:annotation>
         </xs:attribute>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
 
-  <!-- New: the plan-group container. -->
   <xs:complexType name="_plan_group">
+    <xs:annotation>
+      <xs:documentation>Container for a grouped collection of related child plans derived from a single spec via a splits.xml decomposition. Used when a feature's scope exceeds a single flat plan's capacity; sequence-multi-plan generates the group's execution DAG and exec-multi-plan dispatches teammates against children. Structurally distinguished from a flat plan by absence of plan-md (only children carry plan-md) and presence of splits-md + sequence-md — the slug resolver relies on this distinction.</xs:documentation>
+    </xs:annotation>
     <xs:sequence>
-      <xs:element name="plan" type="_grouped_plan_entry" minOccurs="2" maxOccurs="unbounded"/>
+      <xs:element name="plan" type="_grouped_plan_entry" minOccurs="2" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation>A child plan within the group. minOccurs=2 enforces that a single-child group is a flat plan in disguise — use a top-level &lt;plan&gt; instead.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
     </xs:sequence>
-    <xs:attribute name="index" type="_int" use="required"/>
-    <xs:attribute name="id" type="_slug" use="required"/>
-    <xs:attribute name="status" type="_status" use="required"/>
-    <xs:attribute name="expendable" type="_bool" use="required"/>
-    <xs:attribute name="synopsis" type="_long_desc" use="required"/>
-    <xs:attribute name="spec-md" type="_path" use="required"/>
-    <xs:attribute name="splits-md" type="_path" use="required"/>
+    <xs:attribute name="index" type="_int" use="required">
+      <xs:annotation>
+        <xs:documentation>Monotonic integer identifying the group's slot in the &lt;plans&gt; sequence; shares namespace with flat plan entries (one slot per group). Assigned at creation, never reused.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="id" type="_slug" use="required">
+      <xs:annotation>
+        <xs:documentation>Date-prefixed slug identifying the group (e.g., 2026-04-29-shared-firm-config). Matches the group-id attribute on the corresponding &lt;plan-splits&gt; root in splits.xml. Child plan ids are derived as &lt;group-id&gt;-&lt;suffix&gt; from each child's splits.xml suffix.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="status" type="_status" use="required">
+      <xs:annotation>
+        <xs:documentation>Group lifecycle state with child cross-constraints (not XSD-expressible, enforced by exec-multi-plan): open = no execution begun (no child is in-progress or closed); in-progress = at least one child is in-progress or closed, group not fully closed; closed = all children closed AND all sequence invariants have passed integration-checkpoint.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="expendable" type="_bool" use="required">
+      <xs:annotation>
+        <xs:documentation>false = preserve the entry as audit history after closure; true = eligible for removal during housekeeping passes once closed. Same semantics as for flat plans.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="synopsis" type="_long_desc" use="required">
+      <xs:annotation>
+        <xs:documentation>One-line description (≤250 chars) of the group's overall scope, spanning all children. Drafted by ingest-spec from the spec's title/motivation.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="spec-md" type="_path" use="required">
+      <xs:annotation>
+        <xs:documentation>Path to the parent spec markdown (relative to project root). All children share this single spec; children's cycles attributes carve up its §6 cycle decomposition.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="splits-md" type="_path" use="required">
+      <xs:annotation>
+        <xs:documentation>Path to the splits.xml file (relative to project root) that decomposed the spec into this group's children. Authored by ingest-spec when the spec exceeds split-trigger thresholds; validated by splits.xsd. Required and non-empty for grouped plans.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
     <xs:attribute name="sequence-md" type="_path" use="required">
-      <xs:annotation><xs:documentation>May be the empty string before sequence-multi-plan runs; non-empty after.</xs:documentation></xs:annotation>
+      <xs:annotation>
+        <xs:documentation>Path to the sequence.xml file (relative to project root) that encodes the group's wave/dependency DAG. May be the empty string before sequence-multi-plan runs (group is opened but not yet sequenced); non-empty after sequencing. exec-multi-plan refuses to dispatch a group with empty sequence-md.</xs:documentation>
+      </xs:annotation>
     </xs:attribute>
   </xs:complexType>
 

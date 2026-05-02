@@ -6,6 +6,11 @@
   <xs:simpleType name="_int">
     <xs:restriction base="xs:positiveInteger" />
   </xs:simpleType>
+  <xs:simpleType name="_index">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="(\d+)|(\d+.\d+)" />
+    </xs:restriction>
+  </xs:simpleType>
   <xs:simpleType name="_float">
     <xs:restriction base="xs:decimal" />
   </xs:simpleType>
@@ -62,48 +67,48 @@
   <!-- Cycle range: matches "[§N.M..§N.K]" or "[§N.M]" or "[§N.M,§N.K]" or mixed "[§N.M..§N.K,§N.L]". Subsection (.M) is mandatory; bare "§N" is rejected because every spec cycle lives under a numbered subsection. -->
   <xs:simpleType name="_cycle_range">
     <xs:restriction base="xs:string">
-      <xs:pattern value="\[§\d+\.\d+(\.\.§\d+\.\d+)?(,§\d+\.\d+(\.\.§\d+\.\d+)?)*\]"/>
+      <xs:pattern value="\[§\d+\.\d+(\.\.§\d+\.\d+)?(,§\d+\.\d+(\.\.§\d+\.\d+)?)*\]" />
     </xs:restriction>
   </xs:simpleType>
   <!-- Plan-suffix: alphanumeric+dash, no leading dash, no spaces. Examples: foundation, cache, integration, 9a, 9b, 9c. Used by splits.xml entries and sequence.xml wave references. -->
   <xs:simpleType name="_plan_suffix">
     <xs:restriction base="xs:string">
-      <xs:pattern value="[a-zA-Z0-9][a-zA-Z0-9-]*"/>
-      <xs:maxLength value="40"/>
+      <xs:pattern value="[a-zA-Z0-9][a-zA-Z0-9-]*" />
+      <xs:maxLength value="40" />
     </xs:restriction>
   </xs:simpleType>
   <!-- Comma-separated suffix list (for depends-on). Empty allowed. -->
   <xs:simpleType name="_suffix_list">
     <xs:restriction base="xs:string">
-      <xs:pattern value="(([a-zA-Z0-9][a-zA-Z0-9-]*)(,[a-zA-Z0-9][a-zA-Z0-9-]*)*)?"/>
+      <xs:pattern value="(([a-zA-Z0-9][a-zA-Z0-9-]*)(,[a-zA-Z0-9][a-zA-Z0-9-]*)*)?" />
     </xs:restriction>
   </xs:simpleType>
   <!-- Worktree requirement values. -->
   <xs:simpleType name="_worktree_req">
     <xs:restriction base="xs:string">
-      <xs:enumeration value="not-required"/>
-      <xs:enumeration value="required"/>
+      <xs:enumeration value="not-required" />
+      <xs:enumeration value="required" />
     </xs:restriction>
   </xs:simpleType>
   <!-- Path that must be non-empty. Variant of _path for attributes where the empty string is invalid (i.e., everywhere except _plan_group/@sequence-md, which is legitimately empty before sequence-multi-plan runs). -->
   <xs:simpleType name="_path_required_nonempty">
     <xs:restriction base="_path">
-      <xs:minLength value="1"/>
+      <xs:minLength value="1" />
     </xs:restriction>
   </xs:simpleType>
   <!-- Semicolon-separated path list. Each item must start with a non-whitespace, non-semicolon character. Promoted from splits.xsd so other schemas (e.g., a future chores blast-radius) can reuse it. -->
   <xs:simpleType name="_path_list">
     <xs:restriction base="xs:string">
-      <xs:pattern value="[^;\s][^;]*(;[^;\s][^;]*)*"/>
+      <xs:pattern value="[^;\s][^;]*(;[^;\s][^;]*)*" />
     </xs:restriction>
   </xs:simpleType>
   <!-- Gate kind enum (cross-plan execution gate categories). Closed set; new categories require schema bump. -->
   <xs:simpleType name="_gate_kind">
     <xs:restriction base="xs:string">
-      <xs:enumeration value="project-test"/>
-      <xs:enumeration value="project-check"/>
-      <xs:enumeration value="invariant-check"/>
-      <xs:enumeration value="peer-symbol-check"/>
+      <xs:enumeration value="project-test" />
+      <xs:enumeration value="project-check" />
+      <xs:enumeration value="invariant-check" />
+      <xs:enumeration value="peer-symbol-check" />
     </xs:restriction>
   </xs:simpleType>
 </xs:schema>

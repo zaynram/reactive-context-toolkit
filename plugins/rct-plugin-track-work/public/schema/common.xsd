@@ -4,7 +4,7 @@
   <xs:complexType name="_entry"
                   mixed="false">
     <xs:attribute name="index"
-                  type="_int"
+                  type="_index"
                   use="required" />
     <xs:attribute name="id"
                   type="_slug"

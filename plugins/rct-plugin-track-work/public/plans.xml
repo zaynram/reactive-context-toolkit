@@ -5,5 +5,5 @@
            created-at=""
            modified-at=""
            context="Canonical reference for all plans within the project. Plans are scopes and tasks designed for the purpose of advancing active development work.">
-  <plans/>
+  <plans />
 </reference>

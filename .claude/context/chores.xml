@@ -3,8 +3,45 @@
     name="chores"
     path=".claude/context/chores.xml"
     context="Canonical reference for outstanding chores for the project. Chores are small actionable items that need to be addressed, but do not take priority over active development work."
-    created-at=""
-    modified-at=""
+    created-at="2026-05-01T00:00:00Z"
+    modified-at="2026-05-01T00:00:00Z"
 >
-    <chores></chores>
+    <chores>
+        <chore
+            index="1"
+            id="2026-05-01_absorb_redundant_read_guard_builtin"
+            status="open"
+            expendable="true"
+            synopsis="Absorb redundant-read-guard hook as a builtin plugin"
+        >
+            Source: ../claude-lib/.claude/hooks/rct/redundant-read-guard.ts.
+            Two-part scope.
+
+            (1) Complete the TODO(human) `decide()` implementation. Inputs:
+            turnsSinceRead, bytesSinceRead, secondsSinceRead, fileSize. Base
+            thresholds at ~5KB file size: turns=3, bytes=5000, seconds=60.
+            Scale thresholds inversely with fileSize so larger files trip the
+            guard sooner and tiny helpers stay "fresh" longer. Return one of
+            three zones: clearly fresh -> `block` with redirect text Claude
+            reads to reuse the prior read; near-threshold -> `warn` with a
+            short message Claude reasons over before re-reading; clearly
+            stale -> `allow` with empty message. Cover the decision with
+            tests against `src/plugin/types.ts` PluginHookInput shapes.
+
+            (2) Package as a workspace plugin at
+            plugins/rct-plugin-redundant-read-guard/ matching the layout of
+            existing builtins (e.g. plugins/rct-plugin-tasktools/). The
+            current `default export { name, trigger }` already conforms to
+            RCTPlugin -- preserve it. Then register in two places:
+            BUILTIN_PLUGINS in src/constants.ts and optionalDependencies in
+            the root package.json (both as workspace:*). Verify resolution
+            via the built-in -> local -> package chain in
+            src/plugin/resolve.ts and add a smoke test that loading the
+            plugin by name yields a working trigger.
+
+            Acceptance: `bun check` passes; loading the plugin by built-in
+            name in a fresh rct.config.json registers the PreToolUse(Read)
+            guard end-to-end.
+        </chore>
+    </chores>
 </reference>

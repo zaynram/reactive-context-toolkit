@@ -8,7 +8,7 @@
   </xs:simpleType>
   <xs:simpleType name="_index">
     <xs:restriction base="xs:string">
-      <xs:pattern value="(\d+)|(\d+.\d+)" />
+      <xs:pattern value="(\d+)|(\d+\.\d+)" />
     </xs:restriction>
   </xs:simpleType>
   <xs:simpleType name="_float">

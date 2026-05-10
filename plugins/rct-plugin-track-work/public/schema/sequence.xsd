@@ -101,6 +101,16 @@
     <xs:attribute name="finishing-skill" type="_bool" use="required">
       <xs:annotation><xs:documentation>Theme B integration point. Whether to invoke `superpowers:finishing-a-development-branch` after group close. Default `true` if any child has `worktree="required"`, else `false` (Theme B will replace this default with its own logic).</xs:documentation></xs:annotation>
     </xs:attribute>
+    <!-- Theme B additions: all optional with schema-level defaults. Pre-Theme-B sequence.xml documents validate without modification. -->
+    <xs:attribute name="plan-review-cadence" type="_plan_review_cadence" use="optional" default="both">
+      <xs:annotation><xs:documentation>Cadence for reasoning-protocols:plan-review invocation during spec-to-multi-plan. per-teammate = Stage A only. stage-b-only = Stage B only. both = Stage A then Stage B (default). disabled = no plan-review (Theme A legacy behavior).</xs:documentation></xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="code-review-critical-action" type="_critical_action" use="optional" default="halt">
+      <xs:annotation><xs:documentation>Action taken when superpowers:code-review surfaces a Critical finding. halt (default) = executor halts immediately. refactor = executor opens a Refactor commit, re-runs review; if still Critical, halts. defer-chore = executor opens a follow-up chore and proceeds.</xs:documentation></xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="auto-delete-cleanup-branches" type="_bool" use="optional" default="false">
+      <xs:annotation><xs:documentation>Whether finishing-skill's per-child cleanup auto-deletes child branches without user confirmation. Default false (must opt-in for destructive action).</xs:documentation></xs:annotation>
+    </xs:attribute>
   </xs:complexType>
 
   <xs:element name="sequence">

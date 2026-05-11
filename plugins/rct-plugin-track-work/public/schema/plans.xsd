@@ -18,6 +18,15 @@
             <xs:documentation>The path to the implementation plan file, relative to project root. Must be empty or match path regex.</xs:documentation>
           </xs:annotation>
         </xs:attribute>
+        <!-- Theme B addition: optional worktree requirement for single-plan execution. -->
+        <xs:attribute name="worktree"
+                      type="_worktree_req"
+                      use="optional"
+                      default="not-required">
+          <xs:annotation>
+            <xs:documentation>Worktree requirement for single-plan execution. required = exec-plan auto-EnterWorktrees at dispatch step 2 and auto-ExitWorktrees at step 6 before invoking finishing-skill. not-required (default) = exec-plan does not touch worktree state. Default preserves backward compatibility with existing flat-plan entries pre-dating Theme B.</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
@@ -41,13 +50,8 @@
             <xs:documentation>Comma-separated list of sibling suffixes that must reach Green commits before this child can begin execution. Empty = no prerequisites (eligible for the first wave). References must resolve to other suffixes in the same plan-group; sequence-multi-plan validates the DAG. Mirrors the splits.xml depends-on attribute.</xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="worktree"
-                      type="_worktree_req"
-                      use="required">
-          <xs:annotation>
-            <xs:documentation>required = MUST run in an isolated worktree (set when blast-radius overlaps concurrent siblings on top-level non-submodule paths); not-required = blast-radius disjoint from concurrent siblings, or overlap is inside a shared submodule (which forces sequential ordering instead). Determined deterministically by ingest-spec as a pure function of (blast-radius, depends-on graph) — do not hand-edit; change blast-radius or depends-on edges and re-run ingest-spec instead. Mirrors the splits.xml worktree attribute.</xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
+        <!-- worktree is inherited as optional from _plan_entry (Theme B addition). exec-multi-plan enforces presence at dispatch time for grouped children. -->
+
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>

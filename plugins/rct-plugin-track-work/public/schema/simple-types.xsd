@@ -111,4 +111,21 @@
       <xs:enumeration value="peer-symbol-check" />
     </xs:restriction>
   </xs:simpleType>
+  <!-- Theme B: plan-review invocation cadence (per-teammate Stage A, stage-b-only, both, or disabled). -->
+  <xs:simpleType name="_plan_review_cadence">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="per-teammate" />
+      <xs:enumeration value="stage-b-only" />
+      <xs:enumeration value="both" />
+      <xs:enumeration value="disabled" />
+    </xs:restriction>
+  </xs:simpleType>
+  <!-- Theme B: action taken on a Critical code-review finding during exec-{plan,multi-plan}. -->
+  <xs:simpleType name="_critical_action">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="halt" />
+      <xs:enumeration value="refactor" />
+      <xs:enumeration value="defer-chore" />
+    </xs:restriction>
+  </xs:simpleType>
 </xs:schema>

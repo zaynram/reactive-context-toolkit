@@ -7,11 +7,7 @@
  * - Deduplicates with pixi task injection when both are active
  * - Checks tasktools presence freshly each invocation (handles install/uninstall)
  */
-import {
-    definePlugin,
-    type PluginHookInput,
-    type HookEvent,
-} from 'reactive-context-toolkit'
+import { definePlugin, type PluginHookInput, type HookEvent } from 'rct'
 import { existsSync, readFileSync } from 'fs'
 import { resolve } from 'path'
 

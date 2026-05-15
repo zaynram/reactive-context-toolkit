@@ -12,9 +12,9 @@ describe('resolvePlugin', () => {
     })
 
     test('resolves built-in issue-scope', async () => {
-        const result = await resolvePlugin('rct-plugin-issue-scope')
+        const result = await resolvePlugin('rct-plugin-read-guard')
         expect(result.source).toBe('builtin')
-        expect(result.plugin.name).toBe('rct-plugin-issue-scope')
+        expect(result.plugin.name).toBe('rct-plugin-read-guard')
     })
 
     test('throws for unknown plugin name', async () => {
@@ -31,8 +31,11 @@ describe('resolvePlugin', () => {
 describe('displayName', () => {
     test('strips rct-plugin- prefix', () => {
         expect(
-            displayName({ name: 'rct-plugin-tmux' }, 'rct-plugin-tmux'),
-        ).toBe('tmux')
+            displayName(
+                { name: 'rct-plugin-track-work' },
+                'rct-plugin-track-work',
+            ),
+        ).toBe('track-work')
     })
 
     test('uses plugin.name when present', () => {

@@ -1,6 +1,6 @@
 {
-    "name": "rct-plugin-issue-scope",
-    "version": "0.1.0",
+    "name": "rct-plugin-read-guard",
+    "version": "0.0.1",
     "type": "module",
     "scripts": {
         "test": "bun test",
@@ -10,14 +10,5 @@
         "format": "prettier --write .",
         "check": "bun format && bun lint:fix"
     },
-    "peerDependencies": {
-        "reactive-context-toolkit": "github:zaynram/reactive-context-toolkit"
-    },
-    "exports": {
-        ".": "./src/index.ts"
-    },
-    "devDependencies": {
-        "bun-types": "^1.3.11",
-        "typescript": "^6.0.2"
-    }
+    "exports": { ".": "./src/index.ts" }
 }

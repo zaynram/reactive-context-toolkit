@@ -347,9 +347,9 @@ describe('discoverPlugins', () => {
     test('finds built-in plugin names', () => {
         setup({})
         const result = discoverPlugins(TMP_DIR)
-        expect(result).toContain('rct-plugin-issue-scope')
+        expect(result).toContain('rct-plugin-read-guard')
         expect(result).toContain('rct-plugin-track-work')
-        expect(result).toContain('rct-plugin-tmux')
+        expect(result).toContain('rct-plugin-tasktools')
     })
 
     test('finds local plugin files in .claude/hooks/rct/', () => {
@@ -375,7 +375,7 @@ describe('discoverPlugins', () => {
     test('returns only built-in plugins when no local or installed plugins exist', () => {
         setup({})
         const result = discoverPlugins(TMP_DIR)
-        expect(result).toHaveLength(5) // issue-scope, track-work, tmux, tasktools, autonomous-ops
+        expect(result).toHaveLength(3) // issue-scope, track-work, tmux, tasktools, autonomous-ops
     })
 })
 

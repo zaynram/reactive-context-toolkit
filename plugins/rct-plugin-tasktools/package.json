@@ -1,9 +1,13 @@
 {
     "name": "rct-plugin-tasktools",
-    "version": "0.1.0",
     "type": "module",
-    "peerDependencies": {
-        "reactive-context-toolkit": "github:zaynram/reactive-context-toolkit"
+    "scripts": {
+        "test": "bun test",
+        "lint": "bun oxlint --node-plugin --import-plugin --type-aware --type-check",
+        "lint:fix": "bun lint --fix",
+        "format:check": "prettier --check .",
+        "format": "prettier --write .",
+        "check": "bun format && bun lint:fix"
     },
-    "scripts": {}
+    "exports": { ".": "./src/index.ts" }
 }

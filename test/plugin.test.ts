@@ -2,12 +2,10 @@ import { describe, expect, test } from 'bun:test'
 import pluginRegistry from '#plugin/index'
 
 describe('plugin registry', () => {
-    test('contains all 5 builtin plugins', () => {
+    test('contains all builtin plugins', () => {
         expect('rct-plugin-track-work' in pluginRegistry).toBe(true)
-        expect('rct-plugin-issue-scope' in pluginRegistry).toBe(true)
-        expect('rct-plugin-tmux' in pluginRegistry).toBe(true)
         expect('rct-plugin-tasktools' in pluginRegistry).toBe(true)
-        expect('rct-plugin-autonomous-ops' in pluginRegistry).toBe(true)
+        expect('rct-plugin-read-guard' in pluginRegistry).toBe(true)
     })
 
     test('each plugin has a name matching its registry key', () => {
@@ -40,30 +38,5 @@ describe('rct-plugin-track-work', () => {
                 file.metaFiles?.some((m) => m.alias === 'entry-schema'),
             ).toBe(true)
         }
-    })
-})
-
-describe('rct-plugin-issue-scope', () => {
-    const { plugin } = pluginRegistry['rct-plugin-issue-scope']!
-
-    test("has name 'rct-plugin-issue-scope'", () => {
-        expect(plugin.name).toBe('rct-plugin-issue-scope')
-    })
-
-    test('contributes scope and candidates files', () => {
-        const aliases = (plugin.files ?? []).map((f) => f.alias)
-        expect(aliases).toContain('scope')
-        expect(aliases).toContain('candidates')
-    })
-
-    test('scope file has injectOn: SessionStart', () => {
-        const scope = (plugin.files ?? []).find((f) => f.alias === 'scope')
-        expect(scope?.injectOn).toBe('SessionStart')
-    })
-
-    test('scope file has staleCheck configured', () => {
-        const scope = (plugin.files ?? []).find((f) => f.alias === 'scope')
-        expect(scope?.staleCheck).toBeDefined()
-        expect(scope?.staleCheck?.dateTag).toBe('date')
     })
 })

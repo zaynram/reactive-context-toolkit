@@ -1,16 +1,32 @@
 {
-    "compilerOptions": {
-        "target": "ESNext",
-        "module": "ESNext",
-        "moduleResolution": "bundler",
-        "strict": true,
-        "noEmit": true,
-        "esModuleInterop": true,
-        "skipLibCheck": true,
-        "forceConsistentCasingInFileNames": true,
-        "paths": { "#*": ["./src/*"] },
-        "types": ["bun-types"]
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "paths": {
+      "#*": [
+        "./src/*"
+      ],
+      "$*": [
+        "./plugins/*"
+      ]
     },
-    "include": ["src", "test"],
-    "exclude": ["node_modules", "lib"]
+    "types": [
+      "bun-types"
+    ]
+  },
+  "include": [
+    "src",
+    "test",
+    "plugins"
+  ],
+  "exclude": [
+    "node_modules",
+    "lib"
+  ]
 }

@@ -12,63 +12,21 @@
         "typescript": "^6.0.3",
       },
       "optionalDependencies": {
-        "rct-plugin-autonomous-ops": "workspace:*",
-        "rct-plugin-issue-scope": "workspace:*",
+        "rct-plugin-read-guard": "workspace:*",
         "rct-plugin-tasktools": "workspace:*",
-        "rct-plugin-tmux": "workspace:*",
         "rct-plugin-track-work": "workspace:*",
       },
     },
-    "plugins/rct-plugin-autonomous-ops": {
-      "name": "rct-plugin-autonomous-ops",
-      "version": "0.1.0",
-    },
-    "plugins/rct-plugin-issue-scope": {
-      "name": "rct-plugin-issue-scope",
-      "version": "0.1.0",
-      "devDependencies": {
-        "bun-types": "^1.3.11",
-        "typescript": "^6.0.2",
-      },
-      "peerDependencies": {
-        "reactive-context-toolkit": "github:zaynram/reactive-context-toolkit",
-      },
+    "plugins/rct-plugin-read-guard": {
+      "name": "rct-plugin-read-guard",
+      "version": "0.0.1",
     },
     "plugins/rct-plugin-tasktools": {
       "name": "rct-plugin-tasktools",
-      "version": "0.1.0",
-      "peerDependencies": {
-        "reactive-context-toolkit": "github:zaynram/reactive-context-toolkit",
-      },
-    },
-    "plugins/rct-plugin-tmux": {
-      "name": "rct-plugin-tmux",
-      "version": "0.1.0",
-      "bin": {
-        "rct-tmux": "./src/cli.ts",
-      },
-      "dependencies": {
-        "@modelcontextprotocol/sdk": "^1.23.0",
-        "zod": "^4.3.6",
-      },
-      "devDependencies": {
-        "bun-types": "^1.3.11",
-        "typescript": "^6.0.2",
-      },
-      "peerDependencies": {
-        "reactive-context-toolkit": "github:zaynram/reactive-context-toolkit",
-      },
     },
     "plugins/rct-plugin-track-work": {
       "name": "rct-plugin-track-work",
-      "version": "1.0.3",
-      "devDependencies": {
-        "bun-types": "^1.3.11",
-        "typescript": "^6.0.2",
-      },
-      "peerDependencies": {
-        "reactive-context-toolkit": "github:zaynram/reactive-context-toolkit",
-      },
+      "version": "1.0.4",
     },
   },
   "packages": {
@@ -310,17 +268,11 @@
 
     "raw-body": ["raw-body@3.0.2", "", { "dependencies": { "bytes": "~3.1.2", "http-errors": "~2.0.1", "iconv-lite": "~0.7.0", "unpipe": "~1.0.0" } }, "sha512-K5zQjDllxWkf7Z5xJdV0/B0WTNqx6vxG70zJE4N0kBs4LovmEYWJzQGxC9bS9RAKu3bgM40lrd5zoLJ12MQ5BA=="],
 
-    "rct-plugin-autonomous-ops": ["rct-plugin-autonomous-ops@workspace:plugins/rct-plugin-autonomous-ops"],
-
-    "rct-plugin-issue-scope": ["rct-plugin-issue-scope@workspace:plugins/rct-plugin-issue-scope"],
+    "rct-plugin-read-guard": ["rct-plugin-read-guard@workspace:plugins/rct-plugin-read-guard"],
 
     "rct-plugin-tasktools": ["rct-plugin-tasktools@workspace:plugins/rct-plugin-tasktools"],
 
-    "rct-plugin-tmux": ["rct-plugin-tmux@workspace:plugins/rct-plugin-tmux"],
-
     "rct-plugin-track-work": ["rct-plugin-track-work@workspace:plugins/rct-plugin-track-work"],
-
-    "reactive-context-toolkit": ["reactive-context-toolkit@github:zaynram/reactive-context-toolkit#f1cc448", { "optionalDependencies": { "rct-plugin-autonomous-ops": "workspace:*", "rct-plugin-issue-scope": "workspace:*", "rct-plugin-tasktools": "workspace:*", "rct-plugin-tmux": "workspace:*", "rct-plugin-track-work": "workspace:*" }, "bin": { "rct": "./src/cli/index.ts" } }, "zaynram-reactive-context-toolkit-f1cc448", "sha512-GO6eaeCeESmQrk9ctNyvfnIS7n4sZ5gL9/+GJ1vlRYfJfrnoN3g9RExx3lkR50u4c7Hzt/s+4Y32Qa6iOUfjRQ=="],
 
     "require-from-string": ["require-from-string@2.0.2", "", {}, "sha512-Xf0nWe6RseziFMu+Ap9biiUbmplq6S9/p+7w7YXP/JBHhrUDDUhwa+vANyubuqfZWTveU//DYVGsDG7RKL/vEw=="],
 

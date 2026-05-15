@@ -275,19 +275,6 @@ describe('applyPlugins extensions', () => {
         expect(result.extensions.triggers).toEqual([])
     })
 
-    test('applyPlugins with built-in plugins (no context/trigger) returns empty extensions', async () => {
-        const config = makeValidatedConfig([
-            'rct-plugin-track-work',
-            'rct-plugin-issue-scope',
-        ])
-        const result = await applyPlugins(config)
-        // Built-in plugins don't have context/trigger
-        expect(result.extensions.contexts).toEqual([])
-        expect(result.extensions.triggers).toEqual([])
-        // But files/rules should still be merged
-        expect(result.config.files?.length).toBeGreaterThan(0)
-    })
-
     test('extensions functions are paired with plugin names', async () => {
         // This tests the shape — the actual plugin resolution is tested in integration
         const config = makeValidatedConfig([])

@@ -9,6 +9,13 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "paths": {
+      "rct": [
+        "./src/index.ts",
+        "./src/constants.ts"
+      ],
+      "types": [
+        "./src/types.d.ts"
+      ],
       "#*": [
         "./src/*"
       ],
@@ -21,12 +28,12 @@
     ]
   },
   "include": [
-    "src",
-    "test",
-    "plugins"
+    "src/**/*.ts",
+    "test/**/*.ts",
+    "plugins/**/*.ts"
   ],
   "exclude": [
-    "node_modules",
-    "lib"
+    "**/node_modules",
+    "**/lib"
   ]
 }

@@ -10,5 +10,10 @@
         "format": "prettier --write .",
         "check": "bun format && bun lint:fix"
     },
-    "exports": { ".": "./src/index.ts" }
+    "exports": {
+        ".": "./src/index.ts"
+    },
+    "dependencies": {
+        "validate-with-xmllint": "^1.2.1"
+    }
 }

@@ -1,24 +1,25 @@
 import type {
-    SyncHookJSONOutput,
     HookEvent as _HookEvent,
     HookInput as _HookInput,
     BaseHookInput,
     PreToolUseHookInput,
     PostToolUseHookInput,
+    HookJSONOutput as _HookJSONOutput,
 } from '@anthropic-ai/claude-agent-sdk'
 
 declare namespace RC {
     type HookSpecificOutput<T extends _HookEvent = _HookEvent> =
-        Required<SyncHookJSONOutput>['hookSpecificOutput'] & {
+        Required<_HookJSONOutput>['hookSpecificOutput'] & {
             hookEventName: T
             additionalContext: string
         }
 
-    type HookJSONOutput<T extends HookEvent = HookEvent> =
-        SyncHookJSONOutput & { hookSpecificOutput: HookSpecificOutput<T> }
+    type HookJSONOutput<T extends HookEvent = HookEvent> = _HookJSONOutput & {
+        hookSpecificOutput: HookSpecificOutput<T>
+    }
 
     type ExtraHookJSONOutput<T extends HookEvent = HookEvent> = Omit<
-        HookJSONOutput<T>,
+        _HookJSONOutput<T>,
         'hookSpecificOutput'
     >
 

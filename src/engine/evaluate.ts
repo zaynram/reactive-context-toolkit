@@ -1,4 +1,9 @@
-import type { MatchCondition, Match, MatchTarget } from '../config/types'
+import type {
+    MatchCondition,
+    Match,
+    MatchTarget,
+    MatchOptions,
+} from '#config/types'
 
 /**
  * Convert a simple glob pattern to a regex.
@@ -38,15 +43,20 @@ function globToRegex(glob: string): RegExp {
     return new RegExp('^' + regex + '$')
 }
 
-function getPatternStrings(pattern: MatchCondition['pattern']): string[] {
-    if (typeof pattern === 'string') return [pattern]
-    return pattern.map((p) => (typeof p === 'string' ? p : p.path))
+function getPatternStrings(
+    pattern: MatchCondition['pattern'],
+): (string | RegExp)[] {
+    if (Array.isArray(pattern))
+        return pattern.map((p) => (typeof p === 'object' ? p.path : p))
+    return [pattern]
 }
 
+type MatchSingleParameters =
+    | [operator: string, pattern: string, value: string]
+    | [operator: 'regex', pattern: string | RegExp, value: string]
+
 function matchSingle(
-    operator: string,
-    pattern: string,
-    value: string,
+    ...[operator, pattern, value]: MatchSingleParameters
 ): boolean {
     switch (operator) {
         case 'regex':
@@ -112,15 +122,12 @@ export function extractTargetValue(
     return direct ?? ''
 }
 
-export function evaluateMatch(
+export const evaluateMatch = (
     match: Match,
     payload: Record<string, unknown>,
-): boolean {
-    const conditions = Array.isArray(match) ? match : [match]
-
-    // AND logic: all conditions must be true
-    return conditions.every((cond) => {
-        const value = extractTargetValue(cond.target, payload)
-        return evaluateCondition(cond, value)
-    })
-}
+    options?: MatchOptions,
+): boolean =>
+    (Array.isArray(match) ? match : [match])[options?.method ?? 'every'](
+        (cond: MatchCondition) =>
+            evaluateCondition(cond, extractTargetValue(cond.target, payload)),
+    )

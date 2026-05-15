@@ -4,17 +4,19 @@
  */
 
 import { LANGUAGES } from '#constants'
-
+import type { HookEvent as _HookEvent } from '@anthropic-ai/claude-agent-sdk'
 /** Hook events that support additionalContext */
-export type HookEvent =
-    | 'PreToolUse'
-    | 'PostToolUse'
-    | 'PostToolUseFailure'
-    | 'SessionStart'
-    | 'UserPromptSubmit'
-    | 'Setup'
-    | 'SubagentStart'
-    | 'Notification'
+export type HookEvent = _HookEvent
+    & (
+        | 'PreToolUse'
+        | 'PostToolUse'
+        | 'PostToolUseFailure'
+        | 'SessionStart'
+        | 'UserPromptSubmit'
+        | 'Setup'
+        | 'SubagentStart'
+        | 'Notification'
+    )
 
 /** A single hook event or an array of hook events */
 export type HookEventOrArray = HookEvent | HookEvent[]
@@ -119,18 +121,46 @@ export type MatchOperator =
     | 'ends_with'
     | 'glob'
 
-/** A single match condition */
-export interface MatchCondition {
+export interface RegexMatchCondition {
     /** What to match against */
     target: MatchTarget
-    /** How to match (default: "regex") */
-    operator?: MatchOperator
-    /** Pattern(s) to match -- string or array of strings/objects */
-    pattern: string | (string | { name: string; path: string })[]
+    /** How to match */
+    operator?: 'regex' & MatchOperator
+    /** Pattern(s) to match -- string, regex, or array of strings/regex */
+    pattern: string | RegExp | (string | RegExp)[]
 }
+
+export interface StringMatchCondition {
+    /** What to match against */
+    target: MatchTarget
+    /** How to match */
+    operator?: Omit<MatchOperator, 'regex'>
+    /** Pattern(s) to match -- string or array of strings */
+    pattern: string | string[]
+}
+
+export interface FileMatchCondition {
+    /** What to match against */
+    target: 'file_path'
+    /** How to match */
+    operator?: Omit<MatchOperator, 'regex'>
+    /** Pattern(s) to match -- object or array of objects */
+    pattern: { name?: string; alias?: string; path: string }[]
+}
+
+/** A single match condition */
+type MatchCondition =
+    | FileMatchCondition
+    | RegexMatchCondition
+    | StringMatchCondition
 
 /** A match specification: single condition or array of conditions */
 export type Match = MatchCondition | MatchCondition[]
+
+/** Options for controlling the behavior of the match evaluation */
+export interface MatchOptions {
+    method?: 'every' | 'some'
+}
 
 /** A rule entry that blocks or warns on matched tool usage */
 export interface RuleEntry {

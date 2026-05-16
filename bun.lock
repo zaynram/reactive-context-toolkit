@@ -4,6 +4,9 @@
   "workspaces": {
     "": {
       "name": "reactive-context-toolkit",
+      "dependencies": {
+        "validate-with-xmllint": "^1.2.1",
+      },
       "devDependencies": {
         "@anthropic-ai/claude-agent-sdk": "^0.2.141",
         "bun-types": "^1.3.14",

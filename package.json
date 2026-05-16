@@ -46,5 +46,8 @@
         "prepublish": "bun check",
         "publish": "git commit -a -m 'latest source code' && git push"
     },
-    "workspaces": [".", "plugins/*"]
+    "workspaces": [".", "plugins/*"],
+    "dependencies": {
+        "validate-with-xmllint": "^1.2.1"
+    }
 }

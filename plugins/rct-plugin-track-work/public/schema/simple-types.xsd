@@ -37,9 +37,17 @@
       <xs:pattern value="\d{4}-\d{2}-\d{2}-[a-zA-Z0-9-]+" />
     </xs:restriction>
   </xs:simpleType>
+  <!-- _status: closed enumeration matching _worktree_req / _gate_kind / _critical_action shape.
+       Promoted from xs:pattern so XSD-level violation messages name the expected values rather
+       than emitting a generic pattern-mismatch. New status values require a schema bump.
+       Cross-element status invariants (e.g., plan-group atomicity, chore status/fulfillment
+       biconditional) cannot be expressed in XSD 1.0 and are the domain of a downstream
+       cross-element validator supplied by the consuming project. -->
   <xs:simpleType name="_status">
     <xs:restriction base="xs:string">
-      <xs:pattern value="open|in-progress|closed" />
+      <xs:enumeration value="open" />
+      <xs:enumeration value="in-progress" />
+      <xs:enumeration value="closed" />
     </xs:restriction>
   </xs:simpleType>
   <xs:simpleType name="_hash">

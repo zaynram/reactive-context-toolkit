@@ -43,5 +43,18 @@
         <xs:annotation><xs:documentation>ISO-8601 timestamp when ingest-spec generated this file. Used for staleness detection.</xs:documentation></xs:annotation>
       </xs:attribute>
     </xs:complexType>
+    <!-- xs:key for plan/@suffix uniqueness within this splits document.
+         Cross-document referential integrity against sequence.xml is NOT expressible in XSD 1.0
+         (the keyref would have to span two independently-validated documents); that check is
+         the domain of a downstream cross-element validator supplied by the consuming project.
+         The key declared here is what a sibling sequence.xsd keyref WOULD reference if XSD 1.0
+         supported cross-document scope. -->
+    <xs:key name="plan_suffix_key">
+      <xs:annotation>
+        <xs:documentation>Local uniqueness of plan/@suffix within a single &lt;plan-splits&gt; document. ingest-spec is the canonical writer; duplicate suffixes here indicate a generator bug. Cross-document referential integrity (splits.xml ↔ sequence.xml suffix agreement) is enforced by a downstream cross-element validator because XSD 1.0 key/keyref are scoped to a single validated document.</xs:documentation>
+      </xs:annotation>
+      <xs:selector xpath="plan"/>
+      <xs:field xpath="@suffix"/>
+    </xs:key>
   </xs:element>
 </xs:schema>

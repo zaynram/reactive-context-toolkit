@@ -145,5 +145,35 @@
       </xs:attribute>
       <xs:attribute name="generated-at" type="_timestamp" use="required"/>
     </xs:complexType>
+    <!-- wave/@index uniqueness within this sequence document. -->
+    <xs:unique name="wave_index_unique">
+      <xs:annotation>
+        <xs:documentation>Wave indices MUST be unique within a single &lt;sequence&gt; document. Contiguous-from-1 (1, 2, 3, … no gaps) is a stronger ordinal constraint XSD 1.0 cannot express on its own; that contiguity check is the domain of a downstream cross-element validator supplied by the consuming project (counts distinct indices and asserts max==count). xs:unique here is the structural floor.</xs:documentation>
+      </xs:annotation>
+      <xs:selector xpath="waves/wave"/>
+      <xs:field xpath="@index"/>
+    </xs:unique>
+    <!-- Declare a key on wave-member suffixes so dependencies/edge/@from + @to keyrefs resolve to a suffix that actually appears in some wave WITHIN THIS sequence document. Pure-XSD catch for dangling edges. Cross-document (splits.xml ↔ sequence.xml suffix agreement) is the domain of a downstream cross-element validator — see splits.xsd plan_suffix_key annotation. -->
+    <xs:key name="wave_plan_suffix_key">
+      <xs:annotation>
+        <xs:documentation>Suffixes declared in waves/wave/plan/@suffix form the local key space. Used by edge_from_keyref + edge_to_keyref below. NOTE: suffix uniqueness across the FULL sequence document is intentionally not asserted here — a child plan may legitimately appear in only one wave, and the keyref only requires existence. If a suffix were repeated across waves this would be a sequencing bug caught by sequence-multi-plan / sequence_helpers, not by the schema.</xs:documentation>
+      </xs:annotation>
+      <xs:selector xpath="waves/wave/plan"/>
+      <xs:field xpath="@suffix"/>
+    </xs:key>
+    <xs:keyref name="edge_from_keyref" refer="wave_plan_suffix_key">
+      <xs:annotation>
+        <xs:documentation>dependencies/edge/@from MUST resolve to a wave-member suffix declared within this sequence document. Dangling references are rejected at schema validation time.</xs:documentation>
+      </xs:annotation>
+      <xs:selector xpath="dependencies/edge"/>
+      <xs:field xpath="@from"/>
+    </xs:keyref>
+    <xs:keyref name="edge_to_keyref" refer="wave_plan_suffix_key">
+      <xs:annotation>
+        <xs:documentation>dependencies/edge/@to MUST resolve to a wave-member suffix declared within this sequence document. Dangling references are rejected at schema validation time.</xs:documentation>
+      </xs:annotation>
+      <xs:selector xpath="dependencies/edge"/>
+      <xs:field xpath="@to"/>
+    </xs:keyref>
   </xs:element>
 </xs:schema>

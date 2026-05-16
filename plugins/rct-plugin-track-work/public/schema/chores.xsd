@@ -109,8 +109,12 @@
               chore's scope. Subsequent related commits must carry
               `&lt;commit role="amendment"/&gt;`. Required when status="closed",
               absent when status="open" — the status/fulfillment cross-constraint
-              is not expressible in XSD 1.0 (the toolchain's supported level);
-              see in-file reminder at top of chores.xml.
+              is not expressible in XSD 1.0 (the toolchain's supported level).
+              Enforcement deviation: a downstream cross-element validator
+              supplied by the consuming project asserts the biconditional
+              (status="closed" iff @fulfillment present) on chores.xml.
+              status="in-progress" chores MAY carry @fulfillment as a
+              forward-pin against the work-commit SHA, but it is not required.
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>

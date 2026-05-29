@@ -1,0 +1,7 @@
+{
+    "name": "reactive-context-toolkit",
+    "description": "A zero-dependency Claude Code hook library that reactively injects context into AI sessions based on configurable rules, events, and file references.",
+    "keywords": ["context", "reactive", "injection", "hook", "vanilla"],
+    "license": "MIT",
+    "author": { "name": "Zayn Ramdass", "email": "ramdasszayn@gmail.com" }
+}

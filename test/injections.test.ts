@@ -1,13 +1,9 @@
-import { describe, test, expect, spyOn } from 'bun:test'
-import { evaluateInjections } from '../src/engine/injections'
 import type { InjectionEntry, GlobalsConfig } from '../src/config/types'
+import { evaluateInjections } from '../src/engine/injections'
 import type { FileRegistry, ReferenceFile } from '../src/types'
+import { describe, test, expect, spyOn } from 'bun:test'
 
-function makeRef(
-    alias: string,
-    content: string,
-    brief?: string,
-): ReferenceFile {
+function makeRef(alias: string, content: string, brief?: string): ReferenceFile {
     return { alias, path: `/project/${alias}.xml`, brief, read: () => content }
 }
 
@@ -35,9 +31,7 @@ function makeRegistry(refs: ReferenceFile[]): FileRegistry {
             return file ? { file, useBrief } : undefined
         },
         select(...aliases: string[]) {
-            return aliases
-                .map((a) => map.get(a))
-                .filter((f): f is ReferenceFile => !!f)
+            return aliases.map(a => map.get(a)).filter((f): f is ReferenceFile => !!f)
         },
         all() {
             return Array.from(map.values())
@@ -60,11 +54,7 @@ const defaultGlobals: Required<GlobalsConfig> = {
 }
 
 describe('evaluateInjections', () => {
-    const choresRef = makeRef(
-        'chores',
-        '<chores>Fix tests</chores>',
-        'Active chores',
-    )
+    const choresRef = makeRef('chores', '<chores>Fix tests</chores>', 'Active chores')
     const scopeRef = makeRef('scope', '<scope>RCT v1</scope>')
     const registry = makeRegistry([choresRef, scopeRef])
 
@@ -80,23 +70,20 @@ describe('evaluateInjections', () => {
             'Read',
             {},
             registry,
-            defaultGlobals,
+            defaultGlobals
         )
         expect(result).toEqual([])
     })
 
     test('returns file content for matching injection', () => {
-        const injection: InjectionEntry = {
-            on: 'PreToolUse',
-            inject: ['chores'],
-        }
+        const injection: InjectionEntry = { on: 'PreToolUse', inject: ['chores'] }
         const result = evaluateInjections(
             [injection],
             'PreToolUse',
             'Write',
             {},
             registry,
-            defaultGlobals,
+            defaultGlobals
         )
         expect(result).toHaveLength(1)
         expect(result[0]).toContain('Fix tests')
@@ -114,7 +101,7 @@ describe('evaluateInjections', () => {
             'Write',
             {},
             registry,
-            defaultGlobals,
+            defaultGlobals
         )
         expect(result).toHaveLength(1)
         expect(result[0]).toContain('Active chores')
@@ -122,17 +109,14 @@ describe('evaluateInjections', () => {
     })
 
     test('~brief suffix on individual ref', () => {
-        const injection: InjectionEntry = {
-            on: 'PreToolUse',
-            inject: ['chores~brief'],
-        }
+        const injection: InjectionEntry = { on: 'PreToolUse', inject: ['chores~brief'] }
         const result = evaluateInjections(
             [injection],
             'PreToolUse',
             'Write',
             {},
             registry,
-            defaultGlobals,
+            defaultGlobals
         )
         expect(result).toHaveLength(1)
         expect(result[0]).toContain('Active chores')
@@ -151,7 +135,7 @@ describe('evaluateInjections', () => {
             'Read',
             { tool_input: { file_path: '/project/chores.xml' } },
             registry,
-            defaultGlobals,
+            defaultGlobals
         )
         expect(result).toHaveLength(1)
 
@@ -162,7 +146,7 @@ describe('evaluateInjections', () => {
             'Read',
             { tool_input: { file_path: '/other/file.xml' } },
             registry,
-            defaultGlobals,
+            defaultGlobals
         )
         expect(result2).toEqual([])
     })
@@ -170,11 +154,7 @@ describe('evaluateInjections', () => {
     test('match condition on user prompt', () => {
         const injection: InjectionEntry = {
             on: 'UserPromptSubmit',
-            match: {
-                target: 'user_prompt',
-                operator: 'contains',
-                pattern: 'chores',
-            },
+            match: { target: 'user_prompt', operator: 'contains', pattern: 'chores' },
             inject: ['chores'],
         }
         const result = evaluateInjections(
@@ -183,7 +163,7 @@ describe('evaluateInjections', () => {
             undefined,
             { prompt: 'show me chores' },
             registry,
-            defaultGlobals,
+            defaultGlobals
         )
         expect(result).toHaveLength(1)
         expect(result[0]).toContain('Fix tests')
@@ -201,7 +181,7 @@ describe('evaluateInjections', () => {
             'Write',
             {},
             registry,
-            defaultGlobals,
+            defaultGlobals
         )
         expect(result).toHaveLength(1)
         expect(result[0]).toContain('<project-scope>')
@@ -222,7 +202,7 @@ describe('evaluateInjections', () => {
             'Write',
             {},
             registry,
-            defaultGlobals,
+            defaultGlobals
         )
         expect(result).toHaveLength(1)
         const parsed = JSON.parse(result[0])
@@ -241,7 +221,7 @@ describe('evaluateInjections', () => {
             'Write',
             {},
             registry,
-            defaultGlobals,
+            defaultGlobals
         )
         expect(result).toEqual([])
     })
@@ -256,17 +236,14 @@ describe('evaluateInjections', () => {
             staleCheck: { dateTag: 'date', wrapTag: 'stale-scope' },
         }
         const staleRegistry = makeRegistry([staleRef])
-        const injection: InjectionEntry = {
-            on: 'PreToolUse',
-            inject: ['stale'],
-        }
+        const injection: InjectionEntry = { on: 'PreToolUse', inject: ['stale'] }
         const result = evaluateInjections(
             [injection],
             'PreToolUse',
             'Write',
             {},
             staleRegistry,
-            defaultGlobals,
+            defaultGlobals
         )
         expect(result).toHaveLength(1)
         expect(result[0]).toContain('<stale-scope')
@@ -285,17 +262,14 @@ describe('evaluateInjections', () => {
             staleCheck: { dateTag: 'date', wrapTag: 'stale-scope' },
         }
         const freshRegistry = makeRegistry([freshRef])
-        const injection: InjectionEntry = {
-            on: 'PreToolUse',
-            inject: ['fresh'],
-        }
+        const injection: InjectionEntry = { on: 'PreToolUse', inject: ['fresh'] }
         const result = evaluateInjections(
             [injection],
             'PreToolUse',
             'Write',
             {},
             freshRegistry,
-            defaultGlobals,
+            defaultGlobals
         )
         expect(result).toHaveLength(1)
         expect(result[0]).not.toContain('<stale-scope')
@@ -307,21 +281,18 @@ describe('evaluateInjections — unresolved FileRef warning', () => {
     test('warns and skips when FileRef does not resolve', () => {
         const warnSpy = spyOn(console, 'warn').mockImplementation(() => {})
         const registry = makeRegistry([])
-        const injection: InjectionEntry = {
-            on: 'SessionStart',
-            inject: ['nonexistent'],
-        }
+        const injection: InjectionEntry = { on: 'SessionStart', inject: ['nonexistent'] }
         const result = evaluateInjections(
             [injection],
             'SessionStart',
             undefined,
             {},
             registry,
-            defaultGlobals,
+            defaultGlobals
         )
         expect(result).toHaveLength(0)
         expect(warnSpy).toHaveBeenCalledWith(
-            expect.stringContaining("FileRef 'nonexistent' did not resolve"),
+            expect.stringContaining("FileRef 'nonexistent' did not resolve")
         )
         warnSpy.mockRestore()
     })

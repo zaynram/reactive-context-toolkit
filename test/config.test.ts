@@ -1,4 +1,3 @@
-import { describe, test, expect } from 'bun:test'
 import type {
     HookEvent,
     HookEventOrArray,
@@ -22,6 +21,7 @@ import type {
     MetaConfig,
     RCTConfig,
 } from '../src/config/types'
+import { describe, test, expect } from 'bun:test'
 
 // Helper: compile-time assertion that a value satisfies a type
 // If types.ts is missing or wrong, these will produce TS errors and bun test will fail.
@@ -159,11 +159,7 @@ describe('RCT Config Types', () => {
             description: 'Block writing to node_modules',
             on: 'PreToolUse',
             matcher: 'Write|Edit',
-            match: {
-                target: 'file_path',
-                operator: 'contains',
-                pattern: 'node_modules',
-            },
+            match: { target: 'file_path', operator: 'contains', pattern: 'node_modules' },
             action: 'block',
             message: 'Do not write to node_modules',
         }
@@ -195,10 +191,7 @@ describe('RCT Config Types', () => {
         expect(injection.inject).toHaveLength(2)
 
         // Minimal
-        const minimal: InjectionEntry = {
-            on: 'SessionStart',
-            inject: ['readme'],
-        }
+        const minimal: InjectionEntry = { on: 'SessionStart', inject: ['readme'] }
         expect(minimal.inject).toHaveLength(1)
     })
 
@@ -289,11 +282,7 @@ describe('RCT Config Types', () => {
 
     test('RCTConfig full config satisfies type', () => {
         const config = {
-            globals: {
-                format: 'xml',
-                wrapper: 'context',
-                briefByDefault: false,
-            },
+            globals: { format: 'xml', wrapper: 'context', briefByDefault: false },
             files: [
                 {
                     path: 'CLAUDE.md',
@@ -319,11 +308,7 @@ describe('RCT Config Types', () => {
                 },
             ],
             injections: [{ on: 'PreToolUse', inject: ['docs'] }],
-            meta: {
-                injectOn: 'SessionStart',
-                include: ['files'],
-                brief: false,
-            },
+            meta: { injectOn: 'SessionStart', include: ['files'], brief: false },
         } satisfies RCTConfig
 
         expect(config.globals?.format).toBe('xml')

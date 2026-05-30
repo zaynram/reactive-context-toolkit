@@ -1,31 +1,30 @@
 import type { RCTConfig, HookEvent } from '#config/types'
 import { BUILTIN_PLUGINS } from '#constants'
-
+import { HookInput } from '@anthropic-ai/claude-agent-sdk'
 /** Result from a plugin's dynamic trigger function. */
 export interface PluginTriggerResult {
     action: 'block' | 'warn'
     message: string
 }
 
-/** Input passed to plugin context/trigger functions — matches what the hook pipeline actually has. */
-export interface PluginHookInput {
-    toolName?: string
-    payload: Record<string, unknown>
-}
+/**
+Input passed to plugin context/trigger functions — matches what the hook pipeline actually has.
+*/
+export type PluginHookInput<
+    E extends HookEvent = HookEvent,
+    T extends Record<string, unknown> = Record<string, unknown>,
+> = HookInput & { hook_event_name: E } & T
 
 export interface RCTPlugin extends Pick<RCTConfig, 'rules' | 'files'> {
     name?: string
     context?: (
         event: HookEvent,
-        input: PluginHookInput,
+        input: PluginHookInput
     ) => string | undefined | Promise<string | undefined>
     trigger?: (
         event: HookEvent,
-        input: PluginHookInput,
-    ) =>
-        | PluginTriggerResult
-        | undefined
-        | Promise<PluginTriggerResult | undefined>
+        input: PluginHookInput
+    ) => PluginTriggerResult | undefined | Promise<PluginTriggerResult | undefined>
     setup?: () => void | Promise<void>
     /** Which events trigger context(). Omit = all events. */
     contextOn?: HookEvent | HookEvent[]
@@ -51,6 +50,4 @@ export interface InstalledBuiltinPlugin extends ResolvedPlugin {
     ref: BuiltinPluginRef
 }
 
-export type BuiltinPlugins = Partial<
-    Record<BuiltinPluginRef, InstalledBuiltinPlugin>
->
+export type BuiltinPlugins = Partial<Record<BuiltinPluginRef, InstalledBuiltinPlugin>>

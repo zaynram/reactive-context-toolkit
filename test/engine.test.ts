@@ -1,10 +1,10 @@
-import { describe, test, expect } from 'bun:test'
+import type { MatchCondition, Match } from '../src/config/types'
 import {
     evaluateCondition,
     evaluateMatch,
     extractTargetValue,
 } from '../src/engine/evaluate'
-import type { MatchCondition, Match } from '../src/config/types'
+import { describe, test, expect } from 'bun:test'
 
 describe('evaluateCondition', () => {
     test('regex operator matches', () => {
@@ -18,10 +18,7 @@ describe('evaluateCondition', () => {
     })
 
     test('regex is default operator', () => {
-        const cond: MatchCondition = {
-            target: 'file_path',
-            pattern: 'src/.*\\.ts$',
-        }
+        const cond: MatchCondition = { target: 'file_path', pattern: 'src/.*\\.ts$' }
         expect(evaluateCondition(cond, 'src/config/loader.ts')).toBe(true)
     })
 
@@ -138,9 +135,7 @@ describe('evaluateMatch', () => {
 describe('extractTargetValue', () => {
     test('extracts file_path from tool_input', () => {
         const payload = { tool_input: { file_path: 'src/config/loader.ts' } }
-        expect(extractTargetValue('file_path', payload)).toBe(
-            'src/config/loader.ts',
-        )
+        expect(extractTargetValue('file_path', payload)).toBe('src/config/loader.ts')
     })
 
     test('extracts command from tool_input', () => {
@@ -150,9 +145,7 @@ describe('extractTargetValue', () => {
 
     test('extracts user_prompt from payload (prompt field)', () => {
         const payload = { prompt: 'Please fix the bug' }
-        expect(extractTargetValue('user_prompt', payload)).toBe(
-            'Please fix the bug',
-        )
+        expect(extractTargetValue('user_prompt', payload)).toBe('Please fix the bug')
     })
 
     test('extracts tool_name from payload', () => {
@@ -172,9 +165,7 @@ describe('extractTargetValue', () => {
 
     test('extracts error from payload', () => {
         const payload = { error: 'Something went wrong' }
-        expect(extractTargetValue('error', payload)).toBe(
-            'Something went wrong',
-        )
+        expect(extractTargetValue('error', payload)).toBe('Something went wrong')
     })
 
     test('returns empty string for missing target', () => {

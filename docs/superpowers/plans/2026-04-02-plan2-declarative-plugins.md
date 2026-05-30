@@ -87,8 +87,8 @@ If time permits, create minimal test files:
 ```typescript
 import { describe, test, expect } from 'bun:test'
 import { mkdtempSync, existsSync, rmSync } from 'fs'
-import { join } from 'path'
 import { tmpdir } from 'os'
+import { join } from 'path'
 
 describe('issue-scope setup', () => {
     test('scaffolds missing files from templates', () => {

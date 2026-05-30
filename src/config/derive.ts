@@ -1,3 +1,4 @@
+import { fs } from '#util/fs'
 import type {
     LangConfig,
     LangEntry,
@@ -6,7 +7,6 @@ import type {
     FileEntry,
     GlobalsConfig,
 } from './types'
-import { fs } from '#util/fs'
 
 type NodePackageManager = 'bun' | 'pnpm' | 'npm'
 
@@ -40,9 +40,9 @@ export function deriveFromProject(root: string): DerivedConfig {
     const hasTsconfig = has('tsconfig.json')
     const hasJsconfig = has('jsconfig.json')
     const isNodeProject =
-        hasTsconfig
-        || hasJsconfig
-        || (pkg?.name && (pkg?.version || pkg?.private || pkg?.scripts))
+        hasTsconfig ||
+        hasJsconfig ||
+        (pkg?.name && (pkg?.version || pkg?.private || pkg?.scripts))
 
     if (isNodeProject) {
         // Detect package manager from lockfile
@@ -51,8 +51,9 @@ export function deriveFromProject(root: string): DerivedConfig {
         else if (has('pnpm-lock.yaml')) pmName = 'pnpm'
         else if (has('package-lock.json')) pmName = 'npm'
 
-        const tool: LangTool | undefined =
-            pmName ? { name: pmName, scripts: true } : undefined
+        const tool: LangTool | undefined = pmName
+            ? { name: pmName, scripts: true }
+            : undefined
 
         // Get test command from package.json scripts
         if (tool && pkg?.scripts?.test) {
@@ -96,9 +97,9 @@ export function deriveFromProject(root: string): DerivedConfig {
 
     // Build test config
     const test: TestConfig | null =
-        testCmds.length > 0 ?
-            { command: testCmds.join(' && '), injectOn: 'SessionStart' }
-        :   null
+        testCmds.length > 0
+            ? { command: testCmds.join(' && '), injectOn: 'SessionStart' }
+            : null
 
     return { lang, test, files, globals: {} }
 }

@@ -25,7 +25,7 @@ declare namespace RC {
 
     type HookEvent = HookSpecificOutput['hookEventName']
     type InjectFunction<T extends HookEvent = HookEvent> = (
-        output: HookSpecificOutput<T>,
+        output: HookSpecificOutput<T>
     ) => void
 
     type HookInput<T extends HookEvent = HookEvent> = BaseHookInput & {

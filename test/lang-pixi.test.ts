@@ -1,6 +1,6 @@
-import { describe, expect, test } from 'bun:test'
-import { getPixiTasks, getPixiEnvironment } from '#tools/pixi'
 import type { LangTool } from '#config/types'
+import { getPixiTasks, getPixiEnvironment } from '#tools/pixi'
+import { describe, expect, test } from 'bun:test'
 
 const baseTool: LangTool = { name: 'pixi' }
 

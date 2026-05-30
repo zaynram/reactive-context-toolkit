@@ -1,6 +1,6 @@
-import { describe, expect, test } from 'bun:test'
-import { getCargoInfo } from '#tools/cargo'
 import type { LangTool } from '#config/types'
+import { getCargoInfo } from '#tools/cargo'
+import { describe, expect, test } from 'bun:test'
 import path from 'path'
 
 const fixtureDir = path.resolve(import.meta.dir, 'fixtures/project')

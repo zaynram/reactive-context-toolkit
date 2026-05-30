@@ -1,15 +1,11 @@
-import { describe, test, expect } from 'bun:test'
-import { evaluateRules } from '../src/engine/rules'
 import type { RuleEntry } from '../src/config/types'
+import { evaluateRules } from '../src/engine/rules'
+import { describe, test, expect } from 'bun:test'
 
 const blockRule: RuleEntry = {
     on: 'PreToolUse',
     matcher: 'Write|Edit',
-    match: {
-        target: 'file_path',
-        operator: 'regex',
-        pattern: 'docs/.*specs?/',
-    },
+    match: { target: 'file_path', operator: 'regex', pattern: 'docs/.*specs?/' },
     action: 'block',
     message: 'Specs belong in .claude/plans/',
 }
@@ -47,12 +43,9 @@ describe('evaluateRules', () => {
     })
 
     test('returns warn messages for matching warn rules', () => {
-        const result = evaluateRules(
-            [warnRule, warnRule2],
-            'PreToolUse',
-            'Edit',
-            { tool_input: { file_path: 'TODO.md', command: 'rm -rf' } },
-        )
+        const result = evaluateRules([warnRule, warnRule2], 'PreToolUse', 'Edit', {
+            tool_input: { file_path: 'TODO.md', command: 'rm -rf' },
+        })
         expect(result).not.toBeNull()
         expect(result!.action).toBe('warn')
         expect(result!.messages).toContain('File contains TODO marker')
@@ -83,11 +76,7 @@ describe('evaluateRules', () => {
     test('matches when no matcher specified (any tool)', () => {
         const noMatcher: RuleEntry = {
             on: 'PreToolUse',
-            match: {
-                target: 'file_path',
-                operator: 'contains',
-                pattern: 'secret',
-            },
+            match: { target: 'file_path', operator: 'contains', pattern: 'secret' },
             action: 'block',
             message: 'No secrets!',
         }
@@ -99,12 +88,9 @@ describe('evaluateRules', () => {
     })
 
     test('block takes priority over warn', () => {
-        const result = evaluateRules(
-            [warnRule, blockRule],
-            'PreToolUse',
-            'Edit',
-            { tool_input: { file_path: 'docs/specs/TODO.md' } },
-        )
+        const result = evaluateRules([warnRule, blockRule], 'PreToolUse', 'Edit', {
+            tool_input: { file_path: 'docs/specs/TODO.md' },
+        })
         expect(result).not.toBeNull()
         expect(result!.action).toBe('block')
         expect(result!.messages).toEqual(['Specs belong in .claude/plans/'])
@@ -113,20 +99,13 @@ describe('evaluateRules', () => {
     test('collects all messages when multiple block rules match', () => {
         const blockRule2: RuleEntry = {
             on: 'PreToolUse',
-            match: {
-                target: 'file_path',
-                operator: 'contains',
-                pattern: 'specs',
-            },
+            match: { target: 'file_path', operator: 'contains', pattern: 'specs' },
             action: 'block',
             message: 'No specs modification allowed',
         }
-        const result = evaluateRules(
-            [blockRule, blockRule2],
-            'PreToolUse',
-            'Write',
-            { tool_input: { file_path: 'docs/specs/api.md' } },
-        )
+        const result = evaluateRules([blockRule, blockRule2], 'PreToolUse', 'Write', {
+            tool_input: { file_path: 'docs/specs/api.md' },
+        })
         expect(result).not.toBeNull()
         expect(result!.action).toBe('block')
         expect(result!.messages).toHaveLength(2)

@@ -169,7 +169,7 @@ test('includes plugin-contributed files in files section', () => {
         config,
         registry,
         { ...defaultGlobals, plugins: ['track-work'] },
-        { include: ['files'] },
+        { include: ['files'] }
     )
     // track-work plugin contributes "chores" and "plans" files
     expect(result).toContain('chores')
@@ -197,7 +197,7 @@ test('includes plugin-contributed rules in rules section', () => {
         config,
         registry,
         { ...defaultGlobals, plugins: ['track-work'] },
-        { include: ['rules'] },
+        { include: ['rules'] }
     )
     expect(result).toContain('count="1"')
 })
@@ -214,10 +214,7 @@ bun test test/meta.test.ts --test-name-pattern "plugin-contributed"
 In `src/engine/meta.ts`, change `getPluginSectionValues` from a push to a flat-push:
 
 ```ts
-function getPluginSectionValues<T>(
-    config: RCTConfig,
-    prop: keyof RCTPlugin,
-): T[] {
+function getPluginSectionValues<T>(config: RCTConfig, prop: keyof RCTPlugin): T[] {
     const values: T[] = []
     for (const name of config.globals?.plugins ?? [])
         if (name in plugins) {
@@ -260,17 +257,11 @@ Plugins declare `files` (with `injectOn`) and `rules`. These must be merged into
 In `test/schema.test.ts`, add a new `describe("applyPlugins", ...)` block:
 
 ```ts
-import {
-    validateConfig,
-    desugarFileInjections,
-    applyPlugins,
-} from '../src/config/schema'
+import { validateConfig, desugarFileInjections, applyPlugins } from '../src/config/schema'
 
 describe('applyPlugins', () => {
     test('returns config unchanged when no plugins activated', () => {
-        const config = validateConfig({
-            files: [{ alias: 'mine', path: 'mine.xml' }],
-        })
+        const config = validateConfig({ files: [{ alias: 'mine', path: 'mine.xml' }] })
         const result = applyPlugins(config)
         expect(result.files).toHaveLength(1)
         expect(result.rules).toBeUndefined()
@@ -279,7 +270,7 @@ describe('applyPlugins', () => {
     test('merges track-work plugin files into config.files', () => {
         const config = validateConfig({ globals: { plugins: ['track-work'] } })
         const result = applyPlugins(config)
-        const aliases = (result.files ?? []).map((f) => f.alias)
+        const aliases = (result.files ?? []).map(f => f.alias)
         expect(aliases).toContain('chores')
         expect(aliases).toContain('plans')
     })
@@ -290,7 +281,7 @@ describe('applyPlugins', () => {
             files: [{ alias: 'my-file', path: 'my-file.xml' }],
         })
         const result = applyPlugins(config)
-        const aliases = (result.files ?? []).map((f) => f.alias)
+        const aliases = (result.files ?? []).map(f => f.alias)
         expect(aliases).toContain('my-file')
         expect(aliases).toContain('chores')
     })
@@ -299,15 +290,13 @@ describe('applyPlugins', () => {
         const config = validateConfig({ globals: { plugins: ['track-work'] } })
         const applied = applyPlugins(config)
         const desugared = desugarFileInjections(applied)
-        const refs = (desugared.injections ?? []).flatMap((i) => i.inject)
+        const refs = (desugared.injections ?? []).flatMap(i => i.inject)
         expect(refs).toContain('chores')
         expect(refs).toContain('plans')
     })
 
     test('ignores unknown plugin names', () => {
-        const config = validateConfig({
-            globals: { plugins: ['nonexistent-plugin'] },
-        })
+        const config = validateConfig({ globals: { plugins: ['nonexistent-plugin'] } })
         expect(() => applyPlugins(config)).not.toThrow()
         const result = applyPlugins(config)
         expect(result.files ?? []).toHaveLength(0)
@@ -358,11 +347,7 @@ export function applyPlugins(config: ValidatedConfig): ValidatedConfig {
 In `src/cli/hook.ts`, add import:
 
 ```ts
-import {
-    validateConfig,
-    desugarFileInjections,
-    applyPlugins,
-} from '#config/schema'
+import { validateConfig, desugarFileInjections, applyPlugins } from '#config/schema'
 ```
 
 Change the pipeline setup (after `validateConfig`):
@@ -401,9 +386,9 @@ git commit -m "feat: add applyPlugins() and wire plugin contributions into hook 
 Create `test/plugin.test.ts`:
 
 ```ts
-import { describe, expect, test } from 'bun:test'
 import pluginRegistry from '../src/plugin/index'
 import type { RCTPlugin } from '../src/plugin/types'
+import { describe, expect, test } from 'bun:test'
 
 describe('plugin registry', () => {
     test('contains track-work and issue-scope', () => {
@@ -426,21 +411,19 @@ describe('track-work plugin', () => {
     })
 
     test('contributes chores and plans files', () => {
-        const aliases = (plugin.files ?? []).map((f) => f.alias)
+        const aliases = (plugin.files ?? []).map(f => f.alias)
         expect(aliases).toContain('chores')
         expect(aliases).toContain('plans')
     })
 
     test('chores file has injectOn: SessionStart', () => {
-        const chores = (plugin.files ?? []).find((f) => f.alias === 'chores')
+        const chores = (plugin.files ?? []).find(f => f.alias === 'chores')
         expect(chores?.injectOn).toBe('SessionStart')
     })
 
     test('chores and plans have entry-schema metaFile', () => {
         for (const file of plugin.files ?? []) {
-            expect(
-                file.metaFiles?.some((m) => m.alias === 'entry-schema'),
-            ).toBe(true)
+            expect(file.metaFiles?.some(m => m.alias === 'entry-schema')).toBe(true)
         }
     })
 })
@@ -453,18 +436,18 @@ describe('issue-scope plugin', () => {
     })
 
     test('contributes scope and candidates files', () => {
-        const aliases = (plugin.files ?? []).map((f) => f.alias)
+        const aliases = (plugin.files ?? []).map(f => f.alias)
         expect(aliases).toContain('scope')
         expect(aliases).toContain('candidates')
     })
 
     test('scope file has injectOn: SessionStart', () => {
-        const scope = (plugin.files ?? []).find((f) => f.alias === 'scope')
+        const scope = (plugin.files ?? []).find(f => f.alias === 'scope')
         expect(scope?.injectOn).toBe('SessionStart')
     })
 
     test('scope file has staleCheck configured', () => {
-        const scope = (plugin.files ?? []).find((f) => f.alias === 'scope')
+        const scope = (plugin.files ?? []).find(f => f.alias === 'scope')
         expect(scope?.staleCheck).toBeDefined()
         expect(scope?.staleCheck?.dateTag).toBe('date')
     })
@@ -577,11 +560,7 @@ describe('formatTestResult with format', () => {
             output: '',
             tool: 'bun',
         }
-        const out = formatTestResult(
-            result,
-            { command: 'bun test' },
-            defaultGlobals,
-        )
+        const out = formatTestResult(result, { command: 'bun test' }, defaultGlobals)
         expect(out).toContain('exitCode="1"')
     })
 
@@ -593,11 +572,7 @@ describe('formatTestResult with format', () => {
             tool: 'cargo',
         }
         const jsonGlobals = { ...defaultGlobals, format: 'json' as const }
-        const out = formatTestResult(
-            result,
-            { command: 'cargo test' },
-            jsonGlobals,
-        )
+        const out = formatTestResult(result, { command: 'cargo test' }, jsonGlobals)
         const parsed = JSON.parse(out)
         expect(parsed.test.tool).toBe('cargo')
         expect(parsed.test.status).toBe('pass')
@@ -625,10 +600,7 @@ describe('formatTestResult with format', () => {
             output: '',
             tool: 'bun',
         }
-        const testConfig = {
-            command: 'bun test' as const,
-            format: 'json' as const,
-        }
+        const testConfig = { command: 'bun test' as const, format: 'json' as const }
         const out = formatTestResult(result, testConfig, defaultGlobals)
         const parsed = JSON.parse(out)
         expect(parsed.test).toBeDefined()
@@ -695,8 +667,7 @@ function findFirstToolInfo(config: RCTConfig): TestCommandInfo | null {
 export function resolveTestCommand(config: RCTConfig): TestCommandInfo | null {
     if (!config.test) return null
 
-    if (typeof config.test === 'string')
-        return { command: config.test, tool: 'custom' }
+    if (typeof config.test === 'string') return { command: config.test, tool: 'custom' }
 
     if (config.test === true) return findFirstToolInfo(config)
 
@@ -711,7 +682,7 @@ export function resolveTestCommand(config: RCTConfig): TestCommandInfo | null {
 export function formatTestResult(
     result: TestResult,
     testConfig: TestConfig,
-    globals: Required<GlobalsConfig>,
+    globals: Required<GlobalsConfig>
 ): string {
     const brief = testConfig.brief
     if (brief) {
@@ -754,32 +725,28 @@ In `src/cli/hook.ts`, update the test runner section:
 let testResult: string | null = null
 if (desugared.test) {
     const testConfig: TestConfig =
-        typeof desugared.test === 'object' && desugared.test !== true ?
-            (desugared.test as TestConfig)
-        :   { command: desugared.test as true | string }
+        typeof desugared.test === 'object' && desugared.test !== true
+            ? (desugared.test as TestConfig)
+            : { command: desugared.test as true | string }
 
     const rawInjectOn = testConfig.injectOn
-    const testEvents: HookEvent[] =
-        Array.isArray(rawInjectOn) ? rawInjectOn : (
-            [rawInjectOn ?? 'SessionStart']
-        )
+    const testEvents: HookEvent[] = Array.isArray(rawInjectOn)
+        ? rawInjectOn
+        : [rawInjectOn ?? 'SessionStart']
 
     if (testEvents.includes(event)) {
         const cmdInfo = resolveTestCommand(desugared)
         if (cmdInfo) {
-            const sessionId =
-                (payload as Record<string, string>).session_id ?? 'unknown'
+            const sessionId = (payload as Record<string, string>).session_id ?? 'unknown'
             const cacheEnabled = testConfig.cache === true
             const cacheTTL = testConfig.cacheTTL ?? 300
 
-            let rawResult =
-                cacheEnabled ?
-                    getCachedResult(sessionId, cmdInfo.command, cacheTTL)
-                :   null
+            let rawResult = cacheEnabled
+                ? getCachedResult(sessionId, cmdInfo.command, cacheTTL)
+                : null
             if (!rawResult) {
                 rawResult = runTest(cmdInfo.command, CLAUDE_PROJECT_DIR)
-                if (cacheEnabled)
-                    setCachedResult(sessionId, cmdInfo.command, rawResult)
+                if (cacheEnabled) setCachedResult(sessionId, cmdInfo.command, rawResult)
             }
 
             // Merge tool info into result
@@ -833,7 +800,7 @@ formatTestResult(result, 'Result: {status} (code {exitCode})')
 formatTestResult(
     result,
     { command: 'bun test', brief: 'Result: {status} (code {exitCode})' },
-    defaultGlobals,
+    defaultGlobals
 )
 
 // Old:
@@ -893,11 +860,7 @@ describe('validateConfig with minify', () => {
     test('accepts MinifyConfig object in globals', () => {
         const config = validateConfig({
             globals: {
-                minify: {
-                    enabled: true,
-                    separator: ' ',
-                    preserveNewlines: true,
-                },
+                minify: { enabled: true, separator: ' ', preserveNewlines: true },
             },
         })
         expect(typeof config.globals.minify).toBe('object')
@@ -905,9 +868,7 @@ describe('validateConfig with minify', () => {
 
     test('accepts minify boolean on InjectionEntry', () => {
         const config = validateConfig({
-            injections: [
-                { on: 'SessionStart', inject: ['file'], minify: false },
-            ],
+            injections: [{ on: 'SessionStart', inject: ['file'], minify: false }],
         })
         expect(config.injections![0].minify).toBe(false)
     })

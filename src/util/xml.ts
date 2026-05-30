@@ -12,9 +12,9 @@ function isAttributeString(s: unknown): s is XML.AttributeString {
     if (!(typeof s === 'string')) return false
     const parts = s.split('=')
     return (
-        parts.length === 2
-        && parts.every(Boolean)
-        && parts[1].indexOf('"') !== parts[1].lastIndexOf('"')
+        parts.length === 2 &&
+        parts.every(Boolean) &&
+        parts[1].indexOf('"') !== parts[1].lastIndexOf('"')
     )
 }
 function isArray<T = any>(x: unknown, tc?: (x: unknown) => x is T): x is T[] {
@@ -31,15 +31,14 @@ const escapeAttrValue = (s: string): string =>
         .replace(/>/g, '&gt;')
 
 const attributes = (attrs?: AttributesArgument): XML.AttributeString[] =>
-    !attrs || typeof attrs !== 'object' ?
-        isAttributeString(attrs) ? [attrs]
-        :   []
-    :   entries(attrs)
-            .map((a) => a.map((s) => s.trim()))
-            .filter((a) => a.length === 2 && a.every(Boolean))
-            .map(
-                ([k, v]): XML.AttributeString => `${k}="${escapeAttrValue(v)}"`,
-            )
+    !attrs || typeof attrs !== 'object'
+        ? isAttributeString(attrs)
+            ? [attrs]
+            : []
+        : entries(attrs)
+              .map(a => a.map(s => s.trim()))
+              .filter(a => a.length === 2 && a.every(Boolean))
+              .map(([k, v]): XML.AttributeString => `${k}="${escapeAttrValue(v)}"`)
 
 const open = (tag: string, attrs?: AttributesArgument): XML.OpenTag =>
     !attrs ? `<${tag}>` : `<${tag} ${attributes(attrs).join(' ').trim()}>`
@@ -53,7 +52,7 @@ const inline = (tag: string, attrs?: AttributesArgument): XML.InlineTag => {
 
 const wrap = <T extends WrapXMLOptions>(
     tag: string,
-    { attrs, inner, index }: T = {} as T,
+    { attrs, inner, index }: T = {} as T
 ): XML.Element => {
     const collection = index || (typeof inner === 'object' && 'items' in inner)
     if (!inner) return collection ? '' : inline(tag, attrs)
@@ -61,7 +60,7 @@ const wrap = <T extends WrapXMLOptions>(
     const { plural, singular } = getNounVariants(tag)
     const parts: string[] = []
 
-    if (isArray(inner)) inner.forEach((s) => parts.push(s.trim()))
+    if (isArray(inner)) inner.forEach(s => parts.push(s.trim()))
     else if (!collection) parts.push(inner)
     else
         switch (typeof inner) {
@@ -75,24 +74,26 @@ const wrap = <T extends WrapXMLOptions>(
                             wrap(singular, {
                                 attrs: index && { index: `${i + 1}` },
                                 inner: s,
-                            }),
-                        ),
+                            })
+                        )
                     )
                 else {
                     const noun = getNounVariants(inner.tag)
                     parts.push(open(noun.plural, inner.attrs))
-                    const callback: (s: any, i: number) => XML.Element =
-                        isArray(inner.items, (x) => typeof x === 'string') ?
-                            (s: string, i: number) =>
-                                wrap(noun.singular, {
-                                    attrs: index && { index: `${i + 1}` },
-                                    inner: s,
-                                })
-                        :   (a: Record<string, string>, i: number) =>
-                                inline(
-                                    noun.singular,
-                                    index ? { ...a, index: `${i + 1}` } : a,
-                                )
+                    const callback: (s: any, i: number) => XML.Element = isArray(
+                        inner.items,
+                        x => typeof x === 'string'
+                    )
+                        ? (s: string, i: number) =>
+                              wrap(noun.singular, {
+                                  attrs: index && { index: `${i + 1}` },
+                                  inner: s,
+                              })
+                        : (a: Record<string, string>, i: number) =>
+                              inline(
+                                  noun.singular,
+                                  index ? { ...a, index: `${i + 1}` } : a
+                              )
                     parts.push(...inner.items.map(callback))
                     parts.push(close(noun.plural))
                 }

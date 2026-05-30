@@ -1,8 +1,8 @@
+import { applyStaleCheck } from '#config/schema'
 import type { InjectionEntry, HookEvent, GlobalsConfig } from '#config/types'
 import type { FileRegistry } from '#types'
-import { evaluateMatch, extractTargetValue } from './evaluate'
 import { normalize, xml, matchesTool } from '#util'
-import { applyStaleCheck } from '#config/schema'
+import { evaluateMatch, extractTargetValue } from './evaluate'
 
 export function evaluateInjections(
     injections: InjectionEntry[],
@@ -10,7 +10,7 @@ export function evaluateInjections(
     toolName: string | undefined,
     payload: Record<string, unknown>,
     registry: FileRegistry,
-    globals: Required<GlobalsConfig>,
+    globals: Required<GlobalsConfig>
 ): string[] {
     const results: string[] = []
     const now = new Date()
@@ -38,8 +38,8 @@ export function evaluateInjections(
             const normalizedPayload = normalize(filePath)
             const normalizedRegistry = normalize(matchedFile.path)
             if (
-                normalizedRegistry !== normalizedPayload
-                && !normalizedRegistry.endsWith('/' + normalizedPayload)
+                normalizedRegistry !== normalizedPayload &&
+                !normalizedRegistry.endsWith('/' + normalizedPayload)
             )
                 continue
         }
@@ -57,7 +57,7 @@ export function evaluateInjections(
             const resolved = registry.getRef(ref)
             if (!resolved) {
                 console.warn(
-                    `[rct] Warning: FileRef '${ref}' did not resolve — skipping injection`,
+                    `[rct] Warning: FileRef '${ref}' did not resolve — skipping injection`
                 )
                 continue
             }

@@ -10,20 +10,18 @@ async function importBuiltin(name: string): Promise<RCTPlugin> {
     } catch {
         // Fall back to relative path (GitHub installs where plugins/ ships alongside src/)
         // import.meta.resolve returns a file:// URL which import() accepts
-        const resolved = import.meta.resolve(
-            `../../plugins/${name}/src/index.ts`,
-        )
+        const resolved = import.meta.resolve(`../../plugins/${name}/src/index.ts`)
         const { default: plugin } = await import(resolved)
         return plugin
     }
 }
 
 const results = await Promise.allSettled(
-    BUILTIN_PLUGINS.map(async (name) => {
+    BUILTIN_PLUGINS.map(async name => {
         const plugin = await importBuiltin(name)
         validatePlugin(plugin, name)
         return plugin
-    }),
+    })
 )
 
 export default Object.fromEntries(
@@ -37,5 +35,5 @@ export default Object.fromEntries(
                 ref: name,
                 source: 'builtin',
             } as InstalledBuiltinPlugin,
-        ]),
+        ])
 ) as BuiltinPlugins

@@ -1,13 +1,9 @@
-import { describe, expect, test } from 'bun:test'
-import type {
-    RCTPlugin,
-    PluginHookInput,
-    PluginTriggerResult,
-} from '../src/plugin/types'
-import type { HookEvent } from '../src/config/types'
-import { applyPlugins, type ValidatedConfig } from '../src/config/schema'
-import { composeOutput } from '../src/engine/compose'
 import { withTimeout } from '../src/cli/hook'
+import { applyPlugins, type ValidatedConfig } from '../src/config/schema'
+import type { HookEvent } from '../src/config/types'
+import { composeOutput } from '../src/engine/compose'
+import type { RCTPlugin, PluginHookInput, PluginTriggerResult } from '../src/plugin/types'
+import { describe, expect, test } from 'bun:test'
 
 describe('RCTPlugin context function', () => {
     test('plugin with context function is valid', () => {
@@ -27,10 +23,7 @@ describe('RCTPlugin context function', () => {
     })
 
     test('context returning undefined produces no output', () => {
-        const plugin: RCTPlugin = {
-            name: 'undefined-context',
-            context: () => undefined,
-        }
+        const plugin: RCTPlugin = { name: 'undefined-context', context: () => undefined }
         const result = plugin.context!('SessionStart', { payload: {} })
         expect(result).toBeUndefined()
     })
@@ -59,12 +52,12 @@ describe('RCTPlugin context function', () => {
         const result = await withTimeout(
             () => plugin.context!('SessionStart', { payload: {} }),
             5000,
-            'test-context',
+            'test-context'
         )
 
         console.warn = origWarn
         expect(result).toBeUndefined()
-        expect(warns.some((w) => w.includes('context exploded'))).toBe(true)
+        expect(warns.some(w => w.includes('context exploded'))).toBe(true)
     })
 
     test('async context functions are awaited', async () => {
@@ -119,10 +112,7 @@ describe('RCTPlugin trigger function', () => {
     })
 
     test('trigger returning undefined takes no action', () => {
-        const plugin: RCTPlugin = {
-            name: 'undefined-trigger',
-            trigger: () => undefined,
-        }
+        const plugin: RCTPlugin = { name: 'undefined-trigger', trigger: () => undefined }
         const result = plugin.trigger!('PreToolUse', { payload: {} })
         expect(result).toBeUndefined()
     })
@@ -173,12 +163,12 @@ describe('RCTPlugin trigger function', () => {
         const result = await withTimeout(
             () => plugin.trigger!('PreToolUse', { payload: {} }),
             5000,
-            'test-trigger',
+            'test-trigger'
         )
 
         console.warn = origWarn
         expect(result).toBeUndefined()
-        expect(warns.some((w) => w.includes('trigger exploded'))).toBe(true)
+        expect(warns.some(w => w.includes('trigger exploded'))).toBe(true)
     })
 
     test('async trigger functions are awaited', async () => {
@@ -247,7 +237,7 @@ describe('RCTPlugin with both context and trigger', () => {
 // Helper to create a mock resolvePlugin that returns given plugins
 function makeValidatedConfig(
     pluginNames: string[],
-    overrides?: Partial<ValidatedConfig>,
+    overrides?: Partial<ValidatedConfig>
 ): ValidatedConfig {
     return {
         globals: {
@@ -300,11 +290,7 @@ describe('withTimeout', () => {
     })
 
     test('returns value from async function', async () => {
-        const result = await withTimeout(
-            async () => 'async hello',
-            5000,
-            'test',
-        )
+        const result = await withTimeout(async () => 'async hello', 5000, 'test')
         expect(result).toBe('async hello')
     })
 
@@ -318,14 +304,12 @@ describe('withTimeout', () => {
                 throw new Error('boom')
             },
             5000,
-            'test-fn',
+            'test-fn'
         )
 
         console.warn = origWarn
         expect(result).toBeUndefined()
-        expect(
-            warns.some((w) => w.includes('test-fn') && w.includes('boom')),
-        ).toBe(true)
+        expect(warns.some(w => w.includes('test-fn') && w.includes('boom'))).toBe(true)
     })
 
     test('returns undefined on timeout', async () => {
@@ -335,18 +319,16 @@ describe('withTimeout', () => {
 
         const result = await withTimeout(
             () =>
-                new Promise<string>((resolve) =>
-                    setTimeout(() => resolve('late'), 10000),
-                ),
+                new Promise<string>(resolve => setTimeout(() => resolve('late'), 10000)),
             50,
-            'slow-fn',
+            'slow-fn'
         )
 
         console.warn = origWarn
         expect(result).toBeUndefined()
-        expect(
-            warns.some((w) => w.includes('slow-fn') && w.includes('timed out')),
-        ).toBe(true)
+        expect(warns.some(w => w.includes('slow-fn') && w.includes('timed out'))).toBe(
+            true
+        )
     })
 })
 
@@ -374,9 +356,7 @@ describe('composeOutput with pluginContextResults', () => {
             globals: baseGlobals,
         })
         const parsed = JSON.parse(output)
-        expect(parsed.hookSpecificOutput.additionalContext).toContain(
-            'pane info',
-        )
+        expect(parsed.hookSpecificOutput.additionalContext).toContain('pane info')
     })
 
     test('pluginContextResults appear after injections and before meta', () => {
@@ -413,9 +393,7 @@ describe('composeOutput with pluginContextResults', () => {
             globals: baseGlobals,
         })
         const parsed = JSON.parse(output)
-        expect(parsed.hookSpecificOutput.additionalContext).not.toContain(
-            'plugin',
-        )
+        expect(parsed.hookSpecificOutput.additionalContext).not.toContain('plugin')
     })
 
     test('multiple pluginContextResults are all included', () => {

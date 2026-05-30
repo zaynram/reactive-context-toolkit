@@ -1,7 +1,7 @@
+import { fs } from '#util/fs'
 import { describe, test, expect, afterEach } from 'bun:test'
 import { rmSync, existsSync } from 'fs'
 import path from 'path'
-import { fs } from '#util/fs'
 
 const TMP = path.resolve(import.meta.dir, '../.tmp-fs-test')
 

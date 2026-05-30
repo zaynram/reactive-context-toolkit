@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'bun:test'
-import { composeOutput } from '#engine/compose'
 import type { HookEvent, GlobalsConfig } from '#config/types'
+import { composeOutput } from '#engine/compose'
+import { describe, it, expect } from 'bun:test'
 
 describe('composeOutput', () => {
     const event: HookEvent = 'PreToolUse'
@@ -11,10 +11,7 @@ describe('composeOutput', () => {
         minify: true,
         plugins: [],
     }
-    const globalsNoMinify: Required<GlobalsConfig> = {
-        ...globals,
-        minify: false,
-    }
+    const globalsNoMinify: Required<GlobalsConfig> = { ...globals, minify: false }
 
     it('returns block JSON when blockResult is provided', () => {
         const result = composeOutput({
@@ -49,10 +46,10 @@ describe('composeOutput', () => {
         const parsed = JSON.parse(result)
         expect(parsed.hookSpecificOutput.hookEventName).toBe('SessionStart')
         expect(parsed.hookSpecificOutput.additionalContext).toContain(
-            '<file>content</file>',
+            '<file>content</file>'
         )
         expect(parsed.hookSpecificOutput.additionalContext).toContain(
-            '<file2>more</file2>',
+            '<file2>more</file2>'
         )
     })
 
@@ -114,9 +111,7 @@ describe('composeOutput', () => {
             event: 'SessionStart',
             blockResult: null,
             warnMessages: [],
-            injectionResults: [
-                '<file>\n  line1\n  line2\n    indented\n</file>',
-            ],
+            injectionResults: ['<file>\n  line1\n  line2\n    indented\n</file>'],
             metaResult: null,
             langResult: null,
             testResult: null,
@@ -157,10 +152,7 @@ describe('composeOutput', () => {
             metaResult: null,
             langResult: null,
             testResult: null,
-            globals: {
-                ...globals,
-                minify: { enabled: true, separator: ' | ' },
-            },
+            globals: { ...globals, minify: { enabled: true, separator: ' | ' } },
         })
 
         const parsed = JSON.parse(result)
@@ -183,7 +175,7 @@ describe('composeOutput', () => {
         const parsed = JSON.parse(result)
         expect(parsed.hookSpecificOutput.additionalContext).not.toContain('\n')
         expect(parsed.hookSpecificOutput.additionalContext).toBe(
-            '<tag> line1 line2 </tag>',
+            '<tag> line1 line2 </tag>'
         )
     })
 
@@ -220,10 +212,7 @@ describe('composeOutput', () => {
             metaResult: null,
             langResult: null,
             testResult: null,
-            globals: {
-                ...globals,
-                minify: { enabled: true, preserveNewlines: true },
-            },
+            globals: { ...globals, minify: { enabled: true, preserveNewlines: true } },
         })
 
         const parsed = JSON.parse(result)

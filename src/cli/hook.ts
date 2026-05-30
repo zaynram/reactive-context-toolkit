@@ -1,16 +1,15 @@
 #!/usr/bin/env bun
-import { loadConfig } from '#config/loader'
-import { CLAUDE_PROJECT_DIR } from '#constants'
-import {
-    validateConfig,
-    desugarFileInjections,
-    applyPlugins,
-} from '#config/schema'
 import { buildFileRegistry } from '#config/files'
-import { evaluateRules } from '#engine/rules'
+import { loadConfig } from '#config/loader'
+import { validateConfig, desugarFileInjections, applyPlugins } from '#config/schema'
+import type { HookEvent, TestConfig, LangTestConfig } from '#config/types'
+import { CLAUDE_PROJECT_DIR } from '#constants'
+import { composeOutput } from '#engine/compose'
 import { evaluateInjections } from '#engine/injections'
 import { generateMeta } from '#engine/meta'
+import { evaluateRules } from '#engine/rules'
 import { evaluateLang } from '#lang'
+import type { PluginHookInput } from '#plugin/types'
 import {
     resolveTestCommand,
     resolveLangTestCommand,
@@ -18,25 +17,23 @@ import {
     formatTestResult,
     getCachedResult,
     setCachedResult,
+    TestCommandInfo,
 } from '#test/runner'
-import { composeOutput } from '#engine/compose'
-import type { HookEvent, TestConfig, LangTestConfig } from '#config/types'
-import type { PluginHookInput } from '#plugin/types'
 
 const SYNC_EVENTS: HookEvent[] = ['SessionStart', 'Setup']
-const PLUGIN_TIMEOUT_MS = 5000
+const TIMEOUT_MS = parseInt(process.env.RCT_PLUGIN_TIMEOUT_MS ?? '5000')
 
 async function withTimeout<T>(
     fn: () => T | Promise<T>,
     ms: number,
-    label: string,
+    label: string
 ): Promise<T | undefined> {
     const TIMEOUT_SENTINEL = Symbol('timeout')
     let timer: ReturnType<typeof setTimeout> | undefined
     try {
         const result = await Promise.race([
             Promise.resolve(fn()),
-            new Promise<typeof TIMEOUT_SENTINEL>((resolve) => {
+            new Promise<typeof TIMEOUT_SENTINEL>(resolve => {
                 timer = setTimeout(() => resolve(TIMEOUT_SENTINEL), ms)
             }),
         ])
@@ -47,7 +44,7 @@ async function withTimeout<T>(
         return result as T
     } catch (err) {
         console.warn(
-            `[rct] Warning: ${label}: ${err instanceof Error ? err.message : String(err)}`,
+            `[rct] Warning: ${label}: ${err instanceof Error ? err.message : String(err)}`
         )
         return undefined
     } finally {
@@ -57,281 +54,165 @@ async function withTimeout<T>(
 
 export { withTimeout }
 
-async function main(eventArg?: string) {
-    const event = (eventArg ?? process.argv[2]) as HookEvent
-    if (!event) {
-        console.error(
-            '[rct] Error: No hook event specified. Usage: rct hook <HookEvent>',
-        )
-        process.exit(1)
-    }
+export default async function hook(event: HookEvent) {
+    const { config, extensions, registry, globals } = await loadConfig()
+        .then(validateConfig)
+        .then(applyPlugins)
+        .then(({ config, ...rest }) => ({
+            ...rest,
+            config: desugarFileInjections(config),
+        }))
+        .then(({ config: { globals, files = [], ...config }, ...rest }) => ({
+            ...rest,
+            config,
+            registry: buildFileRegistry(files),
+            globals,
+        }))
 
-    const config = await loadConfig()
-    const validated = validateConfig(config)
-    const { config: withPlugins, extensions } = await applyPlugins(validated)
-    const desugared = desugarFileInjections(withPlugins)
-    const registry = buildFileRegistry(desugared.files ?? [])
-    const globals = desugared.globals
-
-    let payload: Record<string, unknown> = {}
-    let toolName: string | undefined
-
-    // Read stdin for async events
-    if (!SYNC_EVENTS.includes(event)) {
-        const stdin = await new Promise<string>((resolve) => {
-            let data = ''
-            process.stdin.on(
-                'data',
-                (chunk: Buffer | string) => (data += chunk),
+    const submitBlock = async (message: string): Promise<never> =>
+        await Bun.stdout
+            .write(
+                composeOutput({
+                    event,
+                    globals,
+                    blockResult: { message },
+                    warnMessages: [],
+                    injectionResults: [],
+                    metaResult: null,
+                    langResult: null,
+                    testResult: null,
+                })
             )
-            process.stdin.on('end', () => resolve(data))
-            process.stdin.on('error', (err) => {
-                console.error(`[rct] stdin error: ${err.message}`)
-                resolve('{}')
-            })
-        })
-        try {
-            payload = JSON.parse(stdin) ?? {}
-            toolName = (payload as any).tool_name
-        } catch (err) {
-            console.error(
-                `[rct] Failed to parse stdin JSON: ${err instanceof Error ? err.message : String(err)}`,
-            )
-            payload = {}
-        }
-    }
+            .catch()
+            .then(() => process.exit(2))
+
+    const execute = async <T>(
+        name: string,
+        fn: (event: HookEvent, payload: PluginHookInput) => T
+    ): Promise<Awaited<T | undefined>> =>
+        await withTimeout(() => fn(event, stdin), TIMEOUT_MS, `plugin '${name}' context`)
 
     // Evaluate plugin triggers (before static rules — early exit on block)
-    const pluginInput: PluginHookInput = { toolName, payload }
-    const pluginWarnMessages: string[] = []
+    const stdin: PluginHookInput<typeof event, { tool_name?: string }> =
+        SYNC_EVENTS.includes(event)
+            ? { hook_event_name: event }
+            : // Read stdin for async events
+              await Bun.stdin
+                  .json()
+                  .catch(err =>
+                      Bun.stderr
+                          .write(`[rct] stdin parse error: ${String(err)}`)
+                          .then(() => ({ hook_event_name: event }))
+                  )
 
+    const warnings = [] as string[]
     for (const { name, fn } of extensions.triggers) {
-        const result = await withTimeout(
-            () => fn(event, pluginInput),
-            PLUGIN_TIMEOUT_MS,
-            `plugin '${name}' trigger`,
-        )
-        if (result?.action === 'block') {
-            const output = composeOutput({
-                event,
-                blockResult: { message: result.message },
-                warnMessages: [],
-                injectionResults: [],
-                metaResult: null,
-                langResult: null,
-                testResult: null,
-                globals,
-            })
-            console.log(output)
-            process.exit(2)
-        }
-        if (result?.action === 'warn') {
-            pluginWarnMessages.push(result.message)
-        }
+        const { action, message } = (await execute(name, fn)) ?? {}
+        if (action === 'warn') warnings.push(message!)
+        if (action === 'block') await submitBlock(message!)
     }
 
     // Evaluate static rules
-    const ruleResult = evaluateRules(
-        desugared.rules ?? [],
-        event,
-        toolName,
-        payload,
-    )
+    const ruleResult = evaluateRules(config.rules ?? [], event, stdin.tool_name, stdin)
 
     // If static rule blocks, output and exit
-    if (ruleResult?.action === 'block') {
-        const output = composeOutput({
-            event,
-            blockResult: { message: ruleResult.messages.join('\n') },
-            warnMessages: [],
-            injectionResults: [],
-            metaResult: null,
-            langResult: null,
-            testResult: null,
-            globals,
-        })
-        console.log(output)
-        process.exit(2)
-    }
-
-    // Evaluate injections
-    const injectionResults = evaluateInjections(
-        desugared.injections ?? [],
-        event,
-        toolName,
-        payload,
-        registry,
-        globals,
-    )
+    if (ruleResult?.action === 'block') await submitBlock(ruleResult.messages.join('\n'))
 
     // Evaluate plugin contexts
-    const pluginContextResults: string[] = []
-    const sessionId =
-        (payload as Record<string, string>).session_id ?? 'default'
-    for (const {
-        name,
-        fn,
-        contextOn,
-        contextFrequency,
-    } of extensions.contexts) {
-        if (contextOn) {
-            const events = Array.isArray(contextOn) ? contextOn : [contextOn]
-            if (!events.includes(event)) continue
-        }
+    const context: string[] = []
+    const sessionId = stdin.session_id
+    for (const { name, fn, contextOn, contextFrequency } of extensions.contexts) {
+        if (contextOn && [contextOn].flat().includes(event)) continue
         // Check frequency limit (persisted across hook invocations via temp file)
         if (contextFrequency && contextFrequency !== 'always') {
             const max = contextFrequency === 'once' ? 1 : contextFrequency
             const key = name.replace(/[^a-zA-Z0-9_-]/g, '_')
-            const countFile = `/tmp/rct-ctx-${sessionId}-${key}`
-            let count = 0
-            try {
-                count = parseInt(
-                    require('fs').readFileSync(countFile, 'utf-8'),
-                    10,
-                )
-            } catch {
-                /* first invocation */
-            }
+            const bunfile = Bun.file(`/tmp/rct-ctx-${sessionId}-${key}`)
+            const count = await bunfile
+                .text()
+                .then(text => parseInt(text, 10))
+                .catch(() => 0)
             if (count >= max) continue
-            try {
-                require('fs').writeFileSync(countFile, String(count + 1))
-            } catch {
-                /* best effort */
-            }
+            await bunfile
+                .write(`${count + 1}`)
+                .catch(err => Bun.stderr.write(String(err)))
         }
-        const result = await withTimeout(
-            () => fn(event, pluginInput),
-            PLUGIN_TIMEOUT_MS,
-            `plugin '${name}' context`,
-        )
-        if (result !== undefined) {
-            pluginContextResults.push(result)
-        }
+        await execute(name, fn).then(res => res !== undefined && context.push(res))
     }
-
-    // Warn messages (static rules + plugin triggers)
-    const warnMessages = [
-        ...(ruleResult?.action === 'warn' ? ruleResult.messages : []),
-        ...pluginWarnMessages,
-    ]
-
-    // Meta
-    let metaResult: string | null = null
-    if (desugared.meta) {
-        const metaEvents =
-            Array.isArray(desugared.meta.injectOn) ?
-                desugared.meta.injectOn
-            :   [desugared.meta.injectOn ?? 'SessionStart']
-        if (metaEvents.includes(event)) {
-            metaResult = generateMeta(
-                desugared,
-                registry,
-                globals,
-                desugared.meta,
-            )
-        }
-    }
-
-    // Lang
-    const langResults =
-        desugared.lang ?
-            evaluateLang(desugared.lang, event, CLAUDE_PROJECT_DIR)
-        :   []
-    const langResult = langResults.length > 0 ? langResults.join('\n') : null
 
     // Test — per-language with top-level inheritance
     const testResults: string[] = []
-    const topLevelTest: TestConfig | null =
-        desugared.test && typeof desugared.test === 'object' ?
-            (desugared.test as TestConfig)
-        : desugared.test ? { command: desugared.test as true | string }
-        : null
+    const topLevelTest: TestConfig | undefined =
+        config.test && typeof config.test === 'object'
+            ? config.test
+            : config.test
+              ? { command: config.test as true | string }
+              : undefined
 
-    const topInjectOn = topLevelTest?.injectOn
-    const testEvents: HookEvent[] =
-        Array.isArray(topInjectOn) ? topInjectOn : (
-            [topInjectOn ?? 'SessionStart']
-        )
-
-    if (testEvents.includes(event)) {
-        const sessionId =
-            (payload as Record<string, string>).session_id ?? 'unknown'
+    if ([topLevelTest?.injectOn ?? 'SessionStart'].flat().includes(event)) {
+        const sessionId = stdin.session_id
         const cacheEnabled = topLevelTest?.cache === true
         const cacheTTL = topLevelTest?.cacheTTL ?? 300
 
-        // Per-language test execution
-        for (const [langName, entry] of Object.entries(desugared.lang ?? {})) {
-            if (!entry) continue
-            const langTest: LangTestConfig | undefined =
-                entry.test ?? (topLevelTest ? { command: true } : undefined)
-            if (!langTest) continue
-
-            const cmdInfo = resolveLangTestCommand(langTest, entry)
-            if (!cmdInfo) continue
-
-            let rawResult =
-                cacheEnabled ?
-                    getCachedResult(
-                        sessionId,
-                        cmdInfo.command,
-                        cacheTTL,
-                        langName,
-                    )
-                :   null
-            if (!rawResult) {
-                rawResult = runTest(cmdInfo.command, CLAUDE_PROJECT_DIR)
-                if (cacheEnabled)
-                    await setCachedResult(
-                        sessionId,
-                        cmdInfo.command,
-                        rawResult,
-                        langName,
-                    )
-            }
-
-            const result = { ...rawResult, tool: cmdInfo.tool, lang: langName }
-            testResults.push(formatTestResult(result, langTest, globals))
+        const processLangEntry = async (
+            test: LangTestConfig,
+            info: TestCommandInfo,
+            lang?: string
+        ) => {
+            const data =
+                (cacheEnabled &&
+                    getCachedResult(sessionId, info.command, cacheTTL, lang)) ||
+                runTest(info.command, CLAUDE_PROJECT_DIR)
+            if (cacheEnabled) await setCachedResult(sessionId, info.command, data, lang)
+            return formatTestResult({ ...data, lang, tool: info.tool }, test, globals)
         }
+
+        Object.entries(config.lang ?? {}).forEach(async ([lang, entry]) => {
+            if (!entry) return
+            const test = entry.test ?? (topLevelTest && { command: true })
+            if (!test) return
+            const info = resolveLangTestCommand(test, entry)
+            if (!info) return
+            await processLangEntry(test, info, lang).then(testResults.push)
+        })
 
         // Fallback: if no per-language tests ran but top-level exists, use v0.x behavior
         if (testResults.length === 0 && topLevelTest) {
-            const cmdInfo = resolveTestCommand(desugared)
-            if (cmdInfo) {
-                let rawResult =
-                    cacheEnabled ?
-                        getCachedResult(sessionId, cmdInfo.command, cacheTTL)
-                    :   null
-                if (!rawResult) {
-                    rawResult = runTest(cmdInfo.command, CLAUDE_PROJECT_DIR)
-                    if (cacheEnabled)
-                        await setCachedResult(
-                            sessionId,
-                            cmdInfo.command,
-                            rawResult,
-                        )
-                }
-                const result = { ...rawResult, tool: cmdInfo.tool }
-                testResults.push(
-                    formatTestResult(result, topLevelTest, globals),
-                )
-            }
+            const info = resolveTestCommand(config)
+            if (info) await processLangEntry(topLevelTest, info).then(testResults.push)
         }
     }
-    const testResult = testResults.length > 0 ? testResults.join('\n') : null
 
-    const output = composeOutput({
-        event,
-        blockResult: null,
-        warnMessages,
-        injectionResults,
-        pluginContextResults,
-        metaResult,
-        langResult,
-        testResult,
-        globals,
-    })
-
-    if (output) console.log(output)
+    await Bun.stdout
+        .write(
+            composeOutput({
+                event,
+                blockResult: null,
+                pluginContextResults: context,
+                warnMessages: [
+                    ...(ruleResult?.action === 'warn' ? ruleResult.messages : []),
+                    ...warnings,
+                ],
+                injectionResults: evaluateInjections(
+                    config.injections ?? [],
+                    event,
+                    stdin.tool_name,
+                    stdin,
+                    registry,
+                    globals
+                ),
+                metaResult:
+                    config.meta &&
+                    [config.meta.injectOn ?? 'SessionStart'].flat().includes(event)
+                        ? generateMeta(config, registry, globals, config.meta)
+                        : null,
+                langResult: config.lang
+                    ? evaluateLang(config.lang, event, CLAUDE_PROJECT_DIR).join('\n')
+                    : null,
+                testResult: testResults.length > 0 ? testResults.join('\n') : null,
+                globals,
+            })
+        )
+        .catch()
+        .then(() => process.exit(0))
 }
-
-export default main

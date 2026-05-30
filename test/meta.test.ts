@@ -1,20 +1,11 @@
-import { describe, test, expect } from 'bun:test'
-import { generateMeta } from '../src/engine/meta'
 import { buildFileRegistry } from '../src/config/files'
 import type { RCTConfig, MetaConfig, GlobalsConfig } from '../src/config/types'
+import { generateMeta } from '../src/engine/meta'
 import type { FileRegistry, ReferenceFile } from '../src/types'
+import { describe, test, expect } from 'bun:test'
 
-function makeRef(
-    alias: string,
-    filePath: string,
-    brief?: string,
-): ReferenceFile {
-    return {
-        alias,
-        path: filePath,
-        brief,
-        read: () => `<${alias}>content</${alias}>`,
-    }
+function makeRef(alias: string, filePath: string, brief?: string): ReferenceFile {
+    return { alias, path: filePath, brief, read: () => `<${alias}>content</${alias}>` }
 }
 
 function makeRegistry(refs: ReferenceFile[]): FileRegistry {
@@ -36,9 +27,7 @@ function makeRegistry(refs: ReferenceFile[]): FileRegistry {
             return file ? { file, useBrief } : undefined
         },
         select(...aliases: string[]) {
-            return aliases
-                .map((a) => map.get(a))
-                .filter((f): f is ReferenceFile => !!f)
+            return aliases.map(a => map.get(a)).filter((f): f is ReferenceFile => !!f)
         },
         all() {
             return Array.from(map.values())
@@ -89,16 +78,8 @@ const baseConfig: RCTConfig = {
 
 describe('generateMeta', () => {
     test('includes files section with aliases and paths', () => {
-        const meta: MetaConfig = {
-            include: ['files'],
-            contents: { enumeration: 'xml' },
-        }
-        const result = generateMeta(
-            baseConfig,
-            defaultRegistry,
-            defaultGlobals,
-            meta,
-        )
+        const meta: MetaConfig = { include: ['files'], contents: { enumeration: 'xml' } }
+        const result = generateMeta(baseConfig, defaultRegistry, defaultGlobals, meta)
         expect(result).toContain('chores')
         expect(result).toContain('scope')
         expect(result).toContain('dev/chores.xml')
@@ -111,89 +92,44 @@ describe('generateMeta', () => {
             brief: true,
             contents: { enumeration: 'xml' },
         }
-        const result = generateMeta(
-            baseConfig,
-            defaultRegistry,
-            defaultGlobals,
-            meta,
-        )
+        const result = generateMeta(baseConfig, defaultRegistry, defaultGlobals, meta)
         expect(result).toContain('chores')
         expect(result).toContain('Active chores')
     })
 
     test('xml enumeration wraps in <rct-meta> tags', () => {
-        const meta: MetaConfig = {
-            include: ['files'],
-            contents: { enumeration: 'xml' },
-        }
-        const result = generateMeta(
-            baseConfig,
-            defaultRegistry,
-            defaultGlobals,
-            meta,
-        )
+        const meta: MetaConfig = { include: ['files'], contents: { enumeration: 'xml' } }
+        const result = generateMeta(baseConfig, defaultRegistry, defaultGlobals, meta)
         expect(result).toContain('<rct-meta>')
         expect(result).toContain('</rct-meta>')
     })
 
     test('json enumeration returns JSON string', () => {
-        const meta: MetaConfig = {
-            include: ['files'],
-            contents: { enumeration: 'json' },
-        }
-        const result = generateMeta(
-            baseConfig,
-            defaultRegistry,
-            defaultGlobals,
-            meta,
-        )
+        const meta: MetaConfig = { include: ['files'], contents: { enumeration: 'json' } }
+        const result = generateMeta(baseConfig, defaultRegistry, defaultGlobals, meta)
         const parsed = JSON.parse(result)
         expect(parsed).toHaveProperty('files')
         expect(Array.isArray(parsed.files)).toBe(true)
     })
 
     test('path enumeration adds path headers', () => {
-        const meta: MetaConfig = {
-            include: ['files'],
-            contents: { enumeration: 'path' },
-        }
-        const result = generateMeta(
-            baseConfig,
-            defaultRegistry,
-            defaultGlobals,
-            meta,
-        )
+        const meta: MetaConfig = { include: ['files'], contents: { enumeration: 'path' } }
+        const result = generateMeta(baseConfig, defaultRegistry, defaultGlobals, meta)
         // Should contain path-labeled sections
         expect(result).toContain('files:')
     })
 
     test('raw enumeration returns plain text', () => {
-        const meta: MetaConfig = {
-            include: ['files'],
-            contents: { enumeration: 'raw' },
-        }
-        const result = generateMeta(
-            baseConfig,
-            defaultRegistry,
-            defaultGlobals,
-            meta,
-        )
+        const meta: MetaConfig = { include: ['files'], contents: { enumeration: 'raw' } }
+        const result = generateMeta(baseConfig, defaultRegistry, defaultGlobals, meta)
         // Should not have XML tags or JSON braces wrapping
         expect(result).not.toContain('<rct-meta>')
         expect(result).toContain('chores')
     })
 
     test('respects include filter', () => {
-        const meta: MetaConfig = {
-            include: ['files'],
-            contents: { enumeration: 'json' },
-        }
-        const result = generateMeta(
-            baseConfig,
-            defaultRegistry,
-            defaultGlobals,
-            meta,
-        )
+        const meta: MetaConfig = { include: ['files'], contents: { enumeration: 'json' } }
+        const result = generateMeta(baseConfig, defaultRegistry, defaultGlobals, meta)
         const parsed = JSON.parse(result)
         expect(parsed).toHaveProperty('files')
         expect(parsed).not.toHaveProperty('lang')
@@ -202,50 +138,26 @@ describe('generateMeta', () => {
     })
 
     test('includes lang section', () => {
-        const meta: MetaConfig = {
-            include: ['lang'],
-            contents: { enumeration: 'json' },
-        }
-        const result = generateMeta(
-            baseConfig,
-            defaultRegistry,
-            defaultGlobals,
-            meta,
-        )
+        const meta: MetaConfig = { include: ['lang'], contents: { enumeration: 'json' } }
+        const result = generateMeta(baseConfig, defaultRegistry, defaultGlobals, meta)
         const parsed = JSON.parse(result)
         expect(parsed).toHaveProperty('lang')
         expect(parsed.lang).toContainEqual(
-            expect.objectContaining({ language: 'node', tools: ['bun'] }),
+            expect.objectContaining({ language: 'node', tools: ['bun'] })
         )
     })
 
     test('includes test section', () => {
-        const meta: MetaConfig = {
-            include: ['test'],
-            contents: { enumeration: 'json' },
-        }
-        const result = generateMeta(
-            baseConfig,
-            defaultRegistry,
-            defaultGlobals,
-            meta,
-        )
+        const meta: MetaConfig = { include: ['test'], contents: { enumeration: 'json' } }
+        const result = generateMeta(baseConfig, defaultRegistry, defaultGlobals, meta)
         const parsed = JSON.parse(result)
         expect(parsed).toHaveProperty('test')
         expect(parsed.test.configured).toBe(true)
     })
 
     test('includes rules section with count and summary', () => {
-        const meta: MetaConfig = {
-            include: ['rules'],
-            contents: { enumeration: 'json' },
-        }
-        const result = generateMeta(
-            baseConfig,
-            defaultRegistry,
-            defaultGlobals,
-            meta,
-        )
+        const meta: MetaConfig = { include: ['rules'], contents: { enumeration: 'json' } }
+        const result = generateMeta(baseConfig, defaultRegistry, defaultGlobals, meta)
         const parsed = JSON.parse(result)
         expect(parsed).toHaveProperty('rules')
         expect(parsed.rules.count).toBe(2)
@@ -255,12 +167,7 @@ describe('generateMeta', () => {
 
     test('includes files and lang by default when include not specified', () => {
         const meta: MetaConfig = { contents: { enumeration: 'json' } }
-        const result = generateMeta(
-            baseConfig,
-            defaultRegistry,
-            defaultGlobals,
-            meta,
-        )
+        const result = generateMeta(baseConfig, defaultRegistry, defaultGlobals, meta)
         const parsed = JSON.parse(result)
         expect(parsed).toHaveProperty('files')
         expect(parsed).toHaveProperty('lang')
@@ -283,7 +190,7 @@ describe('generateMeta', () => {
             config,
             registry,
             { ...defaultGlobals, plugins: ['track-work'] },
-            { include: ['files'] },
+            { include: ['files'] }
         )
         // Plugin files are in config.files (merged by applyPlugins)
         expect(result).toContain('chores')
@@ -309,7 +216,7 @@ describe('generateMeta', () => {
             config,
             registry,
             { ...defaultGlobals, plugins: ['track-work'] },
-            { include: ['rules'] },
+            { include: ['rules'] }
         )
         // track-work has no rules currently, so count should be 1 (just config.rules)
         expect(result).toContain('count="1"')

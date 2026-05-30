@@ -1,6 +1,6 @@
-import type { RCTConfig } from './types'
 import { CLAUDE_PROJECT_DIR } from '#constants'
 import { fs } from '#util'
+import type { RCTConfig } from './types'
 
 const CONFIG_NAMES = ['rct.config.ts', 'rct.config.js', 'rct.config.json']
 

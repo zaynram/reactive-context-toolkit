@@ -1,15 +1,13 @@
-import { describe, expect, test } from 'bun:test'
-import { evaluateLang, extractTsconfigPaths } from '#lang/index'
 import type { LangConfig } from '#config/types'
+import { evaluateLang, extractTsconfigPaths } from '#lang/index'
+import { describe, expect, test } from 'bun:test'
 import path from 'path'
 
 const fixtureDir = path.resolve(import.meta.dir, 'fixtures/project')
 
 describe('evaluateLang', () => {
     test('returns bun scripts for configured bun tool', () => {
-        const lang: LangConfig = {
-            node: { tools: [{ name: 'bun', scripts: true }] },
-        }
+        const lang: LangConfig = { node: { tools: [{ name: 'bun', scripts: true }] } }
         const results = evaluateLang(lang, 'SessionStart', fixtureDir)
         expect(results.length).toBeGreaterThan(0)
         const joined = results.join('')
@@ -19,9 +17,7 @@ describe('evaluateLang', () => {
 
     test('skips tools not matching event but still auto-discovers config', () => {
         const lang: LangConfig = {
-            node: {
-                tools: [{ name: 'bun', scripts: true, injectOn: 'PreToolUse' }],
-            },
+            node: { tools: [{ name: 'bun', scripts: true, injectOn: 'PreToolUse' }] },
         }
         const results = evaluateLang(lang, 'SessionStart', fixtureDir)
         // Tools are skipped (injectOn: PreToolUse), but auto-discovered config still runs
@@ -32,10 +28,7 @@ describe('evaluateLang', () => {
 
     test('uses lang-level injectOn as default', () => {
         const lang: LangConfig = {
-            node: {
-                injectOn: 'PreToolUse',
-                tools: [{ name: 'bun', scripts: true }],
-            },
+            node: { injectOn: 'PreToolUse', tools: [{ name: 'bun', scripts: true }] },
         }
         const results = evaluateLang(lang, 'PreToolUse', fixtureDir)
         expect(results.length).toBeGreaterThan(0)
@@ -50,9 +43,7 @@ describe('evaluateLang', () => {
 
     test('npm and pnpm tools produce same output shape as bun', () => {
         for (const name of ['npm', 'pnpm'] as const) {
-            const lang: LangConfig = {
-                node: { tools: [{ name, scripts: true }] },
-            }
+            const lang: LangConfig = { node: { tools: [{ name, scripts: true }] } }
             const results = evaluateLang(lang, 'SessionStart', fixtureDir)
             expect(results.length).toBeGreaterThan(0)
             expect(results.join('')).toContain('test')
@@ -78,9 +69,7 @@ describe('evaluateLang', () => {
 
 describe('auto-discovery', () => {
     test('auto-discovers tsconfig.json when entry.config is omitted', () => {
-        const lang: LangConfig = {
-            node: { tools: [{ name: 'bun', scripts: true }] },
-        }
+        const lang: LangConfig = { node: { tools: [{ name: 'bun', scripts: true }] } }
         const results = evaluateLang(lang, 'SessionStart', fixtureDir)
         const joined = results.join('')
         // Should auto-discover tsconfig.json and extract path aliases

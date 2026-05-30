@@ -1,28 +1,34 @@
 #!/usr/bin/env bun
-import hook from './hook'
-import init from './init'
-if (process.argv[1] === __filename) {
-    const args = process.argv.slice(3)
-    switch (process.argv[2]) {
+import { HookEvent } from '#config'
+async function main() {
+    const [, , subcommand, ...args] = process.argv
+    switch (subcommand) {
         case 'init':
-            init(args).catch((e) => {
-                console.error(e)
-                process.exit(1)
-            })
+            await import('./init')
+                .then(m => m.default(args))
+                .catch(e => Bun.stderr.write(e).then(() => process.exit(1)))
             break
         case 'hook':
-            hook(process.argv[3]).catch((e) => {
-                console.error(e)
-                process.exit(1)
-            })
+            const event = args.at(0) as HookEvent | undefined
+            if (event)
+                await import('./hook')
+                    .then(m => m.default(event))
+                    .catch(e => Bun.stderr.write(e).then(() => process.exit(1)))
+            else
+                await Bun.stderr
+                    .write('usage: rct hook <event>')
+                    .then(() => process.exit(1))
             break
         case 'update':
-            import('./update')
-                .then((m) => m.default(args))
-                .catch((e) => {
-                    console.error(e)
-                    process.exit(1)
-                })
+            await import('./update')
+                .then(m => m.default(args))
+                .catch(e => Bun.stderr.write(e).then(() => process.exit(1)))
             break
+        default:
+            await Bun.stderr
+                .write(`usage: rct <init|hook|update> [...args]`)
+                .then(() => process.exit(1))
     }
 }
+
+if (import.meta.main) await main().then(() => process.exit(0))

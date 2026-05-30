@@ -1,6 +1,6 @@
 import type { RuleEntry, HookEvent } from '#config/types'
-import { evaluateMatch } from './evaluate'
 import { matchesTool } from '#util/general'
+import { evaluateMatch } from './evaluate'
 
 export interface RuleResult {
     action: 'block' | 'warn'
@@ -11,7 +11,7 @@ export function evaluateRules(
     rules: RuleEntry[],
     event: HookEvent,
     toolName: string | undefined,
-    payload: Record<string, unknown>,
+    payload: Record<string, unknown>
 ): RuleResult | null {
     const blockMessages: string[] = []
     const warnMessages: string[] = []

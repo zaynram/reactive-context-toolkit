@@ -1,7 +1,7 @@
-import { fs } from '#util/fs'
 import { resolvePlugin } from '#plugin/resolve'
 import type { RCTPlugin } from '#plugin/types'
 import { displayName } from '#plugin/types'
+import { fs } from '#util/fs'
 import type {
     RCTConfig,
     GlobalsConfig,
@@ -48,10 +48,7 @@ function validateRegex(pattern: string, context: string): void {
     }
 }
 
-function validateMatchCondition(
-    condition: MatchCondition,
-    context: string,
-): void {
+function validateMatchCondition(condition: MatchCondition, context: string): void {
     const operator = condition.operator ?? 'regex'
     if (operator === 'regex' && typeof condition.pattern === 'string') {
         validateRegex(condition.pattern, context)
@@ -87,18 +84,18 @@ const TARGET_TOOLS: Record<string, string | null> = {
 function warnTargetMatcher(
     target: string | undefined,
     matcher: string,
-    context: string,
+    context: string
 ): void {
     if (!target) return
     const validTools = TARGET_TOOLS[target]
     if (!validTools) return // universal target
     const matchers = matcher.split('|')
     const valid = validTools.split('|')
-    const invalid = matchers.filter((m) => !valid.includes(m))
+    const invalid = matchers.filter(m => !valid.includes(m))
     if (invalid.length > 0) {
         console.warn(
-            `[rct] Hint: ${context} uses target '${target}' with matcher '${invalid.join('|')}'. `
-                + `'${target}' is typically available for ${validTools}.`,
+            `[rct] Hint: ${context} uses target '${target}' with matcher '${invalid.join('|')}'. ` +
+                `'${target}' is typically available for ${validTools}.`
         )
     }
 }
@@ -111,7 +108,7 @@ export function validateConfig(config: RCTConfig): ValidatedConfig {
         for (const key of LEGACY_LANG_KEYS) {
             if (key in config.lang) {
                 console.warn(
-                    `[rct] lang.${key} is deprecated in v1.0.0. Rename to lang.node.`,
+                    `[rct] lang.${key} is deprecated in v1.0.0. Rename to lang.node.`
                 )
             }
         }
@@ -120,19 +117,15 @@ export function validateConfig(config: RCTConfig): ValidatedConfig {
     // Validate rules
     if (config.rules) {
         for (const rule of config.rules) {
-            validateMatch(
-                rule.match,
-                `rule "${rule.description ?? rule.message}"`,
-            )
+            validateMatch(rule.match, `rule "${rule.description ?? rule.message}"`)
             // Hint on suspect target+matcher combinations
             if (rule.match && rule.matcher) {
-                const conditions =
-                    Array.isArray(rule.match) ? rule.match : [rule.match]
+                const conditions = Array.isArray(rule.match) ? rule.match : [rule.match]
                 for (const cond of conditions) {
                     warnTargetMatcher(
                         cond.target,
                         rule.matcher,
-                        `rule "${rule.description ?? rule.message}"`,
+                        `rule "${rule.description ?? rule.message}"`
                     )
                 }
             }
@@ -144,23 +137,18 @@ export function validateConfig(config: RCTConfig): ValidatedConfig {
         for (const injection of config.injections) {
             validateMatch(
                 injection.match,
-                `injection "${injection.description ?? 'unnamed'}"`,
+                `injection "${injection.description ?? 'unnamed'}"`
             )
         }
     }
 
     // Populate defaults
-    const globals: Required<GlobalsConfig> = {
-        ...DEFAULT_GLOBALS,
-        ...config.globals,
-    }
+    const globals: Required<GlobalsConfig> = { ...DEFAULT_GLOBALS, ...config.globals }
 
     return { ...config, globals }
 }
 
-export async function applyPlugins(
-    config: ValidatedConfig,
-): Promise<ApplyPluginsResult> {
+export async function applyPlugins(config: ValidatedConfig): Promise<ApplyPluginsResult> {
     const extensions: PluginExtensions = { contexts: [], triggers: [] }
     const pluginRefs: PluginRef[] = config.globals.plugins ?? []
     if (pluginRefs.length === 0) return { config, extensions }
@@ -176,18 +164,18 @@ export async function applyPlugins(
             const { plugin } = await resolvePlugin(name)
             let files = plugin.files
             if (files && pathOverrides) {
-                const pluginAliases = new Set(files.map((f) => f.alias))
+                const pluginAliases = new Set(files.map(f => f.alias))
                 for (const key of Object.keys(pathOverrides)) {
                     if (!pluginAliases.has(key)) {
                         console.warn(
-                            `[rct] Warning: plugin '${displayName(plugin, name)}' has no file with alias '${key}' (available: ${[...pluginAliases].join(', ')})`,
+                            `[rct] Warning: plugin '${displayName(plugin, name)}' has no file with alias '${key}' (available: ${[...pluginAliases].join(', ')})`
                         )
                     }
                 }
-                files = files.map((f) =>
-                    f.alias && pathOverrides[f.alias] ?
-                        { ...f, path: pathOverrides[f.alias] }
-                    :   f,
+                files = files.map(f =>
+                    f.alias && pathOverrides[f.alias]
+                        ? { ...f, path: pathOverrides[f.alias] }
+                        : f
                 )
             }
             if (files) mergedFiles.push(...files)
@@ -209,13 +197,13 @@ export async function applyPlugins(
                     await Promise.resolve(plugin.setup())
                 } catch (err) {
                     console.warn(
-                        `[rct] Warning: plugin '${displayName(plugin, name)}' setup failed: ${err instanceof Error ? err.message : String(err)}`,
+                        `[rct] Warning: plugin '${displayName(plugin, name)}' setup failed: ${err instanceof Error ? err.message : String(err)}`
                     )
                 }
             }
         } catch (err) {
             console.warn(
-                `[rct] Warning: Failed to resolve plugin '${name}': ${err instanceof Error ? err.message : String(err)}`,
+                `[rct] Warning: Failed to resolve plugin '${name}': ${err instanceof Error ? err.message : String(err)}`
             )
             if (process.env.RCT_DEBUG && err instanceof Error && err.stack) {
                 console.warn(err.stack)
@@ -232,9 +220,7 @@ export async function applyPlugins(
     return { config: merged, extensions }
 }
 
-export function desugarFileInjections(
-    config: ValidatedConfig,
-): ValidatedConfig {
+export function desugarFileInjections(config: ValidatedConfig): ValidatedConfig {
     const files = config.files ?? []
     const existingInjections = [...(config.injections ?? [])]
     const newInjections: InjectionEntry[] = []
@@ -244,12 +230,13 @@ export function desugarFileInjections(
 
         // Desugar file-level injectOn
         if (file.injectOn) {
-            const events: HookEvent[] =
-                Array.isArray(file.injectOn) ? file.injectOn : [file.injectOn]
+            const events: HookEvent[] = Array.isArray(file.injectOn)
+                ? file.injectOn
+                : [file.injectOn]
 
             for (const event of events) {
                 const alreadyExists = existingInjections.some(
-                    (inj) => inj.on === event && inj.inject.includes(alias),
+                    inj => inj.on === event && inj.inject.includes(alias)
                 )
                 if (!alreadyExists) {
                     newInjections.push({ on: event, inject: [alias] })
@@ -263,15 +250,13 @@ export function desugarFileInjections(
                 if (!meta.injectOn) continue
                 const metaAlias = meta.alias ?? fs.stem(meta.path)
                 const colonRef = `${alias}:${metaAlias}`
-                const events: HookEvent[] =
-                    Array.isArray(meta.injectOn) ?
-                        meta.injectOn
-                    :   [meta.injectOn]
+                const events: HookEvent[] = Array.isArray(meta.injectOn)
+                    ? meta.injectOn
+                    : [meta.injectOn]
 
                 for (const event of events) {
                     const alreadyExists = existingInjections.some(
-                        (inj) =>
-                            inj.on === event && inj.inject.includes(colonRef),
+                        inj => inj.on === event && inj.inject.includes(colonRef)
                     )
                     if (!alreadyExists) {
                         newInjections.push({ on: event, inject: [colonRef] })
@@ -287,10 +272,10 @@ export function desugarFileInjections(
 export function applyStaleCheck(
     content: string,
     staleConfig: { dateTag: string; wrapTag: string },
-    today: string,
+    today: string
 ): string {
     const dateRegex = new RegExp(
-        `<${staleConfig.dateTag}>(\\d{4}-\\d{2}-\\d{2})</${staleConfig.dateTag}>`,
+        `<${staleConfig.dateTag}>(\\d{4}-\\d{2}-\\d{2})</${staleConfig.dateTag}>`
     )
     const match = dateRegex.exec(content)
     if (!match) return content

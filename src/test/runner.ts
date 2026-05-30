@@ -1,4 +1,3 @@
-import { execSync } from 'child_process'
 import type {
     RCTConfig,
     TestConfig,
@@ -8,6 +7,7 @@ import type {
     GlobalsConfig,
 } from '#config/types'
 import { xml, fs } from '#util'
+import { execSync } from 'node:child_process'
 
 export type { RCTConfig }
 
@@ -73,8 +73,7 @@ export function resolveTestCommand(config: RCTConfig): TestCommandInfo | null {
     if (!config.test) return null
 
     // String shorthand
-    if (typeof config.test === 'string')
-        return { command: config.test, tool: 'custom' }
+    if (typeof config.test === 'string') return { command: config.test, tool: 'custom' }
 
     // Boolean true => auto-detect
     if (config.test === true) return findFirstToolInfo(config)
@@ -91,7 +90,7 @@ export function resolveTestCommand(config: RCTConfig): TestCommandInfo | null {
 /** Resolve test command from a per-language test config */
 export function resolveLangTestCommand(
     langTest: LangTestConfig,
-    entry: LangEntry,
+    entry: LangEntry
 ): TestCommandInfo | null {
     if (typeof langTest.command === 'string')
         return { command: langTest.command, tool: 'custom' }
@@ -119,7 +118,7 @@ export function runTest(command: string, rootDir: string): TestResult {
 export function formatTestResult(
     result: TestResult,
     testConfig: TestConfig | LangTestConfig,
-    globals: Required<GlobalsConfig>,
+    globals: Required<GlobalsConfig>
 ): string {
     const brief = testConfig.brief
     if (brief) {
@@ -175,7 +174,7 @@ export function getCachedResult(
     sessionId: string,
     command: string,
     ttl: number,
-    lang?: string,
+    lang?: string
 ): TestResult | null {
     const file = cacheKey(sessionId, command, lang)
     if (!fs.exists(file)) return null
@@ -194,7 +193,7 @@ export async function setCachedResult(
     sessionId: string,
     command: string,
     result: TestResult,
-    lang?: string,
+    lang?: string
 ): Promise<void> {
     const file = cacheKey(sessionId, command, lang)
     try {
@@ -203,7 +202,7 @@ export async function setCachedResult(
         await fs.write(file, JSON.stringify(entry))
     } catch (err) {
         console.error(
-            `[rct] Cache write failed: ${err instanceof Error ? err.message : String(err)}`,
+            `[rct] Cache write failed: ${err instanceof Error ? err.message : String(err)}`
         )
     }
 }

@@ -2,11 +2,7 @@ import type { LangEntry, HookEvent } from '#config/types'
 import { getCargoInfo } from '#tools/cargo'
 import { eventMatches } from '#util'
 
-export function evaluateRust(
-    entry: LangEntry,
-    event: HookEvent,
-    cwd: string,
-): string[] {
+export function evaluateRust(entry: LangEntry, event: HookEvent, cwd: string): string[] {
     const results: string[] = []
 
     if (entry.tools) {

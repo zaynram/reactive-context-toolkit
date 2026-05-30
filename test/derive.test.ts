@@ -1,8 +1,8 @@
+import { deriveFromProject } from '../src/config/derive'
 import { describe, test, expect, beforeEach, afterEach } from 'bun:test'
 import { mkdtempSync, writeFileSync, rmSync } from 'fs'
-import { join } from 'path'
 import { tmpdir } from 'os'
-import { deriveFromProject } from '../src/config/derive'
+import { join } from 'path'
 
 let tmp: string
 
@@ -60,11 +60,7 @@ describe('deriveFromProject', () => {
     })
 
     test('derives test command for bun project', () => {
-        writePkg({
-            name: 'app',
-            version: '1.0.0',
-            scripts: { test: 'bun test' },
-        })
+        writePkg({ name: 'app', version: '1.0.0', scripts: { test: 'bun test' } })
         touch('bun.lock')
         const result = deriveFromProject(tmp)
         expect(result.test).not.toBeNull()

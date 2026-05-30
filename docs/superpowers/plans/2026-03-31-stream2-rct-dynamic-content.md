@@ -38,15 +38,12 @@ export interface RCTPlugin extends Pick<RCTConfig, 'rules' | 'files'> {
     name: string
     context?: (
         event: HookEvent,
-        input: PluginHookInput,
+        input: PluginHookInput
     ) => string | undefined | Promise<string | undefined>
     trigger?: (
         event: HookEvent,
-        input: PluginHookInput,
-    ) =>
-        | PluginTriggerResult
-        | undefined
-        | Promise<PluginTriggerResult | undefined>
+        input: PluginHookInput
+    ) => PluginTriggerResult | undefined | Promise<PluginTriggerResult | undefined>
 }
 ```
 
@@ -126,7 +123,7 @@ _context:_ After `evaluateInjections()` and before `composeOutput()`. For each p
 async function withTimeout<T>(
     fn: () => Promise<T>,
     ms: number,
-    label: string,
+    label: string
 ): Promise<T | undefined> {
     try {
         return await Promise.race([
@@ -134,13 +131,13 @@ async function withTimeout<T>(
             new Promise<never>((_, reject) =>
                 setTimeout(
                     () => reject(new Error(`${label} timed out after ${ms}ms`)),
-                    ms,
-                ),
+                    ms
+                )
             ),
         ])
     } catch (err) {
         console.warn(
-            `[rct] Warning: ${label}: ${err instanceof Error ? err.message : err}`,
+            `[rct] Warning: ${label}: ${err instanceof Error ? err.message : err}`
         )
         return undefined
     }
@@ -207,12 +204,12 @@ Steps 3 and 4 can run in parallel — they touch different files:
 After this lands, a follow-up PR updates `rct-plugin-tmux/src/index.ts`:
 
 ```typescript
-import type { RCTPlugin } from 'reactive-context-toolkit'
 import { listPanes, formatLayoutSummary } from './lib/tmux'
+import type { RCTPlugin } from 'reactive-context-toolkit'
 
 export default {
     name: 'tmux',
-    context: async (event) => {
+    context: async event => {
         if (event !== 'SessionStart') return undefined
         try {
             return formatLayoutSummary(await listPanes())

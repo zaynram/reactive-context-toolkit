@@ -80,10 +80,7 @@ export default {
     name: 'warn-trigger',
     trigger(_event: string, input: { toolName?: string }) {
         if (input.toolName === 'WarnTool') {
-            return {
-                action: 'warn' as const,
-                message: 'WarnTool requires caution',
-            }
+            return { action: 'warn' as const, message: 'WarnTool requires caution' }
         }
         return undefined
     },
@@ -132,10 +129,7 @@ import path from 'path'
 
 const INDEX_PATH = path.resolve(__dirname, '../src/cli/index.ts')
 const FIXTURE_DIR = path.resolve(__dirname, 'fixtures/plugin-project')
-const THROWING_FIXTURE_DIR = path.resolve(
-    __dirname,
-    'fixtures/plugin-project-throwing',
-)
+const THROWING_FIXTURE_DIR = path.resolve(__dirname, 'fixtures/plugin-project-throwing')
 
 function runHook(event: string, fixtureDir: string, stdin?: string) {
     const result = spawnSync('bun', ['run', INDEX_PATH, 'hook', event], {
@@ -154,10 +148,7 @@ function runHook(event: string, fixtureDir: string, stdin?: string) {
 
 describe('hook pipeline — plugin trigger integration', () => {
     it('blocks with exit code 2 when trigger matches', () => {
-        const payload = JSON.stringify({
-            tool_name: 'BlockedTool',
-            tool_input: {},
-        })
+        const payload = JSON.stringify({ tool_name: 'BlockedTool', tool_input: {} })
         const result = runHook('PreToolUse', FIXTURE_DIR, payload)
         expect(result.exitCode).toBe(2)
         const parsed = JSON.parse(result.stdout)
@@ -172,10 +163,7 @@ describe('hook pipeline — plugin trigger integration', () => {
     })
 
     it('warns without blocking when trigger returns warn', () => {
-        const payload = JSON.stringify({
-            tool_name: 'WarnTool',
-            tool_input: {},
-        })
+        const payload = JSON.stringify({ tool_name: 'WarnTool', tool_input: {} })
         const result = runHook('PreToolUse', FIXTURE_DIR, payload)
         expect(result.exitCode).toBe(0)
         const parsed = JSON.parse(result.stdout)
@@ -298,10 +286,10 @@ All tests must pass (target: 360+ with new integration tests).
 Update these sections to reflect v1.0.0 changes:
 
 1. **Architecture tree:** Update `src/plugin/` descriptions:
-    - `types.ts` — add `setup?` and note `name` is optional
-    - `validate.ts` — note validates all optional property types
-    - `index.ts` — note keyed by BUILTIN_PLUGINS package name
-    - Add `validate.ts` if not already in tree
+   - `types.ts` — add `setup?` and note `name` is optional
+   - `validate.ts` — note validates all optional property types
+   - `index.ts` — note keyed by BUILTIN_PLUGINS package name
+   - Add `validate.ts` if not already in tree
 2. **Key Data Flow:** Update step 4 to mention setup lifecycle
 3. **Plugin interface:** Update to show `setup?` and optional `name`
 4. **Meta section:** Add note about using meta as self-briefing mechanism
@@ -319,13 +307,13 @@ Verify whether the JSON Schema needs updates for plugin-related type changes:
 ### Step 9: Update README.md
 
 1. Add a "Plugin Authoring" section (brief — 10-15 lines) showing:
-    - Minimal plugin: `definePlugin({ files: [...] })`
-    - Plugin with setup: `definePlugin({ files: [...], setup() { ... } })`
-    - Plugin with context: `definePlugin({ context(event, input) { ... } })`
+   - Minimal plugin: `definePlugin({ files: [...] })`
+   - Plugin with setup: `definePlugin({ files: [...], setup() { ... } })`
+   - Plugin with context: `definePlugin({ context(event, input) { ... } })`
 2. Document `meta` as self-briefing mechanism:
-    ```json
-    "meta": { "injectOn": "SessionStart", "include": ["files", "rules", "plugins"] }
-    ```
+   ```json
+   "meta": { "injectOn": "SessionStart", "include": ["files", "rules", "plugins"] }
+   ```
 3. Update the public API exports list if it changed
 
 ### Step 10: Stale documentation cleanup

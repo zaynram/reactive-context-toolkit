@@ -1,4 +1,5 @@
-import { describe, expect, test } from 'bun:test'
+import type { LangTestConfig, LangEntry } from '#config/types'
+import type { GlobalsConfig } from '#config/types'
 import {
     resolveTestCommand,
     resolveLangTestCommand,
@@ -8,8 +9,7 @@ import {
     setCachedResult,
 } from '#test/runner'
 import type { RCTConfig, TestResult } from '#test/runner'
-import type { LangTestConfig, LangEntry } from '#config/types'
-import type { GlobalsConfig } from '#config/types'
+import { describe, expect, test } from 'bun:test'
 
 const defaultGlobals: Required<GlobalsConfig> = {
     format: 'xml',
@@ -125,44 +125,25 @@ describe('runTest', () => {
 
 describe('formatTestResult', () => {
     test('uses brief template', () => {
-        const result: TestResult = {
-            status: 'pass',
-            exitCode: 0,
-            output: 'all good',
-        }
+        const result: TestResult = { status: 'pass', exitCode: 0, output: 'all good' }
         const formatted = formatTestResult(
             result,
-            {
-                command: 'bun test',
-                brief: 'Result: {status} (code {exitCode})',
-            },
-            defaultGlobals,
+            { command: 'bun test', brief: 'Result: {status} (code {exitCode})' },
+            defaultGlobals
         )
         expect(formatted).toBe('Result: pass (code 0)')
     })
 
     test('xml format pass produces self-closing test tag', () => {
         const result: TestResult = { status: 'pass', exitCode: 0, output: '' }
-        const out = formatTestResult(
-            result,
-            { command: 'bun test' },
-            defaultGlobals,
-        )
+        const out = formatTestResult(result, { command: 'bun test' }, defaultGlobals)
         expect(out).toContain('<test')
         expect(out).toContain('status="pass"')
     })
 
     test('xml format fail includes exitCode', () => {
-        const result: TestResult = {
-            status: 'fail',
-            exitCode: 1,
-            output: 'error',
-        }
-        const out = formatTestResult(
-            result,
-            { command: 'bun test' },
-            defaultGlobals,
-        )
+        const result: TestResult = { status: 'fail', exitCode: 1, output: 'error' }
+        const out = formatTestResult(result, { command: 'bun test' }, defaultGlobals)
         expect(out).toContain('status="fail"')
         expect(out).toContain('exitCode="1"')
     })
@@ -176,11 +157,7 @@ describe('formatTestResult with format', () => {
             output: '',
             tool: 'bun',
         }
-        const out = formatTestResult(
-            result,
-            { command: 'bun test' },
-            defaultGlobals,
-        )
+        const out = formatTestResult(result, { command: 'bun test' }, defaultGlobals)
         expect(out).toContain('<test')
         expect(out).toContain('tool="bun"')
         expect(out).toContain('status="pass"')
@@ -193,11 +170,7 @@ describe('formatTestResult with format', () => {
             output: '',
             tool: 'bun',
         }
-        const out = formatTestResult(
-            result,
-            { command: 'bun test' },
-            defaultGlobals,
-        )
+        const out = formatTestResult(result, { command: 'bun test' }, defaultGlobals)
         expect(out).toContain('exitCode="1"')
     })
 
@@ -209,11 +182,7 @@ describe('formatTestResult with format', () => {
             tool: 'cargo',
         }
         const jsonGlobals = { ...defaultGlobals, format: 'json' as const }
-        const out = formatTestResult(
-            result,
-            { command: 'cargo test' },
-            jsonGlobals,
-        )
+        const out = formatTestResult(result, { command: 'cargo test' }, jsonGlobals)
         const parsed = JSON.parse(out)
         expect(parsed.test.tool).toBe('cargo')
         expect(parsed.test.status).toBe('pass')
@@ -229,7 +198,7 @@ describe('formatTestResult with format', () => {
         const out = formatTestResult(
             result,
             { command: 'pixi run test', brief: '[{tool}] {status}' },
-            defaultGlobals,
+            defaultGlobals
         )
         expect(out).toBe('[pixi] pass')
     })
@@ -244,7 +213,7 @@ describe('formatTestResult with format', () => {
         const out = formatTestResult(
             result,
             { command: 'bun test', format: 'json' },
-            defaultGlobals,
+            defaultGlobals
         )
         const parsed = JSON.parse(out)
         expect(parsed.test).toBeDefined()
@@ -258,11 +227,7 @@ describe('cache', () => {
     })
 
     test('stores and retrieves cached result', async () => {
-        const testResult: TestResult = {
-            status: 'pass',
-            exitCode: 0,
-            output: 'ok',
-        }
+        const testResult: TestResult = { status: 'pass', exitCode: 0, output: 'ok' }
         const sessionId = `test-cache-${Date.now()}`
         await setCachedResult(sessionId, 'bun test', testResult)
         const cached = getCachedResult(sessionId, 'bun test', 300)
@@ -273,11 +238,7 @@ describe('cache', () => {
 
     test('same command on different languages gets separate cache entries', async () => {
         const result: TestResult = { status: 'pass', exitCode: 0, output: 'ok' }
-        const failResult: TestResult = {
-            status: 'fail',
-            exitCode: 1,
-            output: 'err',
-        }
+        const failResult: TestResult = { status: 'fail', exitCode: 1, output: 'err' }
         const sessionId = `test-cache-lang-${Date.now()}`
         await setCachedResult(sessionId, 'test', result, 'node')
         await setCachedResult(sessionId, 'test', failResult, 'rust')
@@ -333,7 +294,7 @@ describe('formatTestResult per-language', () => {
         const out = formatTestResult(
             result,
             { brief: '{lang}: {status} ({tool})' },
-            defaultGlobals,
+            defaultGlobals
         )
         expect(out).toBe('node: pass (bun)')
     })
@@ -346,11 +307,7 @@ describe('formatTestResult per-language', () => {
             tool: 'bun',
             lang: 'node',
         }
-        const out = formatTestResult(
-            result,
-            { command: 'bun test' },
-            defaultGlobals,
-        )
+        const out = formatTestResult(result, { command: 'bun test' }, defaultGlobals)
         expect(out).toContain('lang="node"')
         expect(out).toContain('tool="bun"')
     })
@@ -366,7 +323,7 @@ describe('formatTestResult per-language', () => {
         const out = formatTestResult(
             result,
             { command: 'cargo test', format: 'json' },
-            defaultGlobals,
+            defaultGlobals
         )
         const parsed = JSON.parse(out)
         expect(parsed.test.lang).toBe('rust')
@@ -381,11 +338,7 @@ describe('formatTestResult per-language', () => {
             output: '',
             tool: 'bun',
         }
-        const out = formatTestResult(
-            result,
-            { command: 'bun test' },
-            defaultGlobals,
-        )
+        const out = formatTestResult(result, { command: 'bun test' }, defaultGlobals)
         expect(out).not.toContain('lang=')
     })
 })

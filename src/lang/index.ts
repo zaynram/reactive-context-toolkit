@@ -5,11 +5,7 @@ import { evaluateRust } from './rust'
 
 export { extractTsconfigPaths } from './node'
 
-export function evaluateLang(
-    lang: LangConfig,
-    event: HookEvent,
-    cwd: string,
-): string[] {
+export function evaluateLang(lang: LangConfig, event: HookEvent, cwd: string): string[] {
     const results: string[] = []
 
     if (lang.node) results.push(...evaluateNode(lang.node, event, cwd))

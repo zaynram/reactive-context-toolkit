@@ -9,18 +9,16 @@ export class PluginValidationError extends Error {
 
 export function validatePlugin(
     plugin: unknown,
-    ref: string,
+    ref: string
 ): asserts plugin is RCTPlugin {
     if (!plugin || typeof plugin !== 'object') {
-        throw new PluginValidationError(
-            `Plugin '${ref}' must export an object.`,
-        )
+        throw new PluginValidationError(`Plugin '${ref}' must export an object.`)
     }
     const p = plugin as Record<string, unknown>
     const check = (key: string, type: string) => {
         if (key in p && typeof p[key] !== type) {
             throw new PluginValidationError(
-                `Plugin '${ref}' property '${key}' must be ${type}, got ${typeof p[key]}`,
+                `Plugin '${ref}' property '${key}' must be ${type}, got ${typeof p[key]}`
             )
         }
     }
@@ -30,12 +28,12 @@ export function validatePlugin(
     check('setup', 'function')
     if ('files' in p && !Array.isArray(p.files)) {
         throw new PluginValidationError(
-            `Plugin '${ref}' property 'files' must be an array`,
+            `Plugin '${ref}' property 'files' must be an array`
         )
     }
     if ('rules' in p && !Array.isArray(p.rules)) {
         throw new PluginValidationError(
-            `Plugin '${ref}' property 'rules' must be an array`,
+            `Plugin '${ref}' property 'rules' must be an array`
         )
     }
 }

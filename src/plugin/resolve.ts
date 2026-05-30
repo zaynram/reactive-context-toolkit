@@ -1,8 +1,8 @@
-import type { BuiltinPluginRef, ResolvedPlugin } from './types'
-import builtins from './index'
 import { CLAUDE_PROJECT_DIR } from '#constants'
-import path from 'path'
+import builtins from './index'
+import type { BuiltinPluginRef, ResolvedPlugin } from './types'
 import { PluginValidationError, validatePlugin } from './validate'
+import path from 'path'
 
 export async function resolvePlugin(ref: string): Promise<ResolvedPlugin> {
     // 1. Built-in name
@@ -13,8 +13,9 @@ export async function resolvePlugin(ref: string): Promise<ResolvedPlugin> {
 
     // 2. Local file (starts with . or /)
     if (ref.startsWith('.') || ref.startsWith('/')) {
-        const fullPath =
-            path.isAbsolute(ref) ? ref : path.resolve(CLAUDE_PROJECT_DIR, ref)
+        const fullPath = path.isAbsolute(ref)
+            ? ref
+            : path.resolve(CLAUDE_PROJECT_DIR, ref)
         try {
             const mod = await import(fullPath)
             const plugin = mod.default ?? mod
@@ -23,9 +24,7 @@ export async function resolvePlugin(ref: string): Promise<ResolvedPlugin> {
         } catch (err: unknown) {
             if (err instanceof PluginValidationError) throw err
             const detail = err instanceof Error ? `: ${err.message}` : ''
-            throw new Error(
-                `Failed to load plugin '${ref}' from '${fullPath}'${detail}`,
-            )
+            throw new Error(`Failed to load plugin '${ref}' from '${fullPath}'${detail}`)
         }
     }
 

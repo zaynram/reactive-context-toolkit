@@ -4,16 +4,13 @@ import path from 'path'
 
 const INDEX_PATH = path.resolve(__dirname, '../src/cli/index.ts')
 const FIXTURE_DIR = path.resolve(__dirname, 'fixtures/plugin-project')
-const THROWING_FIXTURE_DIR = path.resolve(
-    __dirname,
-    'fixtures/plugin-project-throwing',
-)
+const THROWING_FIXTURE_DIR = path.resolve(__dirname, 'fixtures/plugin-project-throwing')
 
 function runHook(
     event: string,
     fixtureDir: string,
     stdin?: string,
-    env?: Record<string, string>,
+    env?: Record<string, string>
 ) {
     const result = spawnSync('bun', ['run', INDEX_PATH, 'hook', event], {
         cwd: fixtureDir,
@@ -31,10 +28,7 @@ function runHook(
 
 describe('hook pipeline — plugin trigger integration', () => {
     it('plugin trigger blocks with exit code 2 when tool matches', () => {
-        const payload = JSON.stringify({
-            tool_name: 'BlockedTool',
-            tool_input: {},
-        })
+        const payload = JSON.stringify({ tool_name: 'BlockedTool', tool_input: {} })
         const result = runHook('PreToolUse', FIXTURE_DIR, payload)
         expect(result.exitCode).toBe(2)
         const parsed = JSON.parse(result.stdout)
@@ -49,10 +43,7 @@ describe('hook pipeline — plugin trigger integration', () => {
     })
 
     it('plugin trigger warns without blocking when tool matches warn condition', () => {
-        const payload = JSON.stringify({
-            tool_name: 'WarnTool',
-            tool_input: {},
-        })
+        const payload = JSON.stringify({ tool_name: 'WarnTool', tool_input: {} })
         const result = runHook('PreToolUse', FIXTURE_DIR, payload)
         expect(result.exitCode).toBe(0)
         // Warn message is included in additionalContext (not a block response)

@@ -50,16 +50,16 @@ Rewrite `createTool`:
 
 ```typescript
 import type { ToolOptions, ToolCallback, McpServer } from '#types'
-import { z } from 'zod'
 import type { McpResultSchema } from './helpers'
+import { z } from 'zod'
 
 export function createTool<T extends z.ZodObject<z.ZodRawShape>>(
     options: ToolOptions<T>,
-    handler: (params: z.infer<T>) => Promise<z.infer<McpResultSchema>>,
+    handler: (params: z.infer<T>) => Promise<z.infer<McpResultSchema>>
 ) {
     const name = options.title
         .split(' ')
-        .map((s) => s.toLowerCase())
+        .map(s => s.toLowerCase())
         .join('_')
     return {
         name,
@@ -69,7 +69,7 @@ export function createTool<T extends z.ZodObject<z.ZodRawShape>>(
             server.registerTool<McpResultSchema, T>(
                 name,
                 options,
-                handler as ToolCallback<T>,
+                handler as ToolCallback<T>
             ),
     }
 }
@@ -87,10 +87,10 @@ Each tool callback must now call `preflight()` directly. The `preflight` functio
 
 1. Add `import { preflight } from './helpers'` if not already imported
 2. Add the following two lines as the **first lines** of the handler function body (before any other logic):
-    ```typescript
-    const check = await preflight(params.target) // or just preflight() for list.ts
-    if (check) return check
-    ```
+   ```typescript
+   const check = await preflight(params.target) // or just preflight() for list.ts
+   if (check) return check
+   ```
 3. **Do not modify any other lines** in the handler function
 
 **Tool-specific notes:**
@@ -140,7 +140,7 @@ In `src/lib/types.ts`, update the error message:
 export class InvalidTargetError extends Error {
     constructor(target: string) {
         super(
-            `Invalid tmux target '${target}'. Use session:window.pane format (e.g., dev:0.1).`,
+            `Invalid tmux target '${target}'. Use session:window.pane format (e.g., dev:0.1).`
         )
         this.name = 'InvalidTargetError'
     }
@@ -179,8 +179,8 @@ Address Copilot findings:
 
 1. Clarify this is a workspace-internal package (part of reactive-context-toolkit monorepo)
 2. Fix tool descriptions:
-    - `tmux_close`: "refuses to close last pane in its **window**" (not session)
-    - `tmux_list`: clarify it lists all sessions by default, or filters by session name
+   - `tmux_close`: "refuses to close last pane in its **window**" (not session)
+   - `tmux_list`: clarify it lists all sessions by default, or filters by session name
 3. Remove claim about `$TMUX` defaulting behavior (not implemented)
 4. Add note: "Dynamic context injection for tmux pane layout is planned for a future version."
 

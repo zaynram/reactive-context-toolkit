@@ -76,13 +76,9 @@ rct-plugin-tmux/
 **MCP server installation:**
 
 - `bunx rct-tmux setup` writes to `.mcp.json`:
-    ```json
-    {
-        "mcpServers": {
-            "rct-tmux": { "command": "bunx", "args": ["rct-tmux", "serve"] }
-        }
-    }
-    ```
+  ```json
+  { "mcpServers": { "rct-tmux": { "command": "bunx", "args": ["rct-tmux", "serve"] } } }
+  ```
 - `bunx rct-tmux serve` starts the MCP server (stdio transport)
 
 ### MCP Tools
@@ -100,15 +96,13 @@ List all panes in the current or specified session with metadata.
 **Returns:** Array of pane info objects:
 
 ```json
-[
-    {
-        "target": "claude-team:0.0",
-        "width": 100,
-        "height": 32,
-        "command": "bash",
-        "active": true
-    }
-]
+[{
+    "target": "claude-team:0.0",
+    "width": 100,
+    "height": 32,
+    "command": "bash",
+    "active": true
+}]
 ```
 
 **Implementation:** `tmux list-panes -a -F '#{session_name}:#{window_index}.#{pane_index}\t#{pane_width}\t#{pane_height}\t#{pane_current_command}\t#{pane_active}'`
@@ -205,9 +199,7 @@ interface PaneInfo {
     active: boolean
 }
 
-async function exec(
-    args: string[],
-): Promise<{ stdout: string; exitCode: number }>
+async function exec(args: string[]): Promise<{ stdout: string; exitCode: number }>
 function parseListPanes(output: string): PaneInfo[]
 function validateTarget(target: string): void // throws on invalid
 ```
@@ -262,11 +254,11 @@ export interface RCTPlugin extends Pick<RCTConfig, 'rules' | 'files'> {
     name: string
     context?: (
         event: HookEvent,
-        input: RC.HookInput,
+        input: RC.HookInput
     ) => string | Promise<string> | undefined
     trigger?: (
         event: HookEvent,
-        input: RC.HookInput,
+        input: RC.HookInput
     ) => PluginTriggerResult | Promise<PluginTriggerResult> | undefined
 }
 ```
@@ -291,7 +283,7 @@ After Stream 2 lands, a follow-up PR updates `rct-plugin-tmux/src/index.ts`:
 ```typescript
 export default {
     name: 'tmux',
-    context: async (event) => {
+    context: async event => {
         if (event !== 'SessionStart') return undefined
         try {
             return formatLayoutSummary(await listPanes())

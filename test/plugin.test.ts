@@ -1,5 +1,5 @@
-import { describe, expect, test } from 'bun:test'
 import pluginRegistry from '#plugin/index'
+import { describe, expect, test } from 'bun:test'
 
 describe('plugin registry', () => {
     test('contains all builtin plugins', () => {
@@ -22,21 +22,19 @@ describe('rct-plugin-track-work', () => {
     })
 
     test('contributes chores and plans files', () => {
-        const aliases = (plugin.files ?? []).map((f) => f.alias)
+        const aliases = (plugin.files ?? []).map(f => f.alias)
         expect(aliases).toContain('chores')
         expect(aliases).toContain('plans')
     })
 
     test('chores file has injectOn: SessionStart', () => {
-        const chores = (plugin.files ?? []).find((f) => f.alias === 'chores')
+        const chores = (plugin.files ?? []).find(f => f.alias === 'chores')
         expect(chores?.injectOn).toBe('SessionStart')
     })
 
     test('chores and plans have entry-schema metaFile', () => {
         for (const file of plugin.files ?? []) {
-            expect(
-                file.metaFiles?.some((m) => m.alias === 'entry-schema'),
-            ).toBe(true)
+            expect(file.metaFiles?.some(m => m.alias === 'entry-schema')).toBe(true)
         }
     })
 })

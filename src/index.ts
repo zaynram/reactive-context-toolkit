@@ -7,11 +7,7 @@ export { CLAUDE_PROJECT_DIR, BUILTIN_PLUGINS, LANGUAGES } from '#constants'
 export { loadConfig } from '#config/loader'
 
 /** Validate config regex patterns, populate defaults, and expand shorthand. Composable for custom pipelines. */
-export {
-    validateConfig,
-    desugarFileInjections,
-    applyPlugins,
-} from '#config/schema'
+export { validateConfig, desugarFileInjections, applyPlugins } from '#config/schema'
 export type { PluginExtensions, ApplyPluginsResult } from '#config/schema'
 
 /** Build the alias-to-content Map used by injections and meta. Composable for custom pipelines. */
@@ -119,11 +115,7 @@ export { normalize, minify, condense } from '#util/general'
 
 // Plugin
 
-export type {
-    RCTPlugin,
-    PluginHookInput,
-    PluginTriggerResult,
-} from '#plugin/types'
+export type { RCTPlugin, PluginHookInput, PluginTriggerResult } from '#plugin/types'
 export { displayName } from '#plugin/types'
 
 /** Registry mapping plugin names to their RCTPlugin instances. */

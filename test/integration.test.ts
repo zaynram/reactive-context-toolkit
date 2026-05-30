@@ -5,10 +5,7 @@ import path from 'path'
 const INDEX_PATH = path.resolve(__dirname, '../src/cli/index.ts')
 const FIXTURE_DIR = path.resolve(__dirname, 'fixtures/project')
 
-function runHook(
-    event: string,
-    stdin?: string,
-): { stdout: string; exitCode: number } {
+function runHook(event: string, stdin?: string): { stdout: string; exitCode: number } {
     const result = spawnSync('bun', ['run', INDEX_PATH, 'hook', event], {
         cwd: FIXTURE_DIR,
         env: { ...process.env, CLAUDE_PROJECT_DIR: FIXTURE_DIR },
@@ -29,9 +26,7 @@ describe('integration: cli subprocess', () => {
         expect(parsed.hookSpecificOutput).toBeDefined()
         expect(parsed.hookSpecificOutput.hookEventName).toBe('SessionStart')
         expect(parsed.hookSpecificOutput.additionalContext).toContain('chores')
-        expect(parsed.hookSpecificOutput.additionalContext).toContain(
-            'Fix tests',
-        )
+        expect(parsed.hookSpecificOutput.additionalContext).toContain('Fix tests')
     })
 
     test('PreToolUse with Write to docs/specs/ triggers block rule (exit code 2)', () => {
@@ -60,12 +55,8 @@ describe('integration: cli subprocess', () => {
         const parsed = JSON.parse(stdout)
         expect(parsed.hookSpecificOutput).toBeDefined()
         expect(parsed.hookSpecificOutput.additionalContext).toContain('chores')
-        expect(parsed.hookSpecificOutput.additionalContext).toContain(
-            'Fix tests',
-        )
-        expect(parsed.hookSpecificOutput.additionalContext).toContain(
-            'reminder',
-        )
+        expect(parsed.hookSpecificOutput.additionalContext).toContain('Fix tests')
+        expect(parsed.hookSpecificOutput.additionalContext).toContain('reminder')
     })
 
     test('PreToolUse with no matching rules/injections outputs nothing', () => {

@@ -68,9 +68,7 @@ describe('rct update', () => {
         const config = readJSON(path.join(TMP_DIR, 'rct.config.json'))
 
         // Existing lang preserved (not overwritten)
-        expect(config.lang).toEqual({
-            node: { tools: [{ name: 'bun', scripts: true }] },
-        })
+        expect(config.lang).toEqual({ node: { tools: [{ name: 'bun', scripts: true }] } })
 
         // New field: test was added (not in existing config)
         expect(config.test).toBeDefined()
@@ -88,13 +86,7 @@ describe('rct update', () => {
         const originalLang = {
             node: {
                 tools: [{ name: 'bun', scripts: true }],
-                config: [
-                    {
-                        name: 'tsconfig',
-                        path: 'tsconfig.json',
-                        extractPaths: true,
-                    },
-                ],
+                config: [{ name: 'tsconfig', path: 'tsconfig.json', extractPaths: true }],
             },
         }
 
@@ -134,25 +126,13 @@ describe('rct update', () => {
         const derivedLang = {
             node: {
                 tools: [{ name: 'bun', scripts: true }],
-                config: [
-                    {
-                        name: 'tsconfig',
-                        path: 'tsconfig.json',
-                        extractPaths: true,
-                    },
-                ],
+                config: [{ name: 'tsconfig', path: 'tsconfig.json', extractPaths: true }],
             },
         }
         const customizedLang = {
             node: {
                 tools: [{ name: 'bun', scripts: true, workspace: true }],
-                config: [
-                    {
-                        name: 'tsconfig',
-                        path: 'tsconfig.json',
-                        extractPaths: true,
-                    },
-                ],
+                config: [{ name: 'tsconfig', path: 'tsconfig.json', extractPaths: true }],
             },
         }
 
@@ -189,13 +169,7 @@ describe('rct update', () => {
         const originalLang = {
             node: {
                 tools: [{ name: 'bun', scripts: true }],
-                config: [
-                    {
-                        name: 'tsconfig',
-                        path: 'tsconfig.json',
-                        extractPaths: true,
-                    },
-                ],
+                config: [{ name: 'tsconfig', path: 'tsconfig.json', extractPaths: true }],
             },
             rust: { tools: [{ name: 'cargo' }] },
         }
@@ -211,16 +185,10 @@ describe('rct update', () => {
             // No Cargo.toml — rust should be removed
             'rct.config.json': JSON.stringify({
                 lang: originalLang,
-                test: {
-                    command: 'bun test && cargo test',
-                    injectOn: 'SessionStart',
-                },
+                test: { command: 'bun test && cargo test', injectOn: 'SessionStart' },
                 _derived: {
                     lang: originalLang,
-                    test: {
-                        command: 'bun test && cargo test',
-                        injectOn: 'SessionStart',
-                    },
+                    test: { command: 'bun test && cargo test', injectOn: 'SessionStart' },
                     files: [],
                     globals: {},
                 },
@@ -244,13 +212,7 @@ describe('rct update', () => {
         const nodeLang = {
             node: {
                 tools: [{ name: 'bun', scripts: true }],
-                config: [
-                    {
-                        name: 'tsconfig',
-                        path: 'tsconfig.json',
-                        extractPaths: true,
-                    },
-                ],
+                config: [{ name: 'tsconfig', path: 'tsconfig.json', extractPaths: true }],
             },
         }
 

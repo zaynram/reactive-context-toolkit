@@ -1,6 +1,5 @@
-import path from 'path'
 import fs from 'fs'
-import { validateXMLWithXSD } from 'validate-with-xmllint'
+import path from 'path'
 import {
     definePlugin,
     evaluateMatch,
@@ -9,6 +8,7 @@ import {
     type Match,
     type PluginHookInput,
 } from 'rct'
+import { validateXMLWithXSD } from 'validate-with-xmllint'
 
 const resolveBundled = (...segments: string[]) =>
     path.resolve(__dirname, '..', 'public', ...segments)
@@ -21,16 +21,11 @@ const resolveSchemaPath = (...segments: string[]): string =>
 
 export const schema = fs
     .readdirSync(resolveBundled('schema'))
-    .filter((name) => name.endsWith('.xsd'))
+    .filter(name => name.endsWith('.xsd'))
     .sort()
-    .map((name) => ({
-        src: resolveBundled('schema', name),
-        dst: resolveSchemaPath(name),
-    }))
+    .map(name => ({ src: resolveBundled('schema', name), dst: resolveSchemaPath(name) }))
 
-const schemaByName = new Map(
-    schema.map((s) => [path.basename(s.dst), s] as const),
-)
+const schemaByName = new Map(schema.map(s => [path.basename(s.dst), s] as const))
 const lookupSchemaPath = (name: string): string => {
     const entry = schemaByName.get(name)
     if (!entry) throw new Error(`schema asset not found: ${name}`)
@@ -60,7 +55,7 @@ const files: FileEntry[] = [
 
 const containers = [resolveContextPath(), resolveSchemaPath()]
 const leaves = files
-    .map((f) => ({ src: resolveBundled(path.basename(f.path)), dst: f.path }))
+    .map(f => ({ src: resolveBundled(path.basename(f.path)), dst: f.path }))
     .concat(schema)
 
 const conditions: Record<'context' | 'trigger', Match> = {
@@ -95,7 +90,7 @@ const getContextMatch = (input: PluginHookInput): ContextMatch | undefined => {
         async validate() {
             return validateXMLWithXSD(
                 await bufferFromPath(fp),
-                await bufferFromPath(lookupSchemaPath(this.name)),
+                await bufferFromPath(lookupSchemaPath(this.name))
             )
         },
     }
@@ -106,8 +101,8 @@ export default definePlugin({
     files,
     setup() {
         containers
-            .filter((d) => !fs.existsSync(d))
-            .forEach((d) => fs.mkdirSync(d, { recursive: true }))
+            .filter(d => !fs.existsSync(d))
+            .forEach(d => fs.mkdirSync(d, { recursive: true }))
         leaves
             .filter(({ dst }) => !fs.existsSync(dst))
             .forEach(({ src, dst }) => fs.copyFileSync(src, dst))
@@ -117,15 +112,14 @@ export default definePlugin({
         return match
             ?.validate()
             .then(() => `${match.name} passed XSD schema validation`)
-            .catch((e) => `${match.name} has XSD validation errors: ${e}`)
+            .catch(e => `${match.name} has XSD validation errors: ${e}`)
     },
     contextOn: 'PostToolUse',
     contextFrequency: 'always',
     trigger(event, input) {
         switch (event) {
             case 'PreToolUse':
-                if (!evaluateMatch(conditions.trigger, input.payload))
-                    return undefined
+                if (!evaluateMatch(conditions.trigger, input.payload)) return undefined
                 const name = path.basename(input.payload!.file_path as string)
                 return {
                     action: 'block',

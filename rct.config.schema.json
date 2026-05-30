@@ -88,10 +88,7 @@
                 },
                 "minify": {
                     "description": "Minification of injected content. true/false or fine-grained MinifyConfig object.",
-                    "oneOf": [
-                        { "type": "boolean" },
-                        { "$ref": "#/$defs/MinifyConfig" }
-                    ],
+                    "oneOf": [{ "type": "boolean" }, { "$ref": "#/$defs/MinifyConfig" }],
                     "default": true
                 },
                 "plugins": {
@@ -115,9 +112,7 @@
                                     "paths": {
                                         "type": "object",
                                         "description": "Map of file alias to custom path. Overrides the plugin's default paths.",
-                                        "additionalProperties": {
-                                            "type": "string"
-                                        }
+                                        "additionalProperties": { "type": "string" }
                                     }
                                 },
                                 "additionalProperties": false
@@ -252,9 +247,7 @@
                         { "type": "string" },
                         {
                             "type": "array",
-                            "items": {
-                                "$ref": "#/$defs/MatchConditionPatternItem"
-                            }
+                            "items": { "$ref": "#/$defs/MatchConditionPatternItem" }
                         }
                     ]
                 }
@@ -264,10 +257,7 @@
             "description": "A match specification: single condition or array of conditions",
             "anyOf": [
                 { "$ref": "#/$defs/MatchCondition" },
-                {
-                    "type": "array",
-                    "items": { "$ref": "#/$defs/MatchCondition" }
-                }
+                { "type": "array", "items": { "$ref": "#/$defs/MatchCondition" } }
             ]
         },
         "RuleEntry": {
@@ -299,10 +289,7 @@
                     "enum": ["block", "warn"],
                     "description": "Action to take on match"
                 },
-                "message": {
-                    "type": "string",
-                    "description": "Message to display"
-                }
+                "message": { "type": "string", "description": "Message to display" }
             }
         },
         "InjectionEntry": {
@@ -345,10 +332,7 @@
                     "type": "boolean",
                     "description": "Override global minification for this injection entry."
                 },
-                "wrapper": {
-                    "type": "string",
-                    "description": "Custom wrapper tag"
-                },
+                "wrapper": { "type": "string", "description": "Custom wrapper tag" },
                 "format": {
                     "$ref": "#/$defs/Format",
                     "description": "Output format override"
@@ -394,18 +378,9 @@
                     "type": "boolean",
                     "description": "Whether to inject scripts info"
                 },
-                "manifest": {
-                    "type": "string",
-                    "description": "Path to manifest file"
-                },
-                "lockfile": {
-                    "type": "string",
-                    "description": "Path to lockfile"
-                },
-                "config": {
-                    "type": "string",
-                    "description": "Path to tool config file"
-                },
+                "manifest": { "type": "string", "description": "Path to manifest file" },
+                "lockfile": { "type": "string", "description": "Path to lockfile" },
+                "config": { "type": "string", "description": "Path to tool config file" },
                 "injectOn": {
                     "$ref": "#/$defs/HookEventOrArray",
                     "description": "Hook event(s) that trigger injection"
@@ -419,10 +394,7 @@
             "required": ["name", "path"],
             "properties": {
                 "name": { "type": "string", "description": "Display name" },
-                "path": {
-                    "type": "string",
-                    "description": "Path to the config file"
-                },
+                "path": { "type": "string", "description": "Path to the config file" },
                 "inject": {
                     "type": "boolean",
                     "description": "Whether to inject this config file's content"
@@ -469,10 +441,7 @@
             "properties": {
                 "command": {
                     "description": "Test command (true = auto-detect from tools)",
-                    "anyOf": [
-                        { "type": "boolean", "const": true },
-                        { "type": "string" }
-                    ]
+                    "anyOf": [{ "type": "boolean", "const": true }, { "type": "string" }]
                 },
                 "brief": {
                     "type": "string",
@@ -502,10 +471,7 @@
             "properties": {
                 "command": {
                     "description": "Test command to run (true = auto-detect)",
-                    "anyOf": [
-                        { "type": "boolean", "const": true },
-                        { "type": "string" }
-                    ]
+                    "anyOf": [{ "type": "boolean", "const": true }, { "type": "string" }]
                 },
                 "injectOn": {
                     "$ref": "#/$defs/HookEventOrArray",
@@ -515,10 +481,7 @@
                     "type": "boolean",
                     "description": "Whether to cache test results"
                 },
-                "cacheTTL": {
-                    "type": "number",
-                    "description": "Cache TTL in seconds"
-                },
+                "cacheTTL": { "type": "number", "description": "Cache TTL in seconds" },
                 "brief": {
                     "type": "string",
                     "description": "Brief summary of test results"

@@ -1,6 +1,6 @@
+import { loadConfig } from '../src/config/loader'
 import { describe, test, expect } from 'bun:test'
 import path from 'path'
-import { loadConfig } from '../src/config/loader'
 
 const FIXTURES = path.resolve(import.meta.dir, 'fixtures')
 
@@ -33,11 +33,11 @@ describe('loadConfig', () => {
         try {
             writeFileSync(
                 path.join(tmpDir, 'rct.config.json'),
-                JSON.stringify({ globals: { format: 'xml' } }),
+                JSON.stringify({ globals: { format: 'xml' } })
             )
             writeFileSync(
                 path.join(tmpDir, 'rct.config.ts'),
-                `export default { globals: { format: "json" } }`,
+                `export default { globals: { format: "json" } }`
             )
             const config = await loadConfig(tmpDir)
             // .ts should win over .json

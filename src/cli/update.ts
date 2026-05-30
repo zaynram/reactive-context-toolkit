@@ -1,12 +1,8 @@
 import { deriveFromProject } from '#config/derive'
-import {
-    validateConfig,
-    applyPlugins,
-    desugarFileInjections,
-} from '#config/schema'
-import { mergeSettings } from './init'
-import { fs } from '#util'
+import { validateConfig, applyPlugins, desugarFileInjections } from '#config/schema'
 import type { RCTConfig } from '#config/types'
+import { fs } from '#util'
+import { mergeSettings } from './init'
 
 function deepEqual(a: unknown, b: unknown): boolean {
     return JSON.stringify(a) === JSON.stringify(b)

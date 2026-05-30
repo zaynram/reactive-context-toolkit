@@ -1,8 +1,8 @@
-import { fs } from '#util'
-import type { FileEntry, MetaFileEntry } from './types'
-import { normalize } from '#util/general'
-import type { ReferenceFile, FileRegistry } from '#types'
 import { CLAUDE_PROJECT_DIR } from '#constants'
+import type { ReferenceFile, FileRegistry } from '#types'
+import { fs } from '#util'
+import { normalize } from '#util/general'
+import type { FileEntry, MetaFileEntry } from './types'
 
 export type { ReferenceFile, FileRegistry }
 
@@ -12,7 +12,7 @@ function deriveAlias(entry: MetaFileEntry): string {
 
 export function buildFileRegistry(
     entries: FileEntry[],
-    rootDir: string = CLAUDE_PROJECT_DIR,
+    rootDir: string = CLAUDE_PROJECT_DIR
 ): FileRegistry {
     const files = new Map<string, ReferenceFile>()
     // metaFiles keyed by "parentAlias:metaAlias"
@@ -53,9 +53,7 @@ export function buildFileRegistry(
             return files.get(alias)
         },
 
-        getRef(
-            ref: string,
-        ): { file: ReferenceFile; useBrief: boolean } | undefined {
+        getRef(ref: string): { file: ReferenceFile; useBrief: boolean } | undefined {
             let useBrief = false
             let key = ref
 
@@ -78,7 +76,7 @@ export function buildFileRegistry(
 
         select(...aliases: string[]): ReferenceFile[] {
             return aliases
-                .map((a) => files.get(a))
+                .map(a => files.get(a))
                 .filter((f): f is ReferenceFile => f !== undefined)
         },
 

@@ -6,8 +6,8 @@
 import { LANGUAGES } from '#constants'
 import type { HookEvent as _HookEvent } from '@anthropic-ai/claude-agent-sdk'
 /** Hook events that support additionalContext */
-export type HookEvent = _HookEvent
-    & (
+export type HookEvent = _HookEvent &
+    (
         | 'PreToolUse'
         | 'PostToolUse'
         | 'PostToolUseFailure'
@@ -46,9 +46,7 @@ export interface MinifyConfig {
 }
 
 /** Plugin reference — string name or object with path overrides */
-export type PluginRef =
-    | string
-    | { name: string; paths?: Record<string, string> }
+export type PluginRef = string | { name: string; paths?: Record<string, string> }
 
 /** Extract the plugin name from a PluginRef */
 export function pluginRefName(ref: PluginRef): string {
@@ -56,9 +54,7 @@ export function pluginRefName(ref: PluginRef): string {
 }
 
 /** Extract path overrides from a PluginRef */
-export function pluginRefPaths(
-    ref: PluginRef,
-): Record<string, string> | undefined {
+export function pluginRefPaths(ref: PluginRef): Record<string, string> | undefined {
     return typeof ref === 'string' ? undefined : ref.paths
 }
 
@@ -149,10 +145,7 @@ export interface FileMatchCondition {
 }
 
 /** A single match condition */
-type MatchCondition =
-    | FileMatchCondition
-    | RegexMatchCondition
-    | StringMatchCondition
+type MatchCondition = FileMatchCondition | RegexMatchCondition | StringMatchCondition
 
 /** A match specification: single condition or array of conditions */
 export type Match = MatchCondition | MatchCondition[]

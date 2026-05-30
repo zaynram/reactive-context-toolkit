@@ -1,4 +1,3 @@
-import { describe, test, expect, spyOn } from 'bun:test'
 import {
     validateConfig,
     desugarFileInjections,
@@ -6,6 +5,7 @@ import {
     type ValidatedConfig,
 } from '../src/config/schema'
 import type { RCTConfig, InjectionEntry } from '../src/config/types'
+import { describe, test, expect, spyOn } from 'bun:test'
 
 describe('validateConfig', () => {
     test('returns validated config for valid input', () => {
@@ -32,7 +32,7 @@ describe('validateConfig', () => {
         const warn = spyOn(console, 'warn').mockImplementation(() => {})
         validateConfig({ lang: { typescript: { tools: [] } } } as any)
         expect(warn).toHaveBeenCalledWith(
-            expect.stringContaining('lang.typescript is deprecated'),
+            expect.stringContaining('lang.typescript is deprecated')
         )
         warn.mockRestore()
     })
@@ -41,7 +41,7 @@ describe('validateConfig', () => {
         const warn = spyOn(console, 'warn').mockImplementation(() => {})
         validateConfig({ lang: { javascript: { tools: [] } } } as any)
         expect(warn).toHaveBeenCalledWith(
-            expect.stringContaining('lang.javascript is deprecated'),
+            expect.stringContaining('lang.javascript is deprecated')
         )
         warn.mockRestore()
     })
@@ -145,20 +145,19 @@ describe('desugarFileInjections', () => {
         expect(
             injections.some(
                 (i: InjectionEntry) =>
-                    i.on === 'SessionStart' && i.inject.includes('chores'),
-            ),
+                    i.on === 'SessionStart' && i.inject.includes('chores')
+            )
+        ).toBe(true)
+        expect(
+            injections.some(
+                (i: InjectionEntry) => i.on === 'PreToolUse' && i.inject.includes('scope')
+            )
         ).toBe(true)
         expect(
             injections.some(
                 (i: InjectionEntry) =>
-                    i.on === 'PreToolUse' && i.inject.includes('scope'),
-            ),
-        ).toBe(true)
-        expect(
-            injections.some(
-                (i: InjectionEntry) =>
-                    i.on === 'PostToolUse' && i.inject.includes('scope'),
-            ),
+                    i.on === 'PostToolUse' && i.inject.includes('scope')
+            )
         ).toBe(true)
     })
 
@@ -179,19 +178,14 @@ describe('desugarFileInjections', () => {
                 },
             ],
             injections: [
-                {
-                    on: 'SessionStart',
-                    inject: ['chores'],
-                    wrapper: 'custom-wrapper',
-                },
+                { on: 'SessionStart', inject: ['chores'], wrapper: 'custom-wrapper' },
             ],
         }
         const result = desugarFileInjections(config)
         const injections = result.injections!
         // Only one injection for chores on SessionStart, and it's the explicit one with custom wrapper
         const sessionInjections = injections.filter(
-            (i: InjectionEntry) =>
-                i.on === 'SessionStart' && i.inject.includes('chores'),
+            (i: InjectionEntry) => i.on === 'SessionStart' && i.inject.includes('chores')
         )
         expect(sessionInjections).toHaveLength(1)
         expect(sessionInjections[0].wrapper).toBe('custom-wrapper')
@@ -258,14 +252,14 @@ describe('desugarFileInjections', () => {
         expect(
             injections.some(
                 (i: InjectionEntry) =>
-                    i.on === 'SessionStart' && i.inject.includes('docs:meta'),
-            ),
+                    i.on === 'SessionStart' && i.inject.includes('docs:meta')
+            )
         ).toBe(true)
         expect(
             injections.some(
                 (i: InjectionEntry) =>
-                    i.on === 'PreToolUse' && i.inject.includes('docs:meta'),
-            ),
+                    i.on === 'PreToolUse' && i.inject.includes('docs:meta')
+            )
         ).toBe(true)
     })
 
@@ -292,18 +286,14 @@ describe('desugarFileInjections', () => {
                 },
             ],
             injections: [
-                {
-                    on: 'SessionStart',
-                    inject: ['docs:meta'],
-                    wrapper: 'custom',
-                },
+                { on: 'SessionStart', inject: ['docs:meta'], wrapper: 'custom' },
             ],
         }
         const result = desugarFileInjections(config)
         const injections = result.injections!
         const sessionMeta = injections.filter(
             (i: InjectionEntry) =>
-                i.on === 'SessionStart' && i.inject.includes('docs:meta'),
+                i.on === 'SessionStart' && i.inject.includes('docs:meta')
         )
         expect(sessionMeta).toHaveLength(1)
         expect(sessionMeta[0].wrapper).toBe('custom')
@@ -312,20 +302,16 @@ describe('desugarFileInjections', () => {
 
 describe('applyPlugins', () => {
     test('returns config unchanged when no plugins activated', async () => {
-        const config = validateConfig({
-            files: [{ alias: 'mine', path: 'mine.xml' }],
-        })
+        const config = validateConfig({ files: [{ alias: 'mine', path: 'mine.xml' }] })
         const { config: result } = await applyPlugins(config)
         expect(result.files).toHaveLength(1)
         expect(result.rules).toBeUndefined()
     })
 
     test('merges track-work plugin files into config.files', async () => {
-        const config = validateConfig({
-            globals: { plugins: ['rct-plugin-track-work'] },
-        })
+        const config = validateConfig({ globals: { plugins: ['rct-plugin-track-work'] } })
         const { config: result } = await applyPlugins(config)
-        const aliases = (result.files ?? []).map((f) => f.alias)
+        const aliases = (result.files ?? []).map(f => f.alias)
         expect(aliases).toContain('chores')
         expect(aliases).toContain('plans')
     })
@@ -336,26 +322,22 @@ describe('applyPlugins', () => {
             files: [{ alias: 'my-file', path: 'my-file.xml' }],
         })
         const { config: result } = await applyPlugins(config)
-        const aliases = (result.files ?? []).map((f) => f.alias)
+        const aliases = (result.files ?? []).map(f => f.alias)
         expect(aliases).toContain('my-file')
         expect(aliases).toContain('chores')
     })
 
     test('desugar after applyPlugins generates injections for plugin files with injectOn', async () => {
-        const config = validateConfig({
-            globals: { plugins: ['rct-plugin-track-work'] },
-        })
+        const config = validateConfig({ globals: { plugins: ['rct-plugin-track-work'] } })
         const { config: applied } = await applyPlugins(config)
         const desugared = desugarFileInjections(applied)
-        const refs = (desugared.injections ?? []).flatMap((i) => i.inject)
+        const refs = (desugared.injections ?? []).flatMap(i => i.inject)
         expect(refs).toContain('chores')
         expect(refs).toContain('plans')
     })
 
     test('ignores unknown plugin names', async () => {
-        const config = validateConfig({
-            globals: { plugins: ['nonexistent-plugin'] },
-        })
+        const config = validateConfig({ globals: { plugins: ['nonexistent-plugin'] } })
         const { config: result } = await applyPlugins(config)
         expect(result.files ?? []).toHaveLength(0)
     })
@@ -363,9 +345,7 @@ describe('applyPlugins', () => {
     test('calls plugin.setup() during application', async () => {
         // Test indirectly: track-work and issue-scope have setup functions.
         // applyPlugins calls setup — verify no error thrown and files resolve.
-        const config = validateConfig({
-            globals: { plugins: ['rct-plugin-track-work'] },
-        })
+        const config = validateConfig({ globals: { plugins: ['rct-plugin-track-work'] } })
         const { config: result } = await applyPlugins(config)
         expect(result.files?.length).toBeGreaterThan(0)
     })
@@ -376,19 +356,15 @@ describe('applyPlugins', () => {
         // Here we verify the config still processes correctly even if a plugin
         // is unknown (which exercises the catch path)
         const config = validateConfig({
-            globals: {
-                plugins: ['nonexistent-plugin', 'rct-plugin-track-work'],
-            },
+            globals: { plugins: ['nonexistent-plugin', 'rct-plugin-track-work'] },
         })
         const { config: result } = await applyPlugins(config)
-        const aliases = (result.files ?? []).map((f) => f.alias)
+        const aliases = (result.files ?? []).map(f => f.alias)
         expect(aliases).toContain('chores')
     })
 
     test('uses displayName for extension naming', async () => {
-        const config = validateConfig({
-            globals: { plugins: ['rct-plugin-track-work'] },
-        })
+        const config = validateConfig({ globals: { plugins: ['rct-plugin-track-work'] } })
         const { extensions } = await applyPlugins(config)
         expect(extensions.contexts).toBeDefined()
         expect(extensions.triggers).toBeDefined()
@@ -406,7 +382,7 @@ describe('applyPlugins', () => {
             },
         })
         const { config: result } = await applyPlugins(config)
-        const chores = (result.files ?? []).find((f) => f.alias === 'chores')
+        const chores = (result.files ?? []).find(f => f.alias === 'chores')
         expect(chores).toBeDefined()
         expect(chores!.path).toContain('custom/chores.xml')
     })
@@ -416,15 +392,12 @@ describe('applyPlugins', () => {
             globals: {
                 plugins: [
                     'rct-plugin-read-guard',
-                    {
-                        name: 'rct-plugin-track-work',
-                        paths: { plans: 'my/plans.xml' },
-                    },
+                    { name: 'rct-plugin-track-work', paths: { plans: 'my/plans.xml' } },
                 ],
             },
         })
         const { config: result } = await applyPlugins(config)
-        const plans = (result.files ?? []).find((f) => f.alias === 'plans')
+        const plans = (result.files ?? []).find(f => f.alias === 'plans')
         expect(plans!.path).toContain('my/plans.xml')
     })
 })
@@ -433,8 +406,7 @@ describe('staleCheck', () => {
     test('applyStaleCheck wraps stale content', () => {
         const { applyStaleCheck } =
             require('../src/config/schema') as typeof import('../src/config/schema')
-        const content =
-            '<scope><date>2025-01-01</date><focus>Old stuff</focus></scope>'
+        const content = '<scope><date>2025-01-01</date><focus>Old stuff</focus></scope>'
         const staleConfig = { dateTag: 'date', wrapTag: 'stale-scope' }
         const today = '2026-03-28'
         const result = applyStaleCheck(content, staleConfig, today)
@@ -448,8 +420,7 @@ describe('staleCheck', () => {
     test('applyStaleCheck returns content unchanged when not stale', () => {
         const { applyStaleCheck } =
             require('../src/config/schema') as typeof import('../src/config/schema')
-        const content =
-            '<scope><date>2026-03-28</date><focus>Current</focus></scope>'
+        const content = '<scope><date>2026-03-28</date><focus>Current</focus></scope>'
         const staleConfig = { dateTag: 'date', wrapTag: 'stale-scope' }
         const today = '2026-03-28'
         const result = applyStaleCheck(content, staleConfig, today)

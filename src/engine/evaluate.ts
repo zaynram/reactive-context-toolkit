@@ -1,9 +1,4 @@
-import type {
-    MatchCondition,
-    Match,
-    MatchTarget,
-    MatchOptions,
-} from '#config/types'
+import type { MatchCondition, Match, MatchTarget, MatchOptions } from '#config/types'
 
 /**
  * Convert a simple glob pattern to a regex.
@@ -43,11 +38,9 @@ function globToRegex(glob: string): RegExp {
     return new RegExp('^' + regex + '$')
 }
 
-function getPatternStrings(
-    pattern: MatchCondition['pattern'],
-): (string | RegExp)[] {
+function getPatternStrings(pattern: MatchCondition['pattern']): (string | RegExp)[] {
     if (Array.isArray(pattern))
-        return pattern.map((p) => (typeof p === 'object' ? p.path : p))
+        return pattern.map(p => (typeof p === 'object' ? p.path : p))
     return [pattern]
 }
 
@@ -55,9 +48,7 @@ type MatchSingleParameters =
     | [operator: string, pattern: string, value: string]
     | [operator: 'regex', pattern: string | RegExp, value: string]
 
-function matchSingle(
-    ...[operator, pattern, value]: MatchSingleParameters
-): boolean {
+function matchSingle(...[operator, pattern, value]: MatchSingleParameters): boolean {
     switch (operator) {
         case 'regex':
             return new RegExp(pattern).test(value)
@@ -78,20 +69,17 @@ function matchSingle(
     }
 }
 
-export function evaluateCondition(
-    condition: MatchCondition,
-    value: string,
-): boolean {
+export function evaluateCondition(condition: MatchCondition, value: string): boolean {
     const operator = condition.operator ?? 'regex'
     const patterns = getPatternStrings(condition.pattern)
 
     // Any pattern matching = true (OR logic across patterns)
-    return patterns.some((p) => matchSingle(operator, p, value))
+    return patterns.some(p => matchSingle(operator, p, value))
 }
 
 export function extractTargetValue(
     target: MatchTarget,
-    payload: Record<string, unknown>,
+    payload: Record<string, unknown>
 ): string {
     // user_prompt comes from the "prompt" field directly on payload
     if (target === 'user_prompt') {
@@ -125,9 +113,9 @@ export function extractTargetValue(
 export const evaluateMatch = (
     match: Match,
     payload: Record<string, unknown>,
-    options?: MatchOptions,
+    options?: MatchOptions
 ): boolean =>
     (Array.isArray(match) ? match : [match])[options?.method ?? 'every'](
         (cond: MatchCondition) =>
-            evaluateCondition(cond, extractTargetValue(cond.target, payload)),
+            evaluateCondition(cond, extractTargetValue(cond.target, payload))
     )

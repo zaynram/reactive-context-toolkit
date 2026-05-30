@@ -1,12 +1,12 @@
-import { describe, test, expect, beforeEach, afterEach } from 'bun:test'
-import { mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'fs'
-import path from 'path'
 import {
     detectProject,
     generateConfig,
     mergeSettings,
     discoverPlugins,
 } from '../src/cli/init'
+import { describe, test, expect, beforeEach, afterEach } from 'bun:test'
+import { mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'fs'
+import path from 'path'
 
 const TMP_DIR = path.resolve(__dirname, '../.tmp-init-test')
 
@@ -111,11 +111,7 @@ describe('generateConfig', () => {
                 node: {
                     tools: [{ name: 'bun', scripts: true }],
                     config: [
-                        {
-                            name: 'tsconfig',
-                            path: 'tsconfig.json',
-                            extractPaths: true,
-                        },
+                        { name: 'tsconfig', path: 'tsconfig.json', extractPaths: true },
                     ],
                 },
             },
@@ -124,21 +120,14 @@ describe('generateConfig', () => {
         })
         expect(config.lang).toBeDefined()
         expect(config.lang!.node).toBeDefined()
-        expect(config.test).toEqual({
-            command: 'bun test',
-            injectOn: 'SessionStart',
-        })
+        expect(config.test).toEqual({ command: 'bun test', injectOn: 'SessionStart' })
         expect(config.files).toHaveLength(1)
         expect(config.files![0].alias).toBe('chores')
         expect(config.files![0].injectOn).toBe('SessionStart')
     })
 
     test('omits lang if empty', () => {
-        const config = generateConfig({
-            lang: {},
-            testCommand: null,
-            files: [],
-        })
+        const config = generateConfig({ lang: {}, testCommand: null, files: [] })
         expect(config.lang).toBeUndefined()
         expect(config.test).toBeUndefined()
         expect(config.files).toBeUndefined()
@@ -156,7 +145,7 @@ describe('mergeSettings', () => {
         const settingsPath = path.join(settingsDir, 'settings.json')
         writeFileSync(
             settingsPath,
-            JSON.stringify({ permissions: { allow: ['Read'] } }, null, 2),
+            JSON.stringify({ permissions: { allow: ['Read'] } }, null, 2)
         )
 
         await mergeSettings(settingsPath, {})
@@ -191,9 +180,7 @@ describe('mergeSettings', () => {
                     message: 'no',
                 },
             ],
-            injections: [
-                { on: 'PostToolUse', matcher: 'Read', inject: ['chores'] },
-            ],
+            injections: [{ on: 'PostToolUse', matcher: 'Read', inject: ['chores'] }],
         })
 
         const result = JSON.parse(readFileSync(settingsPath, 'utf-8'))
@@ -210,58 +197,44 @@ describe('mergeSettings', () => {
 
         const result = JSON.parse(readFileSync(settingsPath, 'utf-8'))
         expect(result.hooks.SessionStart).toBeDefined()
-        expect(result.hooks.SessionStart[0].hooks[0].command).toContain(
-            'SessionStart',
-        )
+        expect(result.hooks.SessionStart[0].hooks[0].command).toContain('SessionStart')
     })
 
     test('config with files[].injectOn generates hook entry', async () => {
         setup({})
         const settingsPath = path.join(TMP_DIR, '.claude', 'settings.json')
         await mergeSettings(settingsPath, {
-            files: [
-                { alias: 'readme', path: 'README.md', injectOn: 'PostToolUse' },
-            ],
+            files: [{ alias: 'readme', path: 'README.md', injectOn: 'PostToolUse' }],
         })
 
         const result = JSON.parse(readFileSync(settingsPath, 'utf-8'))
         expect(result.hooks.PostToolUse).toBeDefined()
-        expect(result.hooks.PostToolUse[0].hooks[0].command).toContain(
-            'PostToolUse',
-        )
+        expect(result.hooks.PostToolUse[0].hooks[0].command).toContain('PostToolUse')
     })
 
     test('config with lang entry injectOn generates hook entry', async () => {
         setup({})
         const settingsPath = path.join(TMP_DIR, '.claude', 'settings.json')
         await mergeSettings(settingsPath, {
-            lang: {
-                node: { tools: [{ name: 'bun' }], injectOn: 'PreToolUse' },
-            },
+            lang: { node: { tools: [{ name: 'bun' }], injectOn: 'PreToolUse' } },
         })
 
         const result = JSON.parse(readFileSync(settingsPath, 'utf-8'))
         expect(result.hooks.PreToolUse).toBeDefined()
-        expect(result.hooks.PreToolUse[0].hooks[0].command).toContain(
-            'PreToolUse',
-        )
+        expect(result.hooks.PreToolUse[0].hooks[0].command).toContain('PreToolUse')
     })
 
     test('config with lang tool injectOn generates hook entry', async () => {
         setup({})
         const settingsPath = path.join(TMP_DIR, '.claude', 'settings.json')
         await mergeSettings(settingsPath, {
-            lang: {
-                node: {
-                    tools: [{ name: 'bun', injectOn: 'UserPromptSubmit' }],
-                },
-            },
+            lang: { node: { tools: [{ name: 'bun', injectOn: 'UserPromptSubmit' }] } },
         })
 
         const result = JSON.parse(readFileSync(settingsPath, 'utf-8'))
         expect(result.hooks.UserPromptSubmit).toBeDefined()
         expect(result.hooks.UserPromptSubmit[0].hooks[0].command).toContain(
-            'UserPromptSubmit',
+            'UserPromptSubmit'
         )
     })
 
@@ -275,22 +248,18 @@ describe('mergeSettings', () => {
         const result = JSON.parse(readFileSync(settingsPath, 'utf-8'))
         expect(result.hooks.UserPromptSubmit).toBeDefined()
         expect(result.hooks.UserPromptSubmit[0].hooks[0].command).toContain(
-            'UserPromptSubmit',
+            'UserPromptSubmit'
         )
     })
 
     test('config with meta.injectOn generates hook entry', async () => {
         setup({})
         const settingsPath = path.join(TMP_DIR, '.claude', 'settings.json')
-        await mergeSettings(settingsPath, {
-            meta: { injectOn: 'SubagentStart' },
-        })
+        await mergeSettings(settingsPath, { meta: { injectOn: 'SubagentStart' } })
 
         const result = JSON.parse(readFileSync(settingsPath, 'utf-8'))
         expect(result.hooks.SubagentStart).toBeDefined()
-        expect(result.hooks.SubagentStart[0].hooks[0].command).toContain(
-            'SubagentStart',
-        )
+        expect(result.hooks.SubagentStart[0].hooks[0].command).toContain('SubagentStart')
     })
 
     test('config with rules on PreToolUse generates PreToolUse with matcher', async () => {
@@ -483,7 +452,7 @@ describe('initializeRCT', () => {
             const configPath = path.join(TMP_DIR, 'rct.config.json')
             const config = JSON.parse(readFileSync(configPath, 'utf-8'))
             expect(config).toEqual({ globals: {} })
-            expect(logs.some((l) => l.includes('already exists'))).toBe(true)
+            expect(logs.some(l => l.includes('already exists'))).toBe(true)
         } finally {
             console.log = origLog
             if (origDir !== undefined) {

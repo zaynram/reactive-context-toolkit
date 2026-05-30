@@ -1,39 +1,21 @@
 {
-  "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "strict": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "paths": {
-      "rct": [
-        "./src/index.ts",
-        "./src/constants.ts"
-      ],
-      "types": [
-        "./src/types.d.ts"
-      ],
-      "#*": [
-        "./src/*"
-      ],
-      "$*": [
-        "./plugins/*"
-      ]
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "strict": true,
+        "noEmit": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "paths": {
+            "rct": ["./src/index.ts", "./src/constants.ts"],
+            "types": ["./src/types.d.ts"],
+            "#*": ["./src/*"],
+            "$*": ["./plugins/*"]
+        },
+        "types": ["bun-types"]
     },
-    "types": [
-      "bun-types"
-    ]
-  },
-  "include": [
-    "src/**/*.ts",
-    "test/**/*.ts",
-    "plugins/**/*.ts"
-  ],
-  "exclude": [
-    "**/node_modules",
-    "**/lib"
-  ]
+    "include": ["src/**/*.ts", "test/**/*.ts", "plugins/**/*.ts"],
+    "exclude": ["**/node_modules", "**/lib"]
 }

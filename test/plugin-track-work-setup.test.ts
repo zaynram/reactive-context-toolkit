@@ -1,21 +1,21 @@
+import { schema } from '../plugins/rct-plugin-track-work/src/index'
 // CLAUDE_PROJECT_DIR is captured once at module-load time in src/constants.ts (approach ii:
 // directly invoke a re-export pathway). We import the `schema` named export from the plugin,
 // which carries the source paths (asset()-based, __dirname-relative, env-independent), and
 // replicate the copy step against a temp dir we fully control — no env var mutation needed.
 import { describe, test, expect, beforeAll, afterAll } from 'bun:test'
 import fs from 'fs'
-import path from 'path'
 import os from 'os'
-import { schema } from '../plugins/rct-plugin-track-work/src/index'
+import path from 'path'
 
 // Ground-truth schema set: enumerate what public/schema/ actually contains.
 const PLUGIN_SCHEMA_DIR = path.resolve(
     import.meta.dir,
-    '../plugins/rct-plugin-track-work/public/schema',
+    '../plugins/rct-plugin-track-work/public/schema'
 )
 const groundTruthXsds = fs
     .readdirSync(PLUGIN_SCHEMA_DIR)
-    .filter((name) => name.endsWith('.xsd'))
+    .filter(name => name.endsWith('.xsd'))
     .sort()
 
 describe('rct-plugin-track-work setup()', () => {
@@ -49,7 +49,7 @@ describe('rct-plugin-track-work setup()', () => {
     })
 
     test('plugin schema array covers every .xsd in public/schema/', () => {
-        const schemaNames = schema.map((s) => path.basename(s.src)).sort()
+        const schemaNames = schema.map(s => path.basename(s.src)).sort()
         expect(schemaNames).toEqual(groundTruthXsds)
     })
 
@@ -83,7 +83,7 @@ describe('rct-plugin-track-work setup()', () => {
     test('propagated schema count matches ground-truth count', () => {
         const propagated = fs
             .readdirSync(tmpSchemaDir)
-            .filter((name) => name.endsWith('.xsd'))
+            .filter(name => name.endsWith('.xsd'))
             .sort()
         expect(propagated).toEqual(groundTruthXsds)
     })

@@ -1,3 +1,5 @@
+import { definePlugin } from '#index'
+import type { RCTPlugin, HookEvent, PluginHookInput, PluginTriggerResult } from '#index'
 /**
  * RCT Plugin: Redundant Read Guard
  *
@@ -17,13 +19,6 @@
  */
 import { readFileSync, statSync } from 'fs'
 import { resolve } from 'path'
-import { definePlugin } from '#index'
-import type {
-    RCTPlugin,
-    HookEvent,
-    PluginHookInput,
-    PluginTriggerResult,
-} from '#index'
 const EDIT_TOOLS = new Set(['Edit', 'Write', 'MultiEdit'])
 
 // Normalization constants for freshness scoring
@@ -57,10 +52,7 @@ function parseTimestamp(ts: unknown): number | null {
     return Number.isFinite(t) ? t / 1000 : null
 }
 
-function scanTranscript(
-    transcriptPath: string,
-    targetAbs: string,
-): ScanResult | null {
+function scanTranscript(transcriptPath: string, targetAbs: string): ScanResult | null {
     let raw: string
     try {
         raw = readFileSync(transcriptPath, 'utf-8')
@@ -94,12 +86,7 @@ function scanTranscript(
                 if (resolve(fp) !== targetAbs) continue
                 if (item.name === 'Read') {
                     const ts = parseTimestamp(msg.timestamp)
-                    return {
-                        turns,
-                        bytes,
-                        seconds: ts ? now - ts : 0,
-                        editedSince,
-                    }
+                    return { turns, bytes, seconds: ts ? now - ts : 0, editedSince }
                 }
                 if (EDIT_TOOLS.has(item.name)) editedSince = true
             }
@@ -116,7 +103,7 @@ const normalizeFreshness = (args: DecideArgs) =>
     Math.max(
         args.turnsSinceRead / TURN_BUDGET,
         args.bytesSinceRead / BYTE_BUDGET,
-        args.secondsSinceRead / SECOND_BUDGET,
+        args.secondsSinceRead / SECOND_BUDGET
     ) * Math.pow(Math.max(args.fileSize, 1) / BYTE_BUDGET, 0.3)
 
 function decide(args: DecideArgs): PluginTriggerResult | undefined {

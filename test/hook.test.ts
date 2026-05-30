@@ -37,10 +37,7 @@ describe('hook entry point', () => {
     it('exits with code 2 on PreToolUse block rule', () => {
         const payload = JSON.stringify({
             tool_name: 'Write',
-            tool_input: {
-                file_path: 'docs/specs/something.md',
-                content: 'test',
-            },
+            tool_input: { file_path: 'docs/specs/something.md', content: 'test' },
         })
         const result = runHook('PreToolUse', payload)
         expect(result.exitCode).toBe(2)
@@ -60,9 +57,7 @@ describe('hook entry point', () => {
         // PostToolUse with Read tool on chores file should trigger injection
         const payload = JSON.stringify({
             tool_name: 'Read',
-            tool_input: {
-                file_path: path.resolve(FIXTURE_DIR, 'dev/chores.xml'),
-            },
+            tool_input: { file_path: path.resolve(FIXTURE_DIR, 'dev/chores.xml') },
         })
         const result = runHook('PostToolUse', payload)
         expect(result.exitCode).toBe(0)

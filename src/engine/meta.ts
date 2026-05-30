@@ -5,9 +5,9 @@ import {
     type LangConfig,
     type LangEntry,
 } from '#config/types'
+import { displayName } from '#plugin/types'
 import type { FileRegistry } from '#types'
 import { xml } from '#util'
-import { displayName } from '#plugin/types'
 type MetaSection = 'files' | 'lang' | 'test' | 'rules' | 'plugins'
 
 interface FileMeta {
@@ -46,9 +46,9 @@ type SectionData = {
 function buildFilesSection(
     config: RCTConfig,
     registry: FileRegistry,
-    brief: boolean,
+    brief: boolean
 ): FileMeta[] {
-    return [...(config.files ?? [])].map((f) => {
+    return [...(config.files ?? [])].map(f => {
         const alias = f.alias ?? f.path
         const ref = registry.get(alias)
         const entry: FileMeta = { alias, path: f.path }
@@ -61,12 +61,9 @@ function buildFilesSection(
 
 function buildLangSection(lang: LangConfig): LangMeta[] {
     const result: LangMeta[] = []
-    for (const [language, entry] of Object.entries(lang) as [
-        string,
-        LangEntry,
-    ][]) {
+    for (const [language, entry] of Object.entries(lang) as [string, LangEntry][]) {
         if (!entry) continue
-        const tools = (entry.tools ?? []).map((t) => t.name)
+        const tools = (entry.tools ?? []).map(t => t.name)
         result.push({ language, tools })
     }
     return result
@@ -78,7 +75,7 @@ function buildTestSection(config: RCTConfig): TestMeta {
 
 function buildRulesSection(config: RCTConfig): RulesMeta {
     const rules = [...(config.rules ?? [])]
-    const actions = [...new Set(rules.map((r) => r.action))]
+    const actions = [...new Set(rules.map(r => r.action))]
     return { count: rules.length, actions }
 }
 
@@ -94,7 +91,7 @@ function formatXml(sections: SectionData): string {
                     alias: f.alias,
                     path: f.path,
                     ...(f.brief && { brief: f.brief }),
-                }),
+                })
             )
         }
         parts.push(xml.close('files'))
@@ -104,21 +101,14 @@ function formatXml(sections: SectionData): string {
         parts.push(xml.open('lang'))
         for (const l of sections.lang) {
             parts.push(
-                xml.inline('language', {
-                    name: l.language,
-                    tools: l.tools.join(', '),
-                }),
+                xml.inline('language', { name: l.language, tools: l.tools.join(', ') })
             )
         }
         parts.push(xml.close('lang'))
     }
 
     if (sections.test) {
-        parts.push(
-            xml.inline('test', {
-                configured: String(sections.test.configured),
-            }),
-        )
+        parts.push(xml.inline('test', { configured: String(sections.test.configured) }))
     }
 
     if (sections.rules) {
@@ -126,7 +116,7 @@ function formatXml(sections: SectionData): string {
             xml.inline('rules', {
                 count: String(sections.rules.count),
                 actions: sections.rules.actions.join(', '),
-            }),
+            })
         )
     }
 
@@ -170,7 +160,7 @@ function formatPath(sections: SectionData): string {
 
     if (sections.rules) {
         parts.push(
-            `rules: count=${sections.rules.count}, actions=${sections.rules.actions.join(', ')}`,
+            `rules: count=${sections.rules.count}, actions=${sections.rules.actions.join(', ')}`
         )
     }
 
@@ -206,7 +196,7 @@ function formatRaw(sections: SectionData): string {
 
     if (sections.rules) {
         parts.push(
-            `rules: count=${sections.rules.count}, actions=${sections.rules.actions.join(', ')}`,
+            `rules: count=${sections.rules.count}, actions=${sections.rules.actions.join(', ')}`
         )
     }
 
@@ -223,7 +213,7 @@ export function generateMeta(
     config: RCTConfig,
     registry: FileRegistry,
     globals: Required<GlobalsConfig>,
-    metaConfig: MetaConfig,
+    metaConfig: MetaConfig
 ): string {
     const include: MetaSection[] = metaConfig.include ?? ['files', 'lang']
     const brief = metaConfig.brief ?? true
@@ -248,7 +238,7 @@ export function generateMeta(
     }
 
     if (include.includes('plugins') && globals.plugins?.length) {
-        sections.plugins = globals.plugins.map((p) => {
+        sections.plugins = globals.plugins.map(p => {
             const ref = typeof p === 'string' ? p : p.name
             return { name: displayName({}, ref), ref }
         })

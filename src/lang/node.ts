@@ -2,11 +2,7 @@ import type { LangEntry, HookEvent } from '#config/types'
 import { getBunScripts, getBunWorkspace } from '#tools/bun'
 import { fs, xml, eventMatches } from '#util'
 
-export function evaluateNode(
-    entry: LangEntry,
-    event: HookEvent,
-    cwd: string,
-): string[] {
+export function evaluateNode(entry: LangEntry, event: HookEvent, cwd: string): string[] {
     // Clone entry to avoid mutating the config object
     const resolved = { ...entry }
     const results: string[] = []
@@ -34,8 +30,7 @@ export function evaluateNode(
                 case 'bun':
                 case 'npm':
                 case 'pnpm':
-                    if (tool.scripts !== false)
-                        results.push(getBunScripts(tool, cwd))
+                    if (tool.scripts !== false) results.push(getBunScripts(tool, cwd))
                     if (tool.workspace) results.push(getBunWorkspace(tool, cwd))
                     break
             }
@@ -45,18 +40,14 @@ export function evaluateNode(
     // Process config entries
     if (resolved.config) {
         for (const cfg of resolved.config) {
-            const fullPath =
-                fs.isAbsolute(cfg.path) ? cfg.path : fs.join(cwd, cfg.path)
+            const fullPath = fs.isAbsolute(cfg.path) ? cfg.path : fs.join(cwd, cfg.path)
 
             if (cfg.inject) {
                 if (!eventMatches(event, resolved.injectOn)) continue
                 try {
                     const content = fs.readRaw(fullPath)
                     results.push(
-                        xml.wrap('config', {
-                            attrs: { name: cfg.name },
-                            inner: content,
-                        }),
+                        xml.wrap('config', { attrs: { name: cfg.name }, inner: content })
                     )
                 } catch {
                     /* skip unreadable */
@@ -85,10 +76,8 @@ export function extractTsconfigPaths(configPath: string): string | null {
             .map(([name, targets]) =>
                 xml.inline('path-alias', {
                     name,
-                    target: String(
-                        Array.isArray(targets) ? targets[0] : targets,
-                    ),
-                }),
+                    target: String(Array.isArray(targets) ? targets[0] : targets),
+                })
             )
             .join('')
 

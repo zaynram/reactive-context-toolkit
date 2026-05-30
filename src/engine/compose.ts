@@ -23,8 +23,7 @@ function resolveMinify(globals: Required<GlobalsConfig>): {
     // Default: xml strips newlines (tags are boundaries), json/other preserves them
     const defaultPreserveNewlines = format !== 'xml'
 
-    if (m === false)
-        return { enabled: false, separator: ' ', preserveNewlines: true }
+    if (m === false) return { enabled: false, separator: ' ', preserveNewlines: true }
     if (m === true || m === undefined)
         return {
             enabled: true,
@@ -58,7 +57,7 @@ export function composeOutput(input: ComposeInput): string {
                 decision: 'block',
                 reason: blockResult.message,
                 hookSpecificOutput: { hookEventName: event },
-            }),
+            })
         )
     }
 
@@ -70,7 +69,7 @@ export function composeOutput(input: ComposeInput): string {
         ...(metaResult ? [metaResult] : []),
         ...(langResult ? [langResult] : []),
         ...(testResult ? [testResult] : []),
-    ].filter((s) => s.length > 0)
+    ].filter(s => s.length > 0)
 
     if (parts.length === 0) return ''
 
@@ -84,10 +83,7 @@ export function composeOutput(input: ComposeInput): string {
 
     return minify(
         JSON.stringify({
-            hookSpecificOutput: {
-                hookEventName: event,
-                additionalContext: combined,
-            },
-        }),
+            hookSpecificOutput: { hookEventName: event, additionalContext: combined },
+        })
     )
 }

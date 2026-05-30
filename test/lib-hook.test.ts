@@ -1,5 +1,5 @@
-import { describe, it, expect, test } from 'bun:test'
 import { createHook } from '../src/lib/hook'
+import { describe, it, expect, test } from 'bun:test'
 import path from 'path'
 
 describe('createHook()', () => {
@@ -10,17 +10,14 @@ describe('createHook()', () => {
     // Subprocess tests for full lifecycle
     const runHook = async (
         handlerCode: string,
-        stdin = '{}',
+        stdin = '{}'
     ): Promise<{ stdout: string; stderr: string; exitCode: number }> => {
         const projectRoot = path.resolve(import.meta.dir, '..')
         const script = `
             import { createHook } from '#lib/hook'
             createHook(${handlerCode})
         `
-        const tmpFile = path.join(
-            projectRoot,
-            `_tmp_hook_test_${Date.now()}.ts`,
-        )
+        const tmpFile = path.join(projectRoot, `_tmp_hook_test_${Date.now()}.ts`)
         await Bun.write(tmpFile, script)
         try {
             const proc = Bun.spawn(['bun', 'run', tmpFile], {
@@ -43,7 +40,7 @@ describe('createHook()', () => {
     test('happy path: handler result written to stdout, exit 0', async () => {
         const result = await runHook(
             `async (input) => ({ hookSpecificOutput: { additionalContext: 'hello' } })`,
-            '{"tool_name":"Read"}',
+            '{"tool_name":"Read"}'
         )
         expect(result.exitCode).toBe(0)
         expect(result.stdout).toContain('additionalContext')
@@ -51,9 +48,7 @@ describe('createHook()', () => {
     })
 
     test('handler error: outputs block decision, exit 2', async () => {
-        const result = await runHook(
-            `async () => { throw new Error('handler broke') }`,
-        )
+        const result = await runHook(`async () => { throw new Error('handler broke') }`)
         expect(result.exitCode).toBe(2)
         expect(result.stdout).toContain('block')
         expect(result.stdout).toContain('handler broke')
@@ -63,7 +58,7 @@ describe('createHook()', () => {
     test('invalid JSON stdin: exits 1 without blocking', async () => {
         const result = await runHook(
             `async () => ({ hookSpecificOutput: {} })`,
-            'not json at all',
+            'not json at all'
         )
         expect(result.exitCode).toBe(1)
         expect(result.stdout).toBe('')

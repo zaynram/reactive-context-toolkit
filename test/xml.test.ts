@@ -1,5 +1,5 @@
-import { describe, expect, test } from 'bun:test'
 import { xml } from '#util'
+import { describe, expect, test } from 'bun:test'
 
 describe('xml.inline attribute escaping', () => {
     test('escapes ampersands in attribute values', () => {

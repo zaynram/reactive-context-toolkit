@@ -1,14 +1,10 @@
-import { describe, it, expect } from 'bun:test'
 import { definePlugin } from '#lib/plugin'
+import { describe, it, expect } from 'bun:test'
 import path from 'path'
 
 describe('definePlugin()', () => {
     it('returns a valid plugin object', () => {
-        const plugin = definePlugin({
-            name: 'test-plugin',
-            files: [],
-            rules: [],
-        })
+        const plugin = definePlugin({ name: 'test-plugin', files: [], rules: [] })
         expect(plugin.name).toBe('test-plugin')
         expect(plugin.files).toEqual([])
         expect(plugin.rules).toEqual([])

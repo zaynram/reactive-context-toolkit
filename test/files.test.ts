@@ -1,7 +1,7 @@
-import { describe, test, expect } from 'bun:test'
-import path from 'path'
 import { buildFileRegistry } from '../src/config/files'
 import type { FileEntry } from '../src/config/types'
+import { describe, test, expect } from 'bun:test'
+import path from 'path'
 
 const ROOT = '/tmp/rct-test-root'
 
@@ -54,8 +54,8 @@ describe('buildFileRegistry', () => {
         const reg = buildFileRegistry(entries, ROOT)
         const selected = reg.select('chores', 'docs')
         expect(selected).toHaveLength(2)
-        expect(selected.map((f) => f.alias)).toContain('chores')
-        expect(selected.map((f) => f.alias)).toContain('docs')
+        expect(selected.map(f => f.alias)).toContain('chores')
+        expect(selected.map(f => f.alias)).toContain('docs')
     })
 
     test('select ignores unknown aliases', () => {

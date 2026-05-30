@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from 'fs'
+import { resolve } from 'path'
 /**
  * rct-plugin-tasktools
  *
@@ -8,8 +10,6 @@
  * - Checks tasktools presence freshly each invocation (handles install/uninstall)
  */
 import { definePlugin, type PluginHookInput, type HookEvent } from 'rct'
-import { existsSync, readFileSync } from 'fs'
-import { resolve } from 'path'
 
 const cwd = () => process.env.CLAUDE_PROJECT_DIR ?? process.cwd()
 
@@ -24,8 +24,7 @@ function hasTasktools(): boolean {
     if (now - lastDetectionTime < DETECTION_TTL_MS) return lastDetectionResult
     lastDetectionTime = now
     lastDetectionResult =
-        existsSync(resolve(cwd(), 'dev/tasktools'))
-        || !!process.env.TASKTOOLS_ROOT
+        existsSync(resolve(cwd(), 'dev/tasktools')) || !!process.env.TASKTOOLS_ROOT
     return lastDetectionResult
 }
 
@@ -37,7 +36,7 @@ function hasPixiTaskInjection(): boolean {
         const tools = config?.lang?.python?.tools ?? []
         return tools.some(
             (t: { name: string; tasks?: boolean }) =>
-                t.name === 'pixi' && t.tasks === true,
+                t.name === 'pixi' && t.tasks === true
         )
     } catch {
         return false
@@ -49,9 +48,7 @@ function getNodeScripts(): Record<string, string> | null {
         const pkgPath = resolve(cwd(), 'package.json')
         if (!existsSync(pkgPath)) return null
         const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'))
-        return pkg.scripts && Object.keys(pkg.scripts).length > 0 ?
-                pkg.scripts
-            :   null
+        return pkg.scripts && Object.keys(pkg.scripts).length > 0 ? pkg.scripts : null
     } catch {
         return null
     }
@@ -73,8 +70,7 @@ export default definePlugin({
 
     // Warn on raw git/cargo — should use pixi tasks
     trigger(event: HookEvent, input: PluginHookInput) {
-        if (event !== 'PreToolUse' || input.toolName !== 'Bash')
-            return undefined
+        if (event !== 'PreToolUse' || input.toolName !== 'Bash') return undefined
         if (!hasTasktools()) return undefined
 
         const cmd = String(input.payload?.command ?? '')
@@ -83,8 +79,8 @@ export default definePlugin({
             return {
                 action: 'warn' as const,
                 message:
-                    'This project uses tasktools. Use pixi task wrappers:\n  '
-                    + TASKTOOLS_COMMANDS,
+                    'This project uses tasktools. Use pixi task wrappers:\n  ' +
+                    TASKTOOLS_COMMANDS,
             }
         }
 
@@ -92,10 +88,10 @@ export default definePlugin({
             return {
                 action: 'warn' as const,
                 message:
-                    'This project uses tasktools for cargo workflows.\n'
-                    + '  pixi run test [pattern]   — across packages\n'
-                    + '  pixi run clippy [pattern] — across packages\n'
-                    + '  pixi run check [pattern]  — test + clippy',
+                    'This project uses tasktools for cargo workflows.\n' +
+                    '  pixi run test [pattern]   — across packages\n' +
+                    '  pixi run clippy [pattern] — across packages\n' +
+                    '  pixi run check [pattern]  — test + clippy',
             }
         }
 
@@ -122,14 +118,10 @@ export default definePlugin({
             }
 
             if (!hasPixiTaskInjection()) {
-                parts.push(
-                    '<commands>',
-                    '  ' + TASKTOOLS_COMMANDS,
-                    '</commands>',
-                )
+                parts.push('<commands>', '  ' + TASKTOOLS_COMMANDS, '</commands>')
             } else {
                 parts.push(
-                    '<guidance>Pixi tasks active. Use pixi run &lt;task&gt; for all repo operations.</guidance>',
+                    '<guidance>Pixi tasks active. Use pixi run &lt;task&gt; for all repo operations.</guidance>'
                 )
             }
 
@@ -145,10 +137,10 @@ export default definePlugin({
             if (/^tasktools\s/.test(cmd)) {
                 tasktoolsReferenceInjected = true
                 return (
-                    '<tasktools-reference injected-once="true">\n'
-                    + 'Direct tasktools invocation detected. Available pixi wrappers:\n  '
-                    + TASKTOOLS_COMMANDS
-                    + '\n</tasktools-reference>'
+                    '<tasktools-reference injected-once="true">\n' +
+                    'Direct tasktools invocation detected. Available pixi wrappers:\n  ' +
+                    TASKTOOLS_COMMANDS +
+                    '\n</tasktools-reference>'
                 )
             }
         }

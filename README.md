@@ -61,10 +61,7 @@ Re-derives config from your project, merges with existing config preserving your
             "tools": [{ "name": "bun", "scripts": true }],
             "test": { "command": "bun test", "brief": "{lang}: {status}" }
         },
-        "rust": {
-            "tools": [{ "name": "cargo" }],
-            "test": { "command": "cargo test" }
-        }
+        "rust": { "tools": [{ "name": "cargo" }], "test": { "command": "cargo test" } }
     },
     "test": { "injectOn": "SessionStart", "cache": true, "cacheTTL": 300 }
 }
@@ -131,11 +128,7 @@ import { definePlugin } from 'reactive-context-toolkit'
 export default definePlugin({
     name: 'my-plugin',
     files: [
-        {
-            alias: 'guidelines',
-            path: 'docs/guidelines.md',
-            injectOn: 'SessionStart',
-        },
+        { alias: 'guidelines', path: 'docs/guidelines.md', injectOn: 'SessionStart' },
     ],
     rules: [
         {
@@ -194,7 +187,7 @@ Use `meta` to brief Claude on what RCT provides at session start:
 ```typescript
 import { createHook } from 'reactive-context-toolkit'
 
-createHook(async (input) => {
+createHook(async input => {
     return { hookSpecificOutput: { additionalContext: 'Hello from my hook' } }
 })
 ```
@@ -242,7 +235,6 @@ import {
     pluginRegistry,
     displayName,
 } from 'reactive-context-toolkit'
-
 import type {
     RCTConfig,
     RCTPlugin,

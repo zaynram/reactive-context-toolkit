@@ -1,6 +1,6 @@
-import { execSync } from 'child_process'
 import type { LangTool } from '#config/types'
 import { xml, fs } from '#util'
+import { execSync } from 'node:child_process'
 const tool: LangTool = {
     name: 'pixi',
     config: fs.resolve('pixi.toml'),
@@ -15,10 +15,10 @@ if (await bunfile.exists()) {
     const obj = await bunfile.text().then(Bun.TOML.parse)
     tool.environment = 'environments' in obj
     tool.tasks =
-        'tasks' in obj
-        || ('feature' in obj
-            && Array.isArray(obj.feature)
-            && obj.feature.some((feat) => 'tasks' in feat))
+        'tasks' in obj ||
+        ('feature' in obj &&
+            Array.isArray(obj.feature) &&
+            obj.feature.some(feat => 'tasks' in feat))
 }
 
 export default tool
@@ -64,10 +64,11 @@ export function getPixiTasks(tool: LangTool, cwd: string): string {
                             synopsis: description?.split('Usage: ')[0] ?? '',
                             usage: `pixi run ${name} ${(args ?? [])
                                 .map((a: string | PixiTaskArgument) =>
-                                    typeof a === 'string' ? a
-                                    : typeof a.default === 'string' ?
-                                        `[${a.name}=${a.default}]`
-                                    :   `<${a.name}>`,
+                                    typeof a === 'string'
+                                        ? a
+                                        : typeof a.default === 'string'
+                                          ? `[${a.name}=${a.default}]`
+                                          : `<${a.name}>`
                                 )
                                 .join(' ')}`.trim(),
                         })
@@ -88,7 +89,7 @@ export function getPixiTasks(tool: LangTool, cwd: string): string {
                     name: t.name,
                     synopsis: t.synopsis,
                     usage: t.usage,
-                }),
+                })
             )
             .join('')
         return xml.wrap('pixi-tasks', { inner })

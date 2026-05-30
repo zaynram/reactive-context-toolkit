@@ -18,16 +18,19 @@ function isError(e: unknown): e is Error {
 export async function dynamic(): Promise<AsyncHookJSONOutput> {
     return new Promise<AsyncHookJSONOutput>(resolve => {
         let data = ''
-        process.stdin.on('data', chunk => (data += chunk))
-        process.stdin.on('end', () => {
+        const parse = () => {
             try {
-                resolve({ ...JSON.parse(data), inject: standard })
+                resolve({ ...JSON.parse(data || '{}'), inject: standard })
             } catch (e: unknown) {
                 block({
                     stopReason: isError(e) ? e.message : 'An unknown error occurred.',
                 })
             }
-        })
+        }
+        // A TTY means nothing was piped in; 'end' would never fire and hang.
+        if (process.stdin.isTTY) return parse()
+        process.stdin.on('data', chunk => (data += chunk))
+        process.stdin.on('end', parse)
         process.stdin.on('error', ({ message }) => block({ stopReason: message }))
     })
 }

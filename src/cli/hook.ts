@@ -22,6 +22,7 @@ import {
 
 const SYNC_EVENTS: HookEvent[] = ['SessionStart', 'Setup']
 const TIMEOUT_MS = parseInt(process.env.RCT_PLUGIN_TIMEOUT_MS ?? '5000')
+const STDIN_TIMEOUT_MS = parseInt(process.env.RCT_STDIN_TIMEOUT_MS ?? '5000')
 
 async function withTimeout<T>(
     fn: () => T | Promise<T>,
@@ -53,6 +54,38 @@ async function withTimeout<T>(
 }
 
 export { withTimeout }
+
+/**
+ * Read and parse the hook payload from stdin for async events.
+ *
+ * Sync events (SessionStart, Setup) receive no payload, so we skip stdin
+ * entirely. For async events we must avoid blocking forever: `Bun.stdin.json()`
+ * only resolves once stdin reaches EOF, so if the caller keeps the pipe open
+ * (or the command is run interactively with stdin attached to a TTY) the read
+ * never completes and the CLI hangs. We guard against both: an interactive TTY
+ * means there is no piped payload, and a bounded timeout ensures a non-closing
+ * pipe can never wedge the process. Either way we fall back to a payload that
+ * carries just the event name.
+ */
+async function readStdin(
+    event: HookEvent
+): Promise<PluginHookInput<HookEvent, { tool_name?: string }>> {
+    const fallback = { hook_event_name: event } as PluginHookInput<
+        HookEvent,
+        { tool_name?: string }
+    >
+
+    // Sync events have no stdin payload; a TTY means nothing was piped in.
+    if (SYNC_EVENTS.includes(event) || process.stdin.isTTY) return fallback
+
+    const parsed = await withTimeout(
+        () => Bun.stdin.json() as Promise<typeof fallback>,
+        STDIN_TIMEOUT_MS,
+        'stdin read'
+    )
+
+    return parsed ?? fallback
+}
 
 export default async function hook(event: HookEvent) {
     const { config, extensions, registry, globals } = await loadConfig()
@@ -94,16 +127,7 @@ export default async function hook(event: HookEvent) {
 
     // Evaluate plugin triggers (before static rules — early exit on block)
     const stdin: PluginHookInput<typeof event, { tool_name?: string }> =
-        SYNC_EVENTS.includes(event)
-            ? { hook_event_name: event }
-            : // Read stdin for async events
-              await Bun.stdin
-                  .json()
-                  .catch(err =>
-                      Bun.stderr
-                          .write(`[rct] stdin parse error: ${String(err)}`)
-                          .then(() => ({ hook_event_name: event }))
-                  )
+        await readStdin(event)
 
     const warnings = [] as string[]
     for (const { name, fn } of extensions.triggers) {

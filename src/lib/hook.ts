@@ -18,8 +18,10 @@ type HookHandler = (input: RC.HookInput) => RC.HookJSONOutput | Promise<RC.HookJ
  */
 export function createHook(handler: HookHandler): void {
     let data = ''
-    process.stdin.on('data', (chunk: Buffer | string) => (data += chunk))
-    process.stdin.on('end', async () => {
+    let settled = false
+    const run = async () => {
+        if (settled) return
+        settled = true
         let input: RC.HookInput
         try {
             input = JSON.parse(data || '{}') as RC.HookInput
@@ -42,7 +44,17 @@ export function createHook(handler: HookHandler): void {
             )
             process.exit(2)
         }
-    })
+    }
+
+    // No piped payload when stdin is a TTY — run immediately rather than
+    // waiting on an 'end' event that will never fire (which would hang).
+    if (process.stdin.isTTY) {
+        void run()
+        return
+    }
+
+    process.stdin.on('data', (chunk: Buffer | string) => (data += chunk))
+    process.stdin.on('end', () => void run())
     process.stdin.on('error', err => {
         console.log(
             minify(JSON.stringify({ decision: 'block', stopReason: err.message }))

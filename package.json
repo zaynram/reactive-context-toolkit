@@ -38,7 +38,7 @@
         "build": "bun build --target=bun --outdir=dist --minify src/index.ts src/cli/index.ts",
         "format": "dprint fmt .",
         "check": "bun format && bun lint:fix && bun test",
-        "prepublish": "bun check"
+        "prepublishOnly": "bun run build && bun test"
     },
     "workspaces": [".", "plugins/*"],
     "dependencies": { "validate-with-xmllint": "^1.2.1" }

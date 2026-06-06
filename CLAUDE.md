@@ -8,7 +8,7 @@ Always read the usage directives outlined in [mcp-task-orchestrator-and-superpow
 
 ## What This Project Is
 
-**Reactive Context Toolkit (RCT)** is a zero-dependency TypeScript/Bun library that acts as a Claude Code hook handler. Consumers install it, run `bunx rct init` to scaffold an `rct.config.json` and patch their `.claude/settings.json`, and the hook runs on every configured hook event via `bun run rct hook <event>`. There is no build step — Bun resolves the `bin` field directly to source.
+**Reactive Context Toolkit (RCT)** is a zero-dependency TypeScript/Bun library that acts as a Claude Code hook handler. Consumers install it, run `bunx rct init` to scaffold an `rct.config.json` and patch their `.claude/settings.json`, and the hook runs on every configured hook event via `bun run rct hook <event>`. The package ships a built bundle: `bun run build` bundles `src/index.ts` and `src/cli/index.ts` into `dist/` (minified), which `bin`/`exports` point at. The committed `dist/` is what git/marketplace installs run, so rebuild it after changing `src/` (`bun check` runs the build); npm publish rebuilds via `prepublishOnly`.
 
 Based on the event and match conditions in the config, RCT injects context (XML or JSON) into Claude's prompt, blocks or warns on matched tool use, surfaces language-ecosystem info (scripts, tasks, path aliases), and runs tests per language.
 

@@ -1,9 +1,13 @@
-import { withTimeout } from '../src/cli/hook'
 import { applyPlugins, type ValidatedConfig } from '../src/config/schema'
 import type { HookEvent } from '../src/config/types'
 import { composeOutput } from '../src/engine/compose'
+import { withTimeout } from '../src/lib/io'
 import type { RCTPlugin, PluginHookInput, PluginTriggerResult } from '../src/plugin/types'
 import { describe, expect, test } from 'bun:test'
+
+/** Build a minimal flat `PluginHookInput` for exercising context/trigger fns. */
+const input = (over: Record<string, unknown> = {}): PluginHookInput =>
+    ({ hook_event_name: 'PreToolUse', ...over }) as unknown as PluginHookInput
 
 describe('RCTPlugin context function', () => {
     test('plugin with context function is valid', () => {
@@ -24,7 +28,7 @@ describe('RCTPlugin context function', () => {
 
     test('context returning undefined produces no output', () => {
         const plugin: RCTPlugin = { name: 'undefined-context', context: () => undefined }
-        const result = plugin.context!('SessionStart', { payload: {} })
+        const result = plugin.context!('SessionStart', input())
         expect(result).toBeUndefined()
     })
 
@@ -33,7 +37,7 @@ describe('RCTPlugin context function', () => {
             name: 'string-context',
             context: () => '<tmux>pane layout here</tmux>',
         }
-        const result = plugin.context!('SessionStart', { payload: {} })
+        const result = plugin.context!('SessionStart', input())
         expect(result).toBe('<tmux>pane layout here</tmux>')
     })
 
@@ -50,7 +54,7 @@ describe('RCTPlugin context function', () => {
         console.warn = (...args: unknown[]) => warns.push(String(args[0]))
 
         const result = await withTimeout(
-            () => plugin.context!('SessionStart', { payload: {} }),
+            () => plugin.context!('SessionStart', input()),
             5000,
             'test-context'
         )
@@ -67,7 +71,7 @@ describe('RCTPlugin context function', () => {
                 return 'async result'
             },
         }
-        const result = await plugin.context!('SessionStart', { payload: {} })
+        const result = await plugin.context!('SessionStart', input())
         expect(result).toBe('async result')
     })
 
@@ -84,14 +88,14 @@ describe('RCTPlugin context function', () => {
             },
         }
 
-        await plugin.context!('PreToolUse', {
-            toolName: 'Bash',
-            payload: { tool_name: 'Bash', tool_input: { command: 'ls' } },
-        })
+        await plugin.context!(
+            'PreToolUse',
+            input({ tool_name: 'Bash', tool_input: { command: 'ls' } })
+        )
 
         expect(receivedEvent).toBe('PreToolUse')
-        expect(receivedInput?.toolName).toBe('Bash')
-        expect(receivedInput?.payload.tool_name).toBe('Bash')
+        expect(receivedInput?.tool_name).toBe('Bash')
+        expect((receivedInput?.tool_input as { command?: string })?.command).toBe('ls')
     })
 })
 
@@ -113,7 +117,7 @@ describe('RCTPlugin trigger function', () => {
 
     test('trigger returning undefined takes no action', () => {
         const plugin: RCTPlugin = { name: 'undefined-trigger', trigger: () => undefined }
-        const result = plugin.trigger!('PreToolUse', { payload: {} })
+        const result = plugin.trigger!('PreToolUse', input())
         expect(result).toBeUndefined()
     })
 
@@ -125,10 +129,10 @@ describe('RCTPlugin trigger function', () => {
                 message: 'This tool is not allowed',
             }),
         }
-        const result = plugin.trigger!('PreToolUse', {
-            toolName: 'Bash',
-            payload: { tool_name: 'Bash' },
-        }) as PluginTriggerResult
+        const result = plugin.trigger!(
+            'PreToolUse',
+            input({ tool_name: 'Bash' })
+        ) as PluginTriggerResult
         expect(result.action).toBe('block')
         expect(result.message).toBe('This tool is not allowed')
     })
@@ -141,9 +145,7 @@ describe('RCTPlugin trigger function', () => {
                 message: 'Be careful with this tool',
             }),
         }
-        const result = plugin.trigger!('PreToolUse', {
-            payload: {},
-        }) as PluginTriggerResult
+        const result = plugin.trigger!('PreToolUse', input()) as PluginTriggerResult
         expect(result.action).toBe('warn')
         expect(result.message).toBe('Be careful with this tool')
     })
@@ -161,7 +163,7 @@ describe('RCTPlugin trigger function', () => {
         console.warn = (...args: unknown[]) => warns.push(String(args[0]))
 
         const result = await withTimeout(
-            () => plugin.trigger!('PreToolUse', { payload: {} }),
+            () => plugin.trigger!('PreToolUse', input()),
             5000,
             'test-trigger'
         )
@@ -178,7 +180,7 @@ describe('RCTPlugin trigger function', () => {
                 return { action: 'warn' as const, message: 'async warning' }
             },
         }
-        const result = await plugin.trigger!('PreToolUse', { payload: {} })
+        const result = await plugin.trigger!('PreToolUse', input())
         expect(result).toEqual({ action: 'warn', message: 'async warning' })
     })
 
@@ -195,13 +197,10 @@ describe('RCTPlugin trigger function', () => {
             },
         }
 
-        await plugin.trigger!('PostToolUse', {
-            toolName: 'Write',
-            payload: { tool_name: 'Write' },
-        })
+        await plugin.trigger!('PostToolUse', input({ tool_name: 'Write' }))
 
         expect(receivedEvent).toBe('PostToolUse')
-        expect(receivedInput?.toolName).toBe('Write')
+        expect(receivedInput?.tool_name).toBe('Write')
     })
 })
 

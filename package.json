@@ -33,11 +33,11 @@
     "private": false,
     "scripts": {
         "test": "bun test",
-        "lint": "bun oxlint --node-plugin --import-plugin --type-aware --type-check",
+        "lint": "bun oxlint --node-plugin --import-plugin --type-aware --type-check --ignore-pattern='dist/**'",
         "lint:fix": "bun lint --fix",
         "build": "bun build --target=bun --outdir=dist --minify src/index.ts src/cli/index.ts",
         "format": "dprint fmt .",
-        "check": "bun format && bun lint:fix && bun test",
+        "check": "bun format && bun lint:fix && bun test && bun run build",
         "prepublishOnly": "bun run build && bun test"
     },
     "workspaces": [".", "plugins/*"],

@@ -3,6 +3,7 @@ import path from 'path'
 import {
     definePlugin,
     evaluateMatch,
+    extractTargetValue,
     CLAUDE_PROJECT_DIR,
     type FileEntry,
     type Match,
@@ -83,7 +84,8 @@ const getContextMatch = (input: PluginHookInput): ContextMatch | undefined => {
     if (!evaluateMatch(conditions.context, input)) return undefined
     if (!Bun.which('xmllint'))
         throw Error('xmllint is either not installed or not on PATH')
-    const fp = input.file_path as string
+    // file_path lives under tool_input on the raw payload; use the canonical extractor.
+    const fp = extractTargetValue('file_path', input)
     const name = path.basename(fp)
     return {
         name,
@@ -118,13 +120,17 @@ export default definePlugin({
     contextFrequency: 'always',
     trigger(event, input) {
         switch (event) {
-            case 'PreToolUse':
+            case 'PreToolUse': {
                 if (!evaluateMatch(conditions.trigger, input)) return undefined
-                const name = path.basename(input.file_path as string)
+                // This matches a Bash `xmllint ... chores|plans.xml`; the target
+                // file is in the command, not a file_path field (Bash has none).
+                const cmd = extractTargetValue('command', input)
+                const name = cmd.match(/(?:chores|plans)\.xml/)?.[0] ?? 'chores/plans.xml'
                 return {
                     action: 'block',
                     message: `${name} XSD validation output is auto-injected on Write|Edit tool uses`,
                 }
+            }
         }
     },
 })

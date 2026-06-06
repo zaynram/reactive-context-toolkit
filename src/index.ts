@@ -50,8 +50,8 @@ export { evaluateRules } from '#engine/rules'
 /** Resolve matching injection entries into file content strings. Composable for custom pipelines. */
 export { evaluateInjections } from '#engine/injections'
 
-/** Low-level match helpers: test a full Match array or a single MatchCondition against input. */
-export { evaluateMatch, evaluateCondition } from '#engine/evaluate'
+/** Low-level match helpers: test a Match/MatchCondition, or extract a MatchTarget's value from a payload (digs into `tool_input` for file_path/command/content). */
+export { evaluateMatch, evaluateCondition, extractTargetValue } from '#engine/evaluate'
 
 /** Generate a meta summary of the active config in xml/json/path/raw format. */
 export { generateMeta } from '#engine/meta'
@@ -74,13 +74,21 @@ export {
     formatTestResult,
 } from '#test/runner'
 
-// Library surface (typed hook output helpers + extension API)
+// Library surface (typed hook I/O boundaries + extension API)
 
 /**
- * Typed hook output helpers for writing custom hooks.
+ * Read and parse the hook payload from stdin into a typed `PluginHookInput`.
+ * The input boundary that mirrors `composeOutput` — both are composable by
+ * custom hooks and reused internally by the CLI pipeline. Resilient: empty,
+ * closed, or timed-out stdin yields an event-name-only stub.
+ */
+export { parseInput } from '#lib/io'
+
+/**
+ * Typed low-level hook helpers for writing custom hooks.
  * - `standard` — write a successful hook JSON response to stdout and exit 0.
- * - `dynamic` — parse stdin into a typed HookInput promise for ad-hoc processing.
- * - `block` — write a block decision to stdout and exit 2.
+ * - `dynamic` — parse stdin into a typed `PluginHookInput` promise (wraps `parseInput`).
+ * - `block` — write the reason to stderr and exit 2 (Claude Code ignores stdout on exit 2).
  */
 export { standard, dynamic, block } from '#lib/register'
 
@@ -93,6 +101,7 @@ export { standard, dynamic, block } from '#lib/register'
  * })
  */
 export { createHook } from '#lib/hook'
+export type { HookHandlerOutput } from '#lib/hook'
 
 // Utilities
 

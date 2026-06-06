@@ -1,43 +1,29 @@
-import { minify } from '#util'
-import { SyncHookJSONOutput, AsyncHookJSONOutput } from '@anthropic-ai/claude-agent-sdk'
+import { composeOutput } from '#engine/compose'
+import { parseInput } from '#lib/io'
+import type { PluginHookInput } from '#plugin/types'
+import { minify } from '#util/general'
+import type { SyncHookJSONOutput } from '@anthropic-ai/claude-agent-sdk'
 
+/** Write a successful hook JSON response to stdout and exit 0. */
 export function standard(output: SyncHookJSONOutput): never {
     console.log(minify(JSON.stringify(output)))
     return process.exit(0)
 }
 
-function isError(e: unknown): e is Error {
-    return (
-        e !== null &&
-        typeof e === 'object' &&
-        'message' in e &&
-        typeof e.message === 'string'
-    )
+/**
+ * Read and parse the hook payload from stdin into a typed input. Thin wrapper
+ * over {@link parseInput} (the canonical input boundary), retained for the
+ * low-level helper surface; the event is taken from the payload itself.
+ */
+export function dynamic(): Promise<PluginHookInput> {
+    return parseInput()
 }
 
-export async function dynamic(): Promise<AsyncHookJSONOutput> {
-    return new Promise<AsyncHookJSONOutput>(resolve => {
-        let data = ''
-        const parse = () => {
-            try {
-                resolve({ ...JSON.parse(data || '{}'), inject: standard })
-            } catch (e: unknown) {
-                block({
-                    stopReason: isError(e) ? e.message : 'An unknown error occurred.',
-                })
-            }
-        }
-        // A TTY means nothing was piped in; 'end' would never fire and hang.
-        if (process.stdin.isTTY) return parse()
-        process.stdin.on('data', chunk => (data += chunk))
-        process.stdin.on('end', parse)
-        process.stdin.on('error', ({ message }) => block({ stopReason: message }))
-    })
-}
-
-export function block(
-    output: Omit<SyncHookJSONOutput, 'decision' | 'hookSpecificOutput'>
-): never {
-    console.log(minify(JSON.stringify({ ...output, decision: 'block' })))
+/**
+ * Block the tool call: write the reason to stderr and exit 2. Per the Claude
+ * Code hook contract, exit 2 feeds stderr back to Claude and ignores stdout.
+ */
+export function block(message: string): never {
+    console.error(composeOutput({ blockResult: { message } }))
     return process.exit(2)
 }

@@ -113,10 +113,10 @@ describe('RCT Config Types', () => {
         }
         expect(condition.target).toBe('file_path')
 
-        // pattern can be array of strings or objects
+        // file_path conditions take an array of { name?, alias?, path } objects
         const condWithArrayPattern: MatchCondition = {
-            target: 'tool_name',
-            pattern: ['Write', { name: 'Edit', path: '/src' }],
+            target: 'file_path',
+            pattern: [{ path: '/src' }, { name: 'Edit', path: '/lib' }],
         }
         expect(condWithArrayPattern.pattern).toHaveLength(2)
 

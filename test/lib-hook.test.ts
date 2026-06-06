@@ -47,12 +47,13 @@ describe('createHook()', () => {
         expect(result.stdout).toContain('hello')
     })
 
-    test('handler error: outputs block decision, exit 2', async () => {
+    test('handler error: writes reason to stderr, exit 2', async () => {
         const result = await runHook(`async () => { throw new Error('handler broke') }`)
+        // Exit 2: Claude Code reads stderr and ignores stdout/JSON.
         expect(result.exitCode).toBe(2)
-        expect(result.stdout).toContain('block')
-        expect(result.stdout).toContain('handler broke')
+        expect(result.stdout).toBe('')
         expect(result.stderr).toContain('Hook handler error')
+        expect(result.stderr).toContain('handler broke')
     })
 
     test('invalid JSON stdin: exits 1 without blocking', async () => {

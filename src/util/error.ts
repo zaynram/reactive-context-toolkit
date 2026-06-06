@@ -15,7 +15,14 @@ export default {
         return err instanceof Error && (!name || err.name === name)
     },
     text(e: unknown, { prefix = '', suffix = '' }: ErrorTextOptions = {}): string {
-        return !e ? '' : `${prefix}${e instanceof Error ? e.message : String(e)}${suffix}`
+        if (!e) return ''
+        let msg: string
+        if (e instanceof Error) msg = e.message
+        else if (typeof e === 'object') msg = JSON.stringify(e)
+        // Remaining union excludes object/Error; cast away `function` so the
+        // primitive coercion is well-defined (never "[object Object]").
+        else msg = String(e as string | number | boolean | bigint | symbol)
+        return `${prefix}${msg}${suffix}`
     },
     /**
     @description

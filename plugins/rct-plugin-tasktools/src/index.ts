@@ -9,7 +9,12 @@ import { resolve } from 'path'
  * - Deduplicates with pixi task injection when both are active
  * - Checks tasktools presence freshly each invocation (handles install/uninstall)
  */
-import { definePlugin, type PluginHookInput, type HookEvent } from 'rct'
+import {
+    definePlugin,
+    extractTargetValue,
+    type PluginHookInput,
+    type HookEvent,
+} from 'rct'
 
 const cwd = () => process.env.CLAUDE_PROJECT_DIR ?? process.cwd()
 
@@ -73,7 +78,7 @@ export default definePlugin({
         if (event !== 'PreToolUse' || input.tool_name !== 'Bash') return undefined
         if (!hasTasktools()) return undefined
 
-        const cmd = String(input.command ?? '')
+        const cmd = extractTargetValue('command', input)
 
         if (/^git\s+(commit|push|tag)\b/.test(cmd)) {
             return {
@@ -133,7 +138,7 @@ export default definePlugin({
         if (event === 'PreToolUse' && input.tool_name === 'Bash') {
             if (tasktoolsReferenceInjected) return undefined // already shown this session
 
-            const cmd = String(input.command ?? '')
+            const cmd = extractTargetValue('command', input)
             if (/^tasktools\s/.test(cmd)) {
                 tasktoolsReferenceInjected = true
                 return (

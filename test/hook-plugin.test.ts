@@ -30,10 +30,9 @@ describe('hook pipeline — plugin trigger integration', () => {
     it('plugin trigger blocks with exit code 2 when tool matches', () => {
         const payload = JSON.stringify({ tool_name: 'BlockedTool', tool_input: {} })
         const result = runHook('PreToolUse', FIXTURE_DIR, payload)
+        // Exit-2 blocks feed the plain message back via stderr (stdout ignored).
         expect(result.exitCode).toBe(2)
-        const parsed = JSON.parse(result.stdout)
-        expect(parsed.decision).toBe('block')
-        expect(parsed.reason).toContain('BlockedTool is not allowed by plugin')
+        expect(result.stderr).toContain('BlockedTool is not allowed by plugin')
     })
 
     it('plugin trigger does not block when tool does not match', () => {

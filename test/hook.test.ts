@@ -40,10 +40,10 @@ describe('hook entry point', () => {
             tool_input: { file_path: 'docs/specs/something.md', content: 'test' },
         })
         const result = runHook('PreToolUse', payload)
+        // Exit-2 blocks feed the plain message back via stderr; Claude Code
+        // ignores stdout/JSON on exit 2, so the reason lives in stderr.
         expect(result.exitCode).toBe(2)
-        const parsed = JSON.parse(result.stdout)
-        expect(parsed.decision).toBe('block')
-        expect(parsed.reason).toContain('Specs belong in .claude/plans/')
+        expect(result.stderr).toContain('Specs belong in .claude/plans/')
     })
 
     it('outputs nothing when no config matches', () => {

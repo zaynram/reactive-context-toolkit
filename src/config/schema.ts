@@ -1,14 +1,13 @@
 import { resolvePlugin } from '#plugin/resolve'
 import type { RCTPlugin } from '#plugin/types'
 import { displayName } from '#plugin/types'
+import error from '#util/error'
 import { fs } from '#util/fs'
 import type {
     RCTConfig,
     GlobalsConfig,
     MatchCondition,
     Match,
-    HookEvent,
-    InjectionEntry,
     FileEntry,
     RuleEntry,
     PluginRef,
@@ -195,19 +194,15 @@ export async function applyPlugins(config: ValidatedConfig): Promise<ApplyPlugin
             if (plugin.setup) {
                 try {
                     await Promise.resolve(plugin.setup())
-                } catch (err) {
-                    console.warn(
-                        `[rct] Warning: plugin '${displayName(plugin, name)}' setup failed: ${err instanceof Error ? err.message : String(err)}`
-                    )
+                } catch (inner) {
+                    error.write(`plugin ${displayName(plugin, name)} setup failed`, {
+                        inner,
+                    })
                 }
             }
         } catch (err) {
-            console.warn(
-                `[rct] Warning: Failed to resolve plugin '${name}': ${err instanceof Error ? err.message : String(err)}`
-            )
-            if (process.env.RCT_DEBUG && err instanceof Error && err.stack) {
-                console.warn(err.stack)
-            }
+            error.write(`failed to resolve plugin '${name}'`, { inner: err })
+            if (error.isinstance(err) && err.stack) error.write(err.stack)
         }
     }
 
@@ -220,53 +215,42 @@ export async function applyPlugins(config: ValidatedConfig): Promise<ApplyPlugin
     return { config: merged, extensions }
 }
 
-export function desugarFileInjections(config: ValidatedConfig): ValidatedConfig {
-    const files = config.files ?? []
-    const existingInjections = [...(config.injections ?? [])]
-    const newInjections: InjectionEntry[] = []
+export function desugarFileInjections<T extends ValidatedConfig | ApplyPluginsResult>(
+    data: T
+): T {
+    const pluginsApplied = 'extensions' in data
+    const config = pluginsApplied ? data.config : (data as ValidatedConfig)
 
-    for (const file of files) {
-        const alias = file.alias ?? fs.stem(file.path)
+    config.injections ??= []
+    const { injections, files = [] } = config
 
-        // Desugar file-level injectOn
-        if (file.injectOn) {
-            const events: HookEvent[] = Array.isArray(file.injectOn)
-                ? file.injectOn
-                : [file.injectOn]
-
-            for (const event of events) {
-                const alreadyExists = existingInjections.some(
-                    inj => inj.on === event && inj.inject.includes(alias)
-                )
-                if (!alreadyExists) {
-                    newInjections.push({ on: event, inject: [alias] })
-                }
-            }
-        }
-
-        // Desugar metaFile-level injectOn
-        if (file.metaFiles) {
-            for (const meta of file.metaFiles) {
-                if (!meta.injectOn) continue
-                const metaAlias = meta.alias ?? fs.stem(meta.path)
-                const colonRef = `${alias}:${metaAlias}`
-                const events: HookEvent[] = Array.isArray(meta.injectOn)
-                    ? meta.injectOn
-                    : [meta.injectOn]
-
-                for (const event of events) {
-                    const alreadyExists = existingInjections.some(
-                        inj => inj.on === event && inj.inject.includes(colonRef)
-                    )
-                    if (!alreadyExists) {
-                        newInjections.push({ on: event, inject: [colonRef] })
-                    }
-                }
-            }
-        }
-    }
-
-    return { ...config, injections: [...existingInjections, ...newInjections] }
+    const seen = new Set(
+        injections.flatMap(inj => inj.inject?.map(ref => `${inj.on}|${ref}`) ?? [])
+    )
+    const push = files.flatMap(
+        ({ path, injectOn = [], alias = fs.stem(path), metaFiles = [] }: FileEntry) => [
+            ...[injectOn]
+                .flat()
+                .filter(e => !seen.has(`${e}|${alias}`))
+                .map(on => {
+                    seen.add(`${on}|${alias}`)
+                    return { on, inject: [alias] }
+                }),
+            ...[metaFiles]
+                .flat()
+                .flatMap(({ path, alias: _ = fs.stem(path), injectOn = [] }) =>
+                    [injectOn]
+                        .flat()
+                        .filter(e => !seen.has(`${e}|${alias}:${_}`))
+                        .map(on => {
+                            seen.add(`${on}|${alias}:${_}`)
+                            return { on, inject: [`${alias}:${_}`] }
+                        })
+                ),
+        ]
+    )
+    if (push.length) injections.push(...push)
+    return data
 }
 
 export function applyStaleCheck(

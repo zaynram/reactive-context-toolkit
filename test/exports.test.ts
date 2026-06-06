@@ -51,8 +51,8 @@ describe('barrel exports from src/index.ts', () => {
 
     it('exports plugin registry and type', async () => {
         const mod = await import('../src/index')
-        expect(mod.pluginRegistry).toBeDefined()
-        expect('rct-plugin-track-work' in mod.pluginRegistry).toBe(true)
+        expect(mod.pluginRegistry).toBeFunction()
+        expect('rct-plugin-track-work' in (await mod.pluginRegistry())).toBe(true)
     })
 
     it('exports displayName utility', async () => {

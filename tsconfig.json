@@ -3,6 +3,8 @@
         "target": "ESNext",
         "module": "ESNext",
         "moduleResolution": "bundler",
+        "rootDir": ".",
+        "baseUrl": "./",
         "strict": true,
         "noEmit": true,
         "esModuleInterop": true,
@@ -16,6 +18,6 @@
         },
         "types": ["bun-types"]
     },
-    "include": ["src/**/*.ts", "test/**/*.ts", "plugins/**/*.ts"],
+    "include": ["src/**/*.ts", "plugins/**/*.ts", "test/*.ts"],
     "exclude": ["**/node_modules", "**/lib"]
 }

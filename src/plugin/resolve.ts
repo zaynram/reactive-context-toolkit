@@ -1,11 +1,12 @@
 import { CLAUDE_PROJECT_DIR } from '#constants'
-import builtins from './index'
+import getBuiltins from './index'
 import type { BuiltinPluginRef, ResolvedPlugin } from './types'
 import { PluginValidationError, validatePlugin } from './validate'
 import path from 'path'
 
 export async function resolvePlugin(ref: string): Promise<ResolvedPlugin> {
     // 1. Built-in name
+    const builtins = await getBuiltins()
     if (ref in builtins) {
         const value = builtins[ref as BuiltinPluginRef]
         if (value !== undefined) return value

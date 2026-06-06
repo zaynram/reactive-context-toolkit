@@ -40,7 +40,7 @@ function globToRegex(glob: string): RegExp {
 
 function getPatternStrings(pattern: MatchCondition['pattern']): (string | RegExp)[] {
     if (Array.isArray(pattern))
-        return pattern.map(p => (typeof p === 'object' ? p.path : p))
+        return pattern.map(p => (typeof p === 'object' && 'path' in p ? p.path : p))
     return [pattern]
 }
 
@@ -74,7 +74,9 @@ export function evaluateCondition(condition: MatchCondition, value: string): boo
     const patterns = getPatternStrings(condition.pattern)
 
     // Any pattern matching = true (OR logic across patterns)
-    return patterns.some(p => matchSingle(operator, p, value))
+    return patterns.some(p =>
+        matchSingle(...([operator, p, value] as MatchSingleParameters))
+    )
 }
 
 export function extractTargetValue(

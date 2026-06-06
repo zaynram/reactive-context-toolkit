@@ -19,134 +19,118 @@ import {
     setCachedResult,
     TestCommandInfo,
 } from '#test/runner'
+import error from '#util/error'
+import timers from 'node:timers/promises'
 
-const SYNC_EVENTS: HookEvent[] = ['SessionStart', 'Setup']
 const TIMEOUT_MS = parseInt(process.env.RCT_PLUGIN_TIMEOUT_MS ?? '5000')
 const STDIN_TIMEOUT_MS = parseInt(process.env.RCT_STDIN_TIMEOUT_MS ?? '5000')
+const START_TIMEOUT_MS = parseInt(
+    process.env.RCT_START_TIMEOUT_MS ?? `${STDIN_TIMEOUT_MS / 2}`
+)
 
-async function withTimeout<T>(
+export function withTimeout<T>(
     fn: () => T | Promise<T>,
     ms: number,
     label: string
-): Promise<T | undefined> {
-    const TIMEOUT_SENTINEL = Symbol('timeout')
-    let timer: ReturnType<typeof setTimeout> | undefined
-    try {
-        const result = await Promise.race([
-            Promise.resolve(fn()),
-            new Promise<typeof TIMEOUT_SENTINEL>(resolve => {
-                timer = setTimeout(() => resolve(TIMEOUT_SENTINEL), ms)
-            }),
-        ])
-        if (result === TIMEOUT_SENTINEL) {
-            console.warn(`[rct] Warning: ${label} timed out after ${ms}ms`)
-            return undefined
+): Promise<T | void> {
+    const { promise, resolve, reject } = Promise.withResolvers<T | void>()
+    const controller = new AbortController()
+    Promise.resolve()
+        .then(fn)
+        .then(resolve)
+        .catch(err => {
+            error.write(`${label} completed with errors`, { inner: err })
+            resolve()
+        })
+        .finally(() => controller.abort())
+    void timers.setTimeout(ms, null, { signal: controller.signal }).then(
+        () => {
+            error.write(`${label} timed out after ${ms}ms`)
+            resolve()
+        },
+        err => {
+            if (error.isinstance(err, 'AbortError')) return
+            error.write(`unknown timeout error`, { level: 'debug', inner: err })
+            reject(err)
         }
-        return result as T
-    } catch (err) {
-        console.warn(
-            `[rct] Warning: ${label}: ${err instanceof Error ? err.message : String(err)}`
-        )
-        return undefined
-    } finally {
-        if (timer !== undefined) clearTimeout(timer)
-    }
+    )
+    return promise
 }
-
-export { withTimeout }
 
 /**
  * Read and parse the hook payload from stdin for async events.
  *
- * Sync events (SessionStart, Setup) receive no payload, so we skip stdin
- * entirely. For async events we must avoid blocking forever: `Bun.stdin.json()`
- * only resolves once stdin reaches EOF, so if the caller keeps the pipe open
- * (or the command is run interactively with stdin attached to a TTY) the read
- * never completes and the CLI hangs. We guard against both: an interactive TTY
- * means there is no piped payload, and a bounded timeout ensures a non-closing
- * pipe can never wedge the process. Either way we fall back to a payload that
- * carries just the event name.
+ * Since `Bun.stdin.json()` only resolves once stdin reaches EOF, all
+ * events must be handled asynchronously and we must guard against wedge cases.
+ *
+ * If the caller keeps the pipe open (or the command is run interactively with
+ * stdin attached to a TTY) the read may never complete and the CLI hangs.
+ *
+ * We work around this by returning a stub input on `process.stdin.isTTY` and
+ * by enforcing strict timeouts for events. SessionStart events are given
+ * their own timeout so there is less latency for that event's worst-case
+ * which follows Anthropic's recommendations.
  */
-async function readStdin(
-    event: HookEvent
-): Promise<PluginHookInput<HookEvent, { tool_name?: string }>> {
-    const fallback = { hook_event_name: event } as PluginHookInput<
-        HookEvent,
-        { tool_name?: string }
-    >
-
-    // Sync events have no stdin payload; a TTY means nothing was piped in.
-    if (SYNC_EVENTS.includes(event) || process.stdin.isTTY) return fallback
-
-    const parsed = await withTimeout(
-        () => Bun.stdin.json() as Promise<typeof fallback>,
-        STDIN_TIMEOUT_MS,
-        'stdin read'
-    )
-
-    return parsed ?? fallback
+async function parseInput(event: HookEvent): Promise<PluginHookInput> {
+    // Interactive TTY means there is no piped payload; fallback to event name only
+    if (process.stdin.isTTY) return { hook_event_name: event } as PluginHookInput
+    // Separate timeout for SessionStart to ensure quicker startup in case of timeout
+    const timeout = event === 'SessionStart' ? START_TIMEOUT_MS : STDIN_TIMEOUT_MS
+    // Empty/closed stdin (e.g. no piped payload) or a timeout yields no value;
+    // fall back to an event-name-only stub rather than crashing downstream.
+    const parsed = await withTimeout(() => Bun.stdin.json(), timeout, 'Bun.stdin.json')
+    return (parsed ?? { hook_event_name: event }) as PluginHookInput
 }
 
-export default async function hook(event: HookEvent) {
-    const { config, extensions, registry, globals } = await loadConfig()
+export default async function runHook(event: HookEvent) {
+    const {
+        config: {
+            globals,
+            files = [],
+            injections = [],
+            lang = {},
+            rules = [],
+            ...config
+        },
+        extensions,
+    } = await loadConfig()
         .then(validateConfig)
         .then(applyPlugins)
-        .then(({ config, ...rest }) => ({
-            ...rest,
-            config: desugarFileInjections(config),
-        }))
-        .then(({ config: { globals, files = [], ...config }, ...rest }) => ({
-            ...rest,
-            config,
-            registry: buildFileRegistry(files),
-            globals,
-        }))
+        .then(desugarFileInjections)
 
-    const submitBlock = async (message: string): Promise<never> =>
-        await Bun.stdout
-            .write(
-                composeOutput({
-                    event,
-                    globals,
-                    blockResult: { message },
-                    warnMessages: [],
-                    injectionResults: [],
-                    metaResult: null,
-                    langResult: null,
-                    testResult: null,
-                })
-            )
-            .catch()
+    const block = async (message: string): Promise<never> => {
+        return await Bun.stderr
+            .write(composeOutput({ blockResult: { message } }))
             .then(() => process.exit(2))
+    }
 
     const execute = async <T>(
         name: string,
         fn: (event: HookEvent, payload: PluginHookInput) => T
-    ): Promise<Awaited<T | undefined>> =>
-        await withTimeout(() => fn(event, stdin), TIMEOUT_MS, `plugin '${name}' context`)
+    ): Promise<Awaited<T | void>> =>
+        await withTimeout(() => fn(event, stdin), TIMEOUT_MS, `plugin::${name}::context`)
 
     // Evaluate plugin triggers (before static rules — early exit on block)
     const stdin: PluginHookInput<typeof event, { tool_name?: string }> =
-        await readStdin(event)
+        await parseInput(event)
 
     const warnings = [] as string[]
     for (const { name, fn } of extensions.triggers) {
         const { action, message } = (await execute(name, fn)) ?? {}
         if (action === 'warn') warnings.push(message!)
-        if (action === 'block') await submitBlock(message!)
+        if (action === 'block') await block(message!)
     }
 
     // Evaluate static rules
-    const ruleResult = evaluateRules(config.rules ?? [], event, stdin.tool_name, stdin)
-
+    const ruleResult = evaluateRules(rules ?? [], event, stdin.tool_name, stdin)
     // If static rule blocks, output and exit
-    if (ruleResult?.action === 'block') await submitBlock(ruleResult.messages.join('\n'))
+    if (ruleResult?.action === 'block') await block(ruleResult.messages.join('\n'))
 
     // Evaluate plugin contexts
     const context: string[] = []
     const sessionId = stdin.session_id
     for (const { name, fn, contextOn, contextFrequency } of extensions.contexts) {
-        if (contextOn && [contextOn].flat().includes(event)) continue
+        if (contextOn && ![contextOn].flat().includes(event)) continue
         // Check frequency limit (persisted across hook invocations via temp file)
         if (contextFrequency && contextFrequency !== 'always') {
             const max = contextFrequency === 'once' ? 1 : contextFrequency
@@ -159,13 +143,19 @@ export default async function hook(event: HookEvent) {
             if (count >= max) continue
             await bunfile
                 .write(`${count + 1}`)
-                .catch(err => Bun.stderr.write(String(err)))
+                .catch(err =>
+                    error.write(`error saving context count for session ${sessionId}`, {
+                        level: 'debug',
+                        inner: err,
+                    })
+                )
         }
-        await execute(name, fn).then(res => res !== undefined && context.push(res))
+        await execute(name, fn).then(res => typeof res === 'string' && context.push(res))
     }
 
     // Test — per-language with top-level inheritance
-    const testResults: string[] = []
+    const testCommand = resolveTestCommand(config)
+    const testResults = [] as string[]
     const topLevelTest: TestConfig | undefined =
         config.test && typeof config.test === 'object'
             ? config.test
@@ -191,52 +181,49 @@ export default async function hook(event: HookEvent) {
             return formatTestResult({ ...data, lang, tool: info.tool }, test, globals)
         }
 
-        Object.entries(config.lang ?? {}).forEach(async ([lang, entry]) => {
-            if (!entry) return
-            const test = entry.test ?? (topLevelTest && { command: true })
-            if (!test) return
-            const info = resolveLangTestCommand(test, entry)
-            if (!info) return
-            await processLangEntry(test, info, lang).then(testResults.push)
-        })
+        const results = await Promise.allSettled(
+            Object.entries(lang).map(async ([lang, entry]) => {
+                const test = entry?.test ?? (topLevelTest && { command: true })
+                if (!test) return Promise.reject()
+                const info = resolveLangTestCommand(test, entry)
+                if (!info) return Promise.reject()
+                return await processLangEntry(test, info, lang)
+            })
+        ).then(set => set.filter(res => 'value' in res).map(res => res.value))
 
-        // Fallback: if no per-language tests ran but top-level exists, use v0.x behavior
-        if (testResults.length === 0 && topLevelTest) {
-            const info = resolveTestCommand(config)
-            if (info) await processLangEntry(topLevelTest, info).then(testResults.push)
-        }
+        if (results.length) testResults.push(...results)
+        else if (topLevelTest && testCommand)
+            // Fallback: if no per-language tests ran but top-level exists, use v0.x behavior
+            await processLangEntry(topLevelTest, testCommand).then(testResults.push)
     }
 
-    await Bun.stdout
-        .write(
-            composeOutput({
-                event,
-                blockResult: null,
-                pluginContextResults: context,
-                warnMessages: [
-                    ...(ruleResult?.action === 'warn' ? ruleResult.messages : []),
-                    ...warnings,
-                ],
-                injectionResults: evaluateInjections(
-                    config.injections ?? [],
-                    event,
-                    stdin.tool_name,
-                    stdin,
-                    registry,
-                    globals
-                ),
-                metaResult:
-                    config.meta &&
-                    [config.meta.injectOn ?? 'SessionStart'].flat().includes(event)
-                        ? generateMeta(config, registry, globals, config.meta)
-                        : null,
-                langResult: config.lang
-                    ? evaluateLang(config.lang, event, CLAUDE_PROJECT_DIR).join('\n')
-                    : null,
-                testResult: testResults.length > 0 ? testResults.join('\n') : null,
-                globals,
-            })
-        )
-        .catch()
-        .then(() => process.exit(0))
+    const registry = buildFileRegistry(files)
+    const output = composeOutput({
+        event,
+        pluginContextResults: context,
+        warnMessages: [
+            ...(ruleResult?.action === 'warn' ? ruleResult.messages : []),
+            ...warnings,
+        ],
+        injectionResults: evaluateInjections(
+            injections,
+            event,
+            stdin.tool_name,
+            stdin,
+            registry,
+            globals
+        ),
+        metaResult:
+            config.meta && [config.meta.injectOn ?? 'SessionStart'].flat().includes(event)
+                ? generateMeta(config, registry, globals, config.meta)
+                : null,
+        langResult: lang
+            ? evaluateLang(lang, event, CLAUDE_PROJECT_DIR).join('\n')
+            : null,
+        testResult: testResults.length > 0 ? testResults.join('\n') : null,
+        globals,
+    })
+
+    await Bun.stdout.write(output)
+    process.exit(0)
 }

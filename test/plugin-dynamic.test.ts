@@ -346,7 +346,6 @@ describe('composeOutput with pluginContextResults', () => {
     test('includes pluginContextResults in output', () => {
         const output = composeOutput({
             event: 'SessionStart',
-            blockResult: null,
             warnMessages: [],
             injectionResults: [],
             pluginContextResults: ['<tmux>pane info</tmux>'],
@@ -362,7 +361,6 @@ describe('composeOutput with pluginContextResults', () => {
     test('pluginContextResults appear after injections and before meta', () => {
         const output = composeOutput({
             event: 'SessionStart',
-            blockResult: null,
             warnMessages: [],
             injectionResults: ['<injection>data</injection>'],
             pluginContextResults: ['<plugin>ctx</plugin>'],
@@ -383,7 +381,6 @@ describe('composeOutput with pluginContextResults', () => {
     test('empty pluginContextResults produces no extra output', () => {
         const output = composeOutput({
             event: 'SessionStart',
-            blockResult: null,
             warnMessages: [],
             injectionResults: ['<data>x</data>'],
             pluginContextResults: [],
@@ -399,7 +396,6 @@ describe('composeOutput with pluginContextResults', () => {
     test('multiple pluginContextResults are all included', () => {
         const output = composeOutput({
             event: 'SessionStart',
-            blockResult: null,
             warnMessages: [],
             injectionResults: [],
             pluginContextResults: ['<p1>one</p1>', '<p2>two</p2>'],

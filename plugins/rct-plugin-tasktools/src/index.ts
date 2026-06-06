@@ -70,10 +70,10 @@ export default definePlugin({
 
     // Warn on raw git/cargo — should use pixi tasks
     trigger(event: HookEvent, input: PluginHookInput) {
-        if (event !== 'PreToolUse' || input.toolName !== 'Bash') return undefined
+        if (event !== 'PreToolUse' || input.tool_name !== 'Bash') return undefined
         if (!hasTasktools()) return undefined
 
-        const cmd = String(input.payload?.command ?? '')
+        const cmd = String(input.command ?? '')
 
         if (/^git\s+(commit|push|tag)\b/.test(cmd)) {
             return {
@@ -130,10 +130,10 @@ export default definePlugin({
         }
 
         // PreToolUse: inject command reference on direct tasktools invoke (once only)
-        if (event === 'PreToolUse' && input.toolName === 'Bash') {
+        if (event === 'PreToolUse' && input.tool_name === 'Bash') {
             if (tasktoolsReferenceInjected) return undefined // already shown this session
 
-            const cmd = String(input.payload?.command ?? '')
+            const cmd = String(input.command ?? '')
             if (/^tasktools\s/.test(cmd)) {
                 tasktoolsReferenceInjected = true
                 return (

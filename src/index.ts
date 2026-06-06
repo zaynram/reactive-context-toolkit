@@ -85,14 +85,6 @@ export {
 export { standard, dynamic, block } from '#lib/register'
 
 /**
- * Define a plugin for RCT. Validates the plugin shape at compile time
- * and resolves relative file paths against process.cwd().
- * @example
- * export default definePlugin({ name: 'my-plugin', files: [...], rules: [...] })
- */
-export { definePlugin } from '#lib/plugin'
-
-/**
  * Create a managed hook handler. Handles stdin parsing, handler invocation,
  * stdout formatting, and exit codes. The recommended way to write custom hooks.
  * @example
@@ -118,5 +110,13 @@ export { normalize, minify, condense } from '#util/general'
 export type { RCTPlugin, PluginHookInput, PluginTriggerResult } from '#plugin/types'
 export { displayName } from '#plugin/types'
 
-/** Registry mapping plugin names to their RCTPlugin instances. */
+/** Lazily resolve and memoize the registry mapping built-in plugin names to their RCTPlugin instances. */
 export { default as pluginRegistry } from '#plugin/index'
+
+/**
+ * Define a plugin for RCT. Validates the plugin shape at compile time
+ * and resolves relative file paths against process.cwd().
+ * @example
+ * export default definePlugin({ name: 'my-plugin', files: [...], rules: [...] })
+ */
+export { definePlugin } from '#lib/plugin'

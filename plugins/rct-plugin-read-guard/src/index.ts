@@ -1,5 +1,5 @@
-import { definePlugin } from '#index'
 import type { RCTPlugin, HookEvent, PluginHookInput, PluginTriggerResult } from '#index'
+import { definePlugin } from '#lib/plugin'
 /**
  * RCT Plugin: Redundant Read Guard
  *
@@ -124,11 +124,11 @@ export default definePlugin({
     name: 'rct-plugin-read-guard',
     trigger(event: HookEvent, input: PluginHookInput) {
         if (event !== 'PreToolUse') return undefined
-        if (input.toolName !== 'Read') return undefined
+        if (input.tool_name !== 'Read') return undefined
 
-        const tool: ToolInput = input.payload?.tool_input ?? {}
+        const tool: ToolInput = input.tool_input ?? {}
         const fp = tool?.file_path
-        const transcript = input.payload?.transcript_path as string | undefined
+        const transcript = input.transcript_path as string | undefined
 
         if (!fp || !transcript) return undefined
 

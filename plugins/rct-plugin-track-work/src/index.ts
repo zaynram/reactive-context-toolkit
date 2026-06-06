@@ -80,10 +80,10 @@ const bufferFromPath = async (path: string) =>
     Buffer.from(await Bun.file(path).arrayBuffer())
 
 const getContextMatch = (input: PluginHookInput): ContextMatch | undefined => {
-    if (!evaluateMatch(conditions.context, input.payload)) return undefined
+    if (!evaluateMatch(conditions.context, input)) return undefined
     if (!Bun.which('xmllint'))
         throw Error('xmllint is either not installed or not on PATH')
-    const fp = input.payload!.file_path as string
+    const fp = input.file_path as string
     const name = path.basename(fp)
     return {
         name,
@@ -119,8 +119,8 @@ export default definePlugin({
     trigger(event, input) {
         switch (event) {
             case 'PreToolUse':
-                if (!evaluateMatch(conditions.trigger, input.payload)) return undefined
-                const name = path.basename(input.payload!.file_path as string)
+                if (!evaluateMatch(conditions.trigger, input)) return undefined
+                const name = path.basename(input.file_path as string)
                 return {
                     action: 'block',
                     message: `${name} XSD validation output is auto-injected on Write|Edit tool uses`,

@@ -13,28 +13,16 @@ describe('composeOutput', () => {
     }
     const globalsNoMinify: Required<GlobalsConfig> = { ...globals, minify: false }
 
-    it('returns block JSON when blockResult is provided', () => {
-        const result = composeOutput({
-            event,
-            blockResult: { message: 'Not allowed' },
-            warnMessages: [],
-            injectionResults: [],
-            metaResult: null,
-            langResult: null,
-            testResult: null,
-            globals,
-        })
-
-        const parsed = JSON.parse(result)
-        expect(parsed.decision).toBe('block')
-        expect(parsed.reason).toBe('Not allowed')
-        expect(parsed.hookSpecificOutput.hookEventName).toBe('PreToolUse')
+    it('returns the raw (minified) message when blockResult is provided', () => {
+        // Exit-2 blocks feed stderr text back to Claude; the output is the plain
+        // message, not a JSON envelope (Claude Code ignores stdout/JSON on exit 2).
+        const result = composeOutput({ blockResult: { message: 'Not allowed' } })
+        expect(result).toBe('Not allowed')
     })
 
     it('returns additionalContext JSON when injections are provided', () => {
         const result = composeOutput({
             event: 'SessionStart',
-            blockResult: null,
             warnMessages: [],
             injectionResults: ['<file>content</file>', '<file2>more</file2>'],
             metaResult: null,
@@ -56,7 +44,6 @@ describe('composeOutput', () => {
     it('combines warn messages and injections', () => {
         const result = composeOutput({
             event,
-            blockResult: null,
             warnMessages: ['Warning: be careful', 'Warning: check twice'],
             injectionResults: ['<data>value</data>'],
             metaResult: null,
@@ -75,7 +62,6 @@ describe('composeOutput', () => {
     it('returns empty string when nothing to inject', () => {
         const result = composeOutput({
             event,
-            blockResult: null,
             warnMessages: [],
             injectionResults: [],
             metaResult: null,
@@ -90,7 +76,6 @@ describe('composeOutput', () => {
     it('includes meta, lang, and test results when provided', () => {
         const result = composeOutput({
             event: 'SessionStart',
-            blockResult: null,
             warnMessages: [],
             injectionResults: [],
             metaResult: '<rct-meta><files/></rct-meta>',
@@ -109,7 +94,6 @@ describe('composeOutput', () => {
     it('condenses whitespace by default', () => {
         const result = composeOutput({
             event: 'SessionStart',
-            blockResult: null,
             warnMessages: [],
             injectionResults: ['<file>\n  line1\n  line2\n    indented\n</file>'],
             metaResult: null,
@@ -129,7 +113,6 @@ describe('composeOutput', () => {
     it('preserves whitespace when minify is false', () => {
         const result = composeOutput({
             event: 'SessionStart',
-            blockResult: null,
             warnMessages: [],
             injectionResults: ['<file>\n  line1\n  line2\n</file>'],
             metaResult: null,
@@ -146,7 +129,6 @@ describe('composeOutput', () => {
     it('uses custom separator when configured', () => {
         const result = composeOutput({
             event: 'SessionStart',
-            blockResult: null,
             warnMessages: [],
             injectionResults: ['line1\n\nline2\n\nline3'],
             metaResult: null,
@@ -163,7 +145,6 @@ describe('composeOutput', () => {
     it('strips newlines for xml format by default', () => {
         const result = composeOutput({
             event: 'SessionStart',
-            blockResult: null,
             warnMessages: [],
             injectionResults: ['<tag>\nline1\nline2\n</tag>'],
             metaResult: null,
@@ -187,7 +168,6 @@ describe('composeOutput', () => {
         }
         const result = composeOutput({
             event: 'SessionStart',
-            blockResult: null,
             warnMessages: [],
             injectionResults: ['{"key": "value",\n  "key2": "value2"}'],
             metaResult: null,
@@ -206,7 +186,6 @@ describe('composeOutput', () => {
     it('respects explicit preserveNewlines override', () => {
         const result = composeOutput({
             event: 'SessionStart',
-            blockResult: null,
             warnMessages: [],
             injectionResults: ['<tag>\nline1\nline2\n</tag>'],
             metaResult: null,

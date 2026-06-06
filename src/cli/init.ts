@@ -12,8 +12,9 @@ import type {
     RuleEntry,
     InjectionEntry,
 } from '#config/types'
-import plugins from '#plugin/index'
+import { BUILTIN_PLUGINS } from '#constants'
 import { fs } from '#util'
+import error from '#util/error'
 import { ask, confirm, select } from './prompt'
 import { Glob } from 'bun'
 import { readdirSync } from 'node:fs'
@@ -103,7 +104,7 @@ export function generateConfig(detection: DetectionResult): RCTConfig {
 function collectRequiredEvents(config: RCTConfig): Set<HookEvent> {
     const events: Set<HookEvent> = new Set(['SessionStart'])
     const mergeEvents = (on?: HookEventOrArray) =>
-        ([on].flat().filter(Boolean) as HookEvent[]).forEach(events.add)
+        ([on].flat().filter(Boolean) as HookEvent[]).forEach(e => events.add(e))
 
     for (const rule of config.rules ?? []) mergeEvents(rule.on)
     for (const inj of config.injections ?? []) mergeEvents(inj.on)
@@ -129,19 +130,18 @@ export async function mergeSettings(
     settingsPath: string,
     config: RCTConfig
 ): Promise<void> {
-    // Read existing settings.json
-    const settings = await Bun.file(settingsPath)
-        .json()
-        .then(data => data as Record<string, any>)
-        .catch(() =>
-            Bun.stderr
-                .write(`error: ${settingsPath} contains invalid JSON`)
-                .then(() => process.exit(1))
-        )
+    // Read existing settings.json — an absent file starts empty; only malformed JSON errors.
+    const settings: Record<'hooks', Record<string, object>> = (await Bun.file(
+        settingsPath
+    ).exists())
+        ? await Bun.file(settingsPath)
+              .json()
+              .catch(() => {
+                  throw new Error(`${settingsPath} contains invalid JSON`)
+              })
+        : { hooks: {} }
 
     if (!settings.hooks) settings.hooks = {}
-    // Merge hooks (don't overwrite existing)
-    const hookCommand = 'bun run rct hook'
     // Collect all required events from every config section
     const requiredEvents = collectRequiredEvents(config)
     // Collect matchers for PreToolUse and PostToolUse from rules and injections
@@ -151,7 +151,7 @@ export async function mergeSettings(
     const processEntryMatcher = (item: RuleEntry | InjectionEntry) => {
         if (!item.matcher) return
         const group = item.on === 'PreToolUse' ? preToolMatchers : postToolMatchers
-        item.matcher.split('|').forEach(group.add)
+        item.matcher.split('|').forEach(m => group.add(m))
         if ('matchFile' in item && item.matchFile) postToolMatchers.add('Read')
     }
 
@@ -162,7 +162,11 @@ export async function mergeSettings(
     for (const event of requiredEvents) {
         if (settings.hooks[event]) continue // don't overwrite existing
 
-        const hook = { type: 'command', command: `${hookCommand} ${event}` }
+        const hook = {
+            type: 'command',
+            command: 'bun',
+            args: ['run', 'rct', 'hook', event],
+        }
 
         if (event === 'PreToolUse' && preToolMatchers.size > 0)
             settings.hooks[event] = [
@@ -183,8 +187,8 @@ export async function mergeSettings(
 export function discoverPlugins(root: string): string[] {
     const discovered: string[] = []
 
-    // Built-in plugins from the registry
-    discovered.push(...Object.keys(plugins))
+    // Built-in plugins (static names; discovery lists them regardless of load state)
+    discovered.push(...BUILTIN_PLUGINS)
 
     // Local plugins in .claude/hooks/rct/
     const hookDir = fs.resolve(['.claude', 'hooks', 'rct'], { root })
@@ -224,7 +228,11 @@ function buildConfigFromDerived(
     }
 
     // Files
-    if (derived.files.length > 0) config.files = derived.files
+    if (derived.files.length > 0)
+        config.files = derived.files
+
+        // Stored derivation baseline for `rct update`'s three-way merge (auto-managed).
+    ;(config as RCTConfig & { _derived?: DerivedConfig })._derived = derived
 
     return config
 }
@@ -237,17 +245,23 @@ export default async function initializeRCT(args: string[] = []) {
 
     const configPath = fs.resolve('rct.config.json', { root })
 
-    // Check for existing config
-    if (fs.exists(configPath))
-        if (interactive)
-            if (!(await confirm('rct.config.json already exists. overwrite?', false)))
-                await Bun.stdout.write('aborted.').then(() => process.exit(0))
-            else
-                await Bun.stderr
-                    .write('config exists; use interactive mode to overwrite')
-                    .then(() => process.exit(1))
+    // Check for existing config — never clobber silently.
+    if (fs.exists(configPath)) {
+        if (!interactive) {
+            // Non-interactive: preserve the existing config; `rct update` re-derives.
+            console.log(
+                'rct.config.json already exists; leaving it unchanged (run `rct update` to re-derive).'
+            )
+            return
+        }
+        if (!(await confirm('rct.config.json already exists. overwrite?', false))) {
+            console.log('aborted.')
+            return
+        }
+        // Confirmed overwrite — fall through to regeneration.
+    }
 
-    await Bun.stdout.write('detecting project structure...')
+    console.info('detecting project structure...')
     const derived = deriveFromProject(root)
 
     let config: RCTConfig
@@ -258,35 +272,33 @@ export default async function initializeRCT(args: string[] = []) {
         // Interactive wizard
         const detectedLangs = Object.keys(derived.lang) as (keyof typeof derived.lang)[]
         if (detectedLangs.length > 0) {
-            await Bun.stdout
-                .write(`detected languages: ${detectedLangs.join(', ')}`)
-                .then(() => confirm('use detected languages?'))
-                .then(res =>
-                    res ? select('select languages:', detectedLangs, detectedLangs) : []
-                )
-                .then(chosen =>
-                    detectedLangs
-                        .filter(lang => !chosen.includes(lang))
-                        .forEach(lang => delete derived.lang[lang])
-                )
+            console.info(`detected languages: ${detectedLangs.join(', ')}`)
+            if (await confirm('use detected languages?'))
+                await select('select languages:', detectedLangs, detectedLangs)
+                    .then(res => new Set<string>(res))
+                    .then(chosen =>
+                        detectedLangs
+                            .filter(lang => !chosen.has(lang))
+                            .forEach(lang => delete derived.lang[lang])
+                    )
 
             // Per language: confirm PM and test command
             Object.entries(derived.lang).forEach(async ([name, entry]) => {
                 if (!entry.tools) return
                 const listing = entry.tools.map(({ name }) => name).join(', ')
-                await Bun.stdout.write(`  (${name}) detected tools: ${listing}`)
+                console.info(`  (${name}) detected tools: ${listing}`)
                 await confirm(`use detected tools (${name})?`).then(
                     keep => !keep && (entry.tools = [])
                 )
             })
 
             if (derived.test) {
-                await Bun.stdout.write(`detected test command: ${derived.test.command}`)
+                console.info(`detected test command: ${derived.test.command}`)
                 await confirm('Use detected test command?').then(
                     keep => !keep && (derived.test = null)
                 )
             }
-        } else await Bun.stderr.write('no languages detected')
+        } else error.write('no languages detected')
 
         // Plugins
         const availablePlugins = discoverPlugins(root)
@@ -304,7 +316,7 @@ export default async function initializeRCT(args: string[] = []) {
     }
 
     await fs.write(configPath, JSON.stringify(config, null, 2))
-    await Bun.stdout.write(`wrote ${configPath}`)
+    console.info(`wrote ${configPath}`)
 
     // Apply plugins and desugar to get full config for mergeSettings
     await applyPlugins(validateConfig(config))
@@ -312,5 +324,5 @@ export default async function initializeRCT(args: string[] = []) {
         .then(cfg =>
             mergeSettings(fs.resolve(['.claude', 'settings.json'], { root }), cfg)
         )
-        .then(() => Bun.stdout.write(`updated settings.json`))
+        .then(() => console.info(`updated settings.json`))
 }

@@ -5,8 +5,8 @@ import {
     discoverPlugins,
 } from '../src/cli/init'
 import { describe, test, expect, beforeEach, afterEach } from 'bun:test'
-import { mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'fs'
-import path from 'path'
+import { mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'node:fs'
+import path from 'node:path'
 
 const TMP_DIR = path.resolve(__dirname, '../.tmp-init-test')
 
@@ -20,9 +20,7 @@ function setup(files: Record<string, string>) {
 }
 
 function cleanup() {
-    if (existsSync(TMP_DIR)) {
-        rmSync(TMP_DIR, { recursive: true, force: true })
-    }
+    if (existsSync(TMP_DIR)) rmSync(TMP_DIR, { recursive: true, force: true })
 }
 
 describe('detectProject', () => {
@@ -197,7 +195,7 @@ describe('mergeSettings', () => {
 
         const result = JSON.parse(readFileSync(settingsPath, 'utf-8'))
         expect(result.hooks.SessionStart).toBeDefined()
-        expect(result.hooks.SessionStart[0].hooks[0].command).toContain('SessionStart')
+        expect(result.hooks.SessionStart[0].hooks[0].args).toContain('SessionStart')
     })
 
     test('config with files[].injectOn generates hook entry', async () => {
@@ -209,7 +207,7 @@ describe('mergeSettings', () => {
 
         const result = JSON.parse(readFileSync(settingsPath, 'utf-8'))
         expect(result.hooks.PostToolUse).toBeDefined()
-        expect(result.hooks.PostToolUse[0].hooks[0].command).toContain('PostToolUse')
+        expect(result.hooks.PostToolUse[0].hooks[0].args).toContain('PostToolUse')
     })
 
     test('config with lang entry injectOn generates hook entry', async () => {
@@ -221,7 +219,7 @@ describe('mergeSettings', () => {
 
         const result = JSON.parse(readFileSync(settingsPath, 'utf-8'))
         expect(result.hooks.PreToolUse).toBeDefined()
-        expect(result.hooks.PreToolUse[0].hooks[0].command).toContain('PreToolUse')
+        expect(result.hooks.PreToolUse[0].hooks[0].args).toContain('PreToolUse')
     })
 
     test('config with lang tool injectOn generates hook entry', async () => {
@@ -233,7 +231,7 @@ describe('mergeSettings', () => {
 
         const result = JSON.parse(readFileSync(settingsPath, 'utf-8'))
         expect(result.hooks.UserPromptSubmit).toBeDefined()
-        expect(result.hooks.UserPromptSubmit[0].hooks[0].command).toContain(
+        expect(result.hooks.UserPromptSubmit[0].hooks[0].args).toContain(
             'UserPromptSubmit'
         )
     })
@@ -247,7 +245,7 @@ describe('mergeSettings', () => {
 
         const result = JSON.parse(readFileSync(settingsPath, 'utf-8'))
         expect(result.hooks.UserPromptSubmit).toBeDefined()
-        expect(result.hooks.UserPromptSubmit[0].hooks[0].command).toContain(
+        expect(result.hooks.UserPromptSubmit[0].hooks[0].args).toContain(
             'UserPromptSubmit'
         )
     })
@@ -259,7 +257,7 @@ describe('mergeSettings', () => {
 
         const result = JSON.parse(readFileSync(settingsPath, 'utf-8'))
         expect(result.hooks.SubagentStart).toBeDefined()
-        expect(result.hooks.SubagentStart[0].hooks[0].command).toContain('SubagentStart')
+        expect(result.hooks.SubagentStart[0].hooks[0].args).toContain('SubagentStart')
     })
 
     test('config with rules on PreToolUse generates PreToolUse with matcher', async () => {

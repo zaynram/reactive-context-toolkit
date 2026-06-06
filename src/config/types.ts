@@ -145,7 +145,10 @@ export interface FileMatchCondition {
 }
 
 /** A single match condition */
-type MatchCondition = FileMatchCondition | RegexMatchCondition | StringMatchCondition
+export type MatchCondition =
+    | FileMatchCondition
+    | RegexMatchCondition
+    | StringMatchCondition
 
 /** A match specification: single condition or array of conditions */
 export type Match = MatchCondition | MatchCondition[]

@@ -5,7 +5,10 @@ import path from 'path'
 const INDEX_PATH = path.resolve(__dirname, '../src/cli/index.ts')
 const FIXTURE_DIR = path.resolve(__dirname, 'fixtures/project')
 
-function runHook(event: string, stdin?: string): { stdout: string; exitCode: number } {
+function runHook(
+    event: string,
+    stdin?: string
+): { stdout: string; stderr: string; exitCode: number } {
     const result = spawnSync('bun', ['run', INDEX_PATH, 'hook', event], {
         cwd: FIXTURE_DIR,
         env: { ...process.env, CLAUDE_PROJECT_DIR: FIXTURE_DIR },
@@ -13,7 +16,11 @@ function runHook(event: string, stdin?: string): { stdout: string; exitCode: num
         encoding: 'utf-8',
         timeout: 10000,
     })
-    return { stdout: result.stdout?.trim() ?? '', exitCode: result.status ?? 1 }
+    return {
+        stdout: result.stdout?.trim() ?? '',
+        stderr: result.stderr?.trim() ?? '',
+        exitCode: result.status ?? 1,
+    }
 }
 
 describe('integration: cli subprocess', () => {
@@ -34,12 +41,10 @@ describe('integration: cli subprocess', () => {
             tool_name: 'Write',
             tool_input: { file_path: 'docs/specs/api.md', content: 'test' },
         })
-        const { stdout, exitCode } = runHook('PreToolUse', payload)
+        const { stderr, exitCode } = runHook('PreToolUse', payload)
+        // Exit-2 blocks feed the plain message back via stderr (stdout ignored).
         expect(exitCode).toBe(2)
-
-        const parsed = JSON.parse(stdout)
-        expect(parsed.decision).toBe('block')
-        expect(parsed.reason).toContain('Specs belong in .claude/plans/')
+        expect(stderr).toContain('Specs belong in .claude/plans/')
     })
 
     test('PostToolUse Read of chores file triggers injection', () => {

@@ -1,17 +1,18 @@
 import type { HookEvent, GlobalsConfig } from '#config/types'
 import { minify, condense } from '#util/general'
 
-export interface ComposeInput {
-    event: HookEvent
-    blockResult: { message: string } | null
-    warnMessages: string[]
-    injectionResults: string[]
-    pluginContextResults?: string[]
-    metaResult: string | null
-    langResult: string | null
-    testResult: string | null
-    globals: Required<GlobalsConfig>
-}
+export type ComposeInput =
+    | {
+          event: HookEvent
+          warnMessages: string[]
+          injectionResults: string[]
+          pluginContextResults?: string[]
+          metaResult: string | null
+          langResult: string | null
+          testResult: string | null
+          globals: Required<GlobalsConfig>
+      }
+    | { blockResult: { message: string } }
 
 function resolveMinify(globals: Required<GlobalsConfig>): {
     enabled: boolean
@@ -38,9 +39,20 @@ function resolveMinify(globals: Required<GlobalsConfig>): {
 }
 
 export function composeOutput(input: ComposeInput): string {
+    // Block path
+    if ('blockResult' in input)
+        // JSON block result serialization is not supported
+        // so this has been simplified to simply minify the
+        // message provided.
+        //
+        // Per https://code.claude.com/docs/en/hooks#common-input-fields;
+        // > Exit 2 means a blocking error.
+        // > Claude Code ignores stdout and any JSON in it.
+        // > Instead, stderr text is fed back to Claude as an error message.
+        return minify(input.blockResult.message)
+
     const {
         event,
-        blockResult,
         warnMessages,
         injectionResults,
         pluginContextResults = [],
@@ -49,17 +61,6 @@ export function composeOutput(input: ComposeInput): string {
         testResult,
         globals,
     } = input
-
-    // Block path
-    if (blockResult) {
-        return minify(
-            JSON.stringify({
-                decision: 'block',
-                reason: blockResult.message,
-                hookSpecificOutput: { hookEventName: event },
-            })
-        )
-    }
 
     // Collect all context strings
     const parts: string[] = [

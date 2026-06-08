@@ -1,36 +1,19 @@
 {
     "name": "reactive-context-toolkit",
     "version": "1.2.0",
-    "devDependencies": {
-        "@anthropic-ai/claude-agent-sdk": "^0.2.141",
-        "bun-types": "^1.3.14",
-        "oxlint": "^1.65.0",
-        "oxlint-tsgolint": "^0.18.1",
-        "typescript": "^6.0.3"
-    },
-    "optionalDependencies": {
-        "rct-plugin-read-guard": "./plugins/rct-plugin-read-guard",
-        "rct-plugin-track-work": "./plugins/rct-plugin-track-work",
-        "rct-plugin-tasktools": "./plugins/rct-plugin-tasktools"
-    },
-    "exports": { ".": { "default": "./dist/index.js" } },
-    "bin": { "rct": "./dist/cli/index.js" },
-    "files": ["dist/", "plugins/", ".claude-plugin/", "README.md", "LICENSE"],
-    "packageManager": "bun@1.3.14",
-    "prettier": {
-        "arrowParens": "always",
-        "bracketSpacing": true,
-        "endOfLine": "lf",
-        "objectWrap": "collapse",
-        "semi": false,
-        "singleQuote": true,
-        "tabWidth": 4,
-        "printWidth": 80,
-        "embeddedLanguageFormatting": "auto",
-        "experimentalTernaries": true,
-        "experimentalOperatorPosition": "start"
-    },
     "private": false,
+    "packageManager": "bun@1.3.14",
+    "workspaces": ["plugins/*"],
+    "exports": { 
+        ".": { 
+            "default": "./dist/index.js",
+            "types": "./src/index.ts"
+        } 
+    },
+    "bin": { 
+        "rct": "./dist/cli/index.js"
+    },
+    "files": ["dist/", "plugins/", ".claude-plugin/", "README.md", "LICENSE"],
     "scripts": {
         "test": "bun test",
         "lint": "bun oxlint --node-plugin --import-plugin --type-aware --type-check --ignore-pattern='dist/**'",
@@ -40,6 +23,19 @@
         "check": "bun format && bun lint:fix && bun test && bun run build",
         "prepublishOnly": "bun run build && bun test"
     },
-    "workspaces": ["plugins/*"],
-    "dependencies": { "validate-with-xmllint": "^1.2.1" }
+    "dependencies": { 
+        "validate-with-xmllint": "^1.2.1" 
+    },
+    "optionalDependencies": {
+        "rct-plugin-read-guard": "./plugins/rct-plugin-read-guard",
+        "rct-plugin-track-work": "./plugins/rct-plugin-track-work",
+        "rct-plugin-tasktools": "./plugins/rct-plugin-tasktools"
+    },
+    "devDependencies": {
+        "@anthropic-ai/claude-agent-sdk": "^0.2.141",
+        "bun-types": "^1.3.14",
+        "oxlint": "^1.65.0",
+        "oxlint-tsgolint": "^0.18.1",
+        "typescript": "^6.0.3"
+    }
 }

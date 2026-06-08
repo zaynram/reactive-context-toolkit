@@ -15,7 +15,7 @@
     },
     "exports": { ".": { "default": "./dist/index.js" } },
     "bin": { "rct": "./dist/cli/index.js" },
-    "files": ["dist/", "plugins/", "README.md", "LICENSE"],
+    "files": ["dist/", "plugins/", ".claude-plugin/", "README.md", "LICENSE"],
     "packageManager": "bun@1.3.14",
     "prettier": {
         "arrowParens": "always",

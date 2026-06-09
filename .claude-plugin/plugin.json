@@ -1,7 +1,11 @@
 {
     "name": "reactive-context-toolkit",
+    "version": "1.2.0",
+    "displayName": "RCT",
+    "repository": "https://github.com/zaynram/reactive-context-toolkit.git",
+    "homepage": "https://www.npmjs.com/package/reactive-context-toolkit",
+    "author": { "name": "Zayn Ramdass", "email": "ramdasszayn@gmail.com" },
     "description": "A zero-dependency Claude Code hook library that reactively injects context into AI sessions based on configurable rules, events, and file references.",
     "keywords": ["context", "reactive", "injection", "hook", "vanilla"],
-    "license": "MIT",
-    "author": { "name": "Zayn Ramdass", "email": "ramdasszayn@gmail.com" }
+    "license": "MIT"
 }

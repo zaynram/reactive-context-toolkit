@@ -6,3 +6,6 @@
 node_modules
 rct-cache-*
 .claude/worktrees/
+# Personal / per-machine (source-control policy)
+.claude/settings.local.json
+CLAUDE.local.md
